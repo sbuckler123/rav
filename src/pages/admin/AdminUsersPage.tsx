@@ -175,9 +175,9 @@ export default function AdminUsersPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -244,12 +244,12 @@ export default function AdminUsersPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(u)}>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" onClick={() => openEdit(u)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    className="h-10 w-10 text-muted-foreground hover:text-red-600"
                     disabled={u.id === currentUser?.id}
                     onClick={() => setDeleteTarget(u)}
                   >
@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
 
             <div className="space-y-1.5">
               <Label>תפקיד</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {ROLES.map(r => (
                   <button key={r} onClick={() => field('role', r)}
                     className={cn(

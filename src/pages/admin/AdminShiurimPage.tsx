@@ -176,9 +176,9 @@ export default function AdminShiurimPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
             <CalendarDays className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -256,10 +256,10 @@ export default function AdminShiurimPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(s)}>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" onClick={() => openEdit(s)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-600" onClick={() => setDeleteTarget(s)}>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-red-600" onClick={() => setDeleteTarget(s)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -285,7 +285,7 @@ export default function AdminShiurimPage() {
                 placeholder="כותרת השיעור" className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>תאריך</Label>
                 <Input type="date" value={form.date} onChange={e => field('date', e.target.value)}

@@ -100,7 +100,7 @@ export default function QuestionsPage() {
         </div>
 
         {/* Status tabs */}
-        <div className="flex gap-1 bg-muted rounded-lg p-1 flex-shrink-0">
+        <div className="flex gap-1 bg-muted rounded-lg p-1 flex-shrink-0 overflow-x-auto">
           {STATUS_TABS.map(tab => (
             <button
               key={tab.value}

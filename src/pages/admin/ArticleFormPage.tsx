@@ -147,7 +147,7 @@ export default function ArticleFormPage() {
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
 
         {/* Metadata — left sidebar */}
         <div className="lg:col-span-2 space-y-4">
@@ -171,7 +171,7 @@ export default function ArticleFormPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>שנה לועזית</Label>
                 <Input value={form.yearNum} onChange={e => field('yearNum', e.target.value)}
@@ -282,7 +282,7 @@ export default function ArticleFormPage() {
 
             {showPreview ? (
               /* Split: editor + preview */
-              <div className="grid lg:grid-cols-2 divide-x divide-x-reverse divide-border">
+              <div className="grid md:grid-cols-2 divide-x divide-x-reverse divide-border">
                 <div className="p-4">
                   <Textarea
                     value={form.fullContent}

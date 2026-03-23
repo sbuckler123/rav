@@ -46,7 +46,7 @@ function NavLink({ item, onClick }: { item: typeof navItems[0]; onClick?: () => 
       to={item.path}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+        'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150',
         isActive
           ? 'bg-secondary text-primary shadow-sm'
           : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all"
+          className="flex items-center gap-2 w-full px-4 py-3 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all min-h-[44px]"
         >
           <LogOut className="h-4 w-4" />
           התנתקות
@@ -141,7 +141,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden flex-shrink-0"
+            className="lg:hidden flex-shrink-0 h-11 w-11"
             onClick={() => setSidebarOpen(v => !v)}
           >
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

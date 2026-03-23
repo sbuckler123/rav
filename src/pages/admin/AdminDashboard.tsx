@@ -60,7 +60,7 @@ function StatCard({
           </div>
           <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
-        <p className="text-3xl font-bold text-primary">{value}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-primary">{value}</p>
         <p className="text-sm font-medium text-primary mt-0.5">{label}</p>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
@@ -138,13 +138,13 @@ export default function AdminDashboard() {
 
       {/* Main stat cards */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="bg-white rounded-xl border border-border p-5 h-32 animate-pulse bg-muted" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard
             label="שאלות"
             value={stats.totalQuestions}

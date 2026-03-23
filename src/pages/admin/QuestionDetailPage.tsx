@@ -122,7 +122,7 @@ export default function QuestionDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl w-full">
 
       {/* Back + header */}
       <div className="flex items-center gap-3 mb-6">
