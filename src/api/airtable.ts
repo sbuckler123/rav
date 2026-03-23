@@ -54,3 +54,32 @@ export async function airtableCreate(table: string, fields: Record<string, unkno
 
   return res.json();
 }
+
+export async function airtableUpdate(table: string, recordId: string, fields: Record<string, unknown>) {
+  const res = await fetch(`${BASE_URL}/${encodeURIComponent(table)}/${recordId}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ fields }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message ?? `Airtable error: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function airtableDelete(table: string, recordId: string) {
+  const res = await fetch(`${BASE_URL}/${encodeURIComponent(table)}/${recordId}`, {
+    method: 'DELETE',
+    headers,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message ?? `Airtable error: ${res.status}`);
+  }
+
+  return res.json();
+}

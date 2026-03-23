@@ -23,10 +23,10 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
 
   const questionsData = await airtableFetch('שאלות', params);
 
-  // שליפת תשובות
+  // שליפת תשובות — graceful fallback if table doesn't exist yet
   const answersData = await airtableFetch('תשובות', {
     filterByFormula: 'NOT({שאלה}="")',
-  });
+  }).catch(() => ({ records: [] }));
 
   const questions = questionsData.records
     .filter((r: any) => {
