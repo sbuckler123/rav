@@ -101,7 +101,8 @@ export default function ArticleFormPage() {
 
       if (categoriesArr.length) fields['קטגוריות'] = categoriesArr;
       if (tagsArr.length) fields['תגיות'] = tagsArr;
-      if (form.yearNum) fields['שנה לועזית'] = parseInt(form.yearNum);
+      const yearParsed = parseInt(form.yearNum);
+      if (!isNaN(yearParsed)) fields['שנה לועזית'] = yearParsed;
       if (form.yearHebrew) fields['שנה עברית'] = form.yearHebrew.trim();
 
       if (isEdit) {
