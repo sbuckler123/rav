@@ -1,0 +1,106 @@
+צור בסיס נתונים בשם "מערכת תוכן - הרב" עם הטבלאות והשדות הבאים:
+
+---
+
+טבלה 1: סרטונים
+- כותרת — Single line text
+- תיאור — Long text
+- תאריך — Date
+- משך — Single line text
+- צפיות — Number (integer)
+- קטגוריה — Single select עם האפשרויות: שיעור, הלכה, דרשה, אירוע, ראיון, שונות
+- סוג סרטון — Single select עם האפשרויות: youtube, direct
+- מזהה יוטיוב — Single line text
+- קישור סרטון — URL
+- תמונה ממוזערת — URL
+- חדש — Checkbox
+- מוצג בעמוד הבית — Checkbox
+
+---
+
+טבלה 2: שאלות
+- מזהה שאלה — Single line text
+- תוכן השאלה — Long text
+- שם השואל — Single line text
+- קטגוריה — Link to another record (מקושר לטבלת קטגוריות)
+- תאריך הגשה — Date
+- מפורסם — Checkbox
+- הסכמה לפרסום — Checkbox
+- סטטוס — Single select עם האפשרויות: ממתין, נענה, מפורסם, נדחה
+
+---
+
+טבלה 3: תשובות
+- שאלה — Link to another record (מקושר לטבלת שאלות)
+- תוכן התשובה — Long text
+- סוג כותב — Single select עם האפשרויות: רב, מזכירות, אוטומטי
+- תאריך — Date
+
+---
+
+טבלה 4: קטגוריות
+- שם — Single line text
+- שם באנגלית — Single line text
+- צבע — Single line text
+- בשימוש ב — Multiple select עם האפשרויות: שאלות, סרטונים, מאמרים, אירועים, שיעורים
+
+---
+
+טבלה 5: מאמרים
+- כותרת — Single line text
+- כתב עת — Single line text
+- מוסד — Single line text
+- שנה עברית — Single line text
+- שנה לועזית — Number (integer)
+- קטגוריות — Multiple select
+- תגיות — Multiple select
+- זמן קריאה — Single line text
+- תקציר — Long text
+- קישור PDF — URL
+- נקודות מפתח — Long text
+- מקורות — Long text
+
+---
+
+טבלה 6: יומן אירועים
+- כותרת — Single line text
+- מזהה URL — Single line text
+- סוג אירוע — Single select עם האפשרויות: פגישה דיפלומטית, ביקור קהילתי, טקס ממלכתי, כנס, אירוע ציבורי, ביקור רב, סיור
+- תאריך עברי — Single line text
+- תאריך לועזי — Date
+- מיקום — Single line text
+- משך — Single line text
+- תקציר קצר — Long text
+- משתתפים — Long text
+- תיאור — Long text
+- ציטוטים — Long text
+- לוח זמנים — Long text
+
+---
+
+טבלה 7: שיעורים
+- כותרת — Single line text
+- קטגוריה — Single select עם האפשרויות: שיעור, הלכה, דרשה, אירוע, ראיון, שונות
+- תאריך — Date
+- שעה — Single line text
+- מיקום — Single line text
+- תיאור — Long text
+- קישור הרשמה — URL
+- בוטל — Checkbox
+
+---
+
+טבלה 8: גלריה
+- קישור לאירוע — Link to another record (מקושר לטבלת יומן אירועים)
+- URL תמונה — URL
+- כיתוב — Single line text
+- סדר — Number (integer)
+
+---
+
+תצוגות:
+- בכל טבלה צור תצוגת Grid בשם "כל הרשומות"
+- בטבלת שאלות צור תצוגה נוספת בשם "ממתין לטיפול" עם פילטר: סטטוס = ממתין
+- בטבלת שאלות צור תצוגה נוספת בשם "מפורסם בלבד" עם פילטר: מפורסם = מסומן
+- בטבלת סרטונים צור תצוגת Gallery בשם "גלריית סרטונים" עם שדה התמונה: תמונה ממוזערת
+- בטבלת יומן אירועים צור תצוגת Calendar בשם "לוח שנה" עם שדה התאריך: תאריך לועזי
