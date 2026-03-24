@@ -20,6 +20,7 @@ import ShiurDetailPage from '@/pages/ShiurDetailPage';
 import EventDetailPage from '@/pages/EventDetailPage';
 import ArticleDetailPage from '@/pages/ArticleDetailPage';
 import { Toaster } from '@/components/ui/sonner';
+import AccessibilityWidget from '@/components/AccessibilityWidget';
 
 // Admin
 import { AuthProvider } from '@/auth/AuthContext';
@@ -75,6 +76,7 @@ export default function App() {
             element={
               <div className="min-h-screen flex flex-col" dir="rtl">
                 <Header />
+                <AccessibilityWidget />
                 <main className="flex-1">
                   <Routes>
                     <Route path="/" element={<HomePage />} />

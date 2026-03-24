@@ -1,0 +1,103 @@
+/*
+ * accessibility.css
+ * Global styles applied by AccessibilityWidget via classes on <html>
+ * Import this file in main.tsx (or index.css) so it is always loaded.
+ *
+ * Classes added/removed on document.documentElement:
+ *   .acc-text-large    — 120% font size
+ *   .acc-text-xl       — 140% font size
+ *   .acc-high-contrast — black background + yellow/white text
+ *   .acc-grayscale     — full grayscale filter
+ */
+
+/* ─── Text size ──────────────────────────────────────────────────────────────
+   Increasing font-size on html scales all rem-based values automatically.
+   The body font-size in index.css is 1rem so this cascades everywhere.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html.acc-text-large {
+  font-size: 120%;
+}
+
+html.acc-text-xl {
+  font-size: 140%;
+}
+
+/* ─── High contrast ──────────────────────────────────────────────────────────
+   Override every shadcn/ui CSS variable to a black + yellow palette.
+   All Tailwind color utilities in this project resolve through these vars,
+   so changing them here is enough — no !important hacks needed.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html.acc-high-contrast {
+  /* Surfaces */
+  --background:          0 0% 0%;          /* #000000 */
+  --foreground:          54 100% 62%;      /* #FFE033 yellow */
+
+  --card:                0 0% 5%;          /* near-black card */
+  --card-foreground:     54 100% 62%;
+
+  --popover:             0 0% 5%;
+  --popover-foreground:  54 100% 62%;
+
+  /* Primary → bright yellow so it pops on black */
+  --primary:             54 100% 62%;
+  --primary-foreground:  0 0% 0%;
+
+  /* Secondary → bright cyan accent */
+  --secondary:           185 100% 50%;     /* #00E5FF */
+  --secondary-foreground: 0 0% 0%;
+
+  /* Muted → very dark grey */
+  --muted:               0 0% 12%;
+  --muted-foreground:    54 100% 80%;      /* lighter yellow for secondary text */
+
+  --accent:              0 0% 15%;
+  --accent-foreground:   54 100% 62%;
+
+  /* Borders → visible yellow */
+  --border:              54 100% 62%;
+  --input:               0 0% 15%;
+  --ring:                54 100% 62%;
+
+  /* Destructive stays red — it's already high-contrast */
+  --destructive:         0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+/* Links inside high-contrast mode */
+html.acc-high-contrast a {
+  color: hsl(185 100% 55%) !important;   /* cyan */
+  text-decoration: underline !important;
+}
+
+html.acc-high-contrast a:hover {
+  color: hsl(54 100% 70%) !important;    /* lighter yellow on hover */
+}
+
+/* Images: keep them visible but desaturate slightly */
+html.acc-high-contrast img {
+  filter: brightness(0.9) contrast(1.1);
+}
+
+/* ─── Grayscale ──────────────────────────────────────────────────────────────
+   Apply to <html> so the filter captures the entire viewport including
+   fixed/sticky elements.  Combine with high-contrast gracefully.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html.acc-grayscale:not(.acc-high-contrast) {
+  filter: grayscale(100%);
+}
+
+/* When both are active: grayscale wins visually over hue; keep contrast */
+html.acc-grayscale.acc-high-contrast {
+  filter: grayscale(100%) contrast(1.5);
+}
+
+/* ─── Smooth transitions when toggling ──────────────────────────────────────
+   Prevent jarring flashes when classes are applied/removed.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html {
+  transition: filter 0.25s ease, font-size 0.2s ease;
+}
