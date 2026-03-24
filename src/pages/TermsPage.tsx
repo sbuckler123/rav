@@ -13,8 +13,8 @@ export default function TermsPage() {
           <section>
             <p className="text-foreground leading-relaxed">
               ברוכים הבאים לאתר הרשמי של הרב קלמן מאיר בר שליט"א. תנאי שימוש אלו
-              ("התנאים") מסדירים את השימוש שלכם באתר המופעל על ידי הרבנות הראשית
-              לישראל ("אנו" או "הארגון").
+              ("התנאים") מסדירים את השימוש שלכם באתר האישי המופעל על ידי
+              הרב קלמן מאיר בר שליט"א ("אנו" או "הרב").
             </p>
             <p className="text-foreground leading-relaxed mt-3">
               הכניסה לאתר והשימוש בו מהווים הסכמה לתנאים המפורטים להלן. אם אינכם
@@ -68,7 +68,7 @@ export default function TermsPage() {
           <Section title="3. קניין רוחני וזכויות יוצרים">
             <p>
               כל התכנים המופיעים באתר — לרבות מאמרים, שיעורים, פסקי הלכה, תמונות
-              ועיצוב — הם רכושה של הרבנות הראשית לישראל ו/או של הרב קלמן מאיר בר
+              ועיצוב — הם רכושו של הרב קלמן מאיר בר
               שליט"א, ומוגנים בחוק זכות יוצרים, התשס"ח–2007.
             </p>
             <p className="mt-3">
@@ -188,8 +188,8 @@ export default function TermsPage() {
           <Section title="11. יצירת קשר">
             <p className="mb-4">לשאלות, הבהרות או פניות בנוגע לתנאי שימוש אלו:</p>
             <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-3">
-              <p className="font-bold text-primary text-sm">הרבנות הראשית לישראל</p>
-              <p className="text-sm text-foreground">רחוב אהליאב 5, ירושלים — בנין הרבנות הראשית לישראל</p>
+              <p className="font-bold text-primary text-sm">הרב קלמן מאיר בר שליט"א</p>
+              <p className="text-sm text-foreground">רחוב אהליאב 5, ירושלים</p>
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
                 <a href="mailto:Kh@rab.gov.il" className="hover:text-secondary transition-colors underline underline-offset-2 break-all">

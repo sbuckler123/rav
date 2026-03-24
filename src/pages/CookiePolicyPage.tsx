@@ -271,7 +271,7 @@ export default function CookiePolicyPage() {
           <Section title="7. יצירת קשר">
             <p className="mb-4">לשאלות בנושא מדיניות עוגיות זו:</p>
             <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-3">
-              <p className="font-bold text-primary text-sm">הרבנות הראשית לישראל</p>
+              <p className="font-bold text-primary text-sm">הרב קלמן מאיר בר שליט"א</p>
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
                 <a

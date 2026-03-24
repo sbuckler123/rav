@@ -12,8 +12,8 @@ export default function AccessibilityStatementPage() {
           {/* ── מבוא ── */}
           <section>
             <p className="text-foreground leading-relaxed text-sm sm:text-base">
-              הרבנות הראשית לישראל מחויבת להנגיש את האתר הרשמי של הרב קלמן מאיר בר שליט"א
-              לכלל הציבור, לרבות אנשים עם מוגבלות, בהתאם לחוק שוויון זכויות לאנשים עם
+              הרב קלמן מאיר בר שליט"א מחויב להנגיש את אתרו האישי לכלל הציבור,
+              לרבות אנשים עם מוגבלות, בהתאם לחוק שוויון זכויות לאנשים עם
               מוגבלות, התשנ"ח–1998, ולתקנות הנגישות לשירות (התאמות נגישות לאתר אינטרנט),
               התשע"ה–2014.
             </p>
@@ -124,7 +124,7 @@ function BulletList({ items, muted }: { items: string[]; muted?: boolean }) {
 function ContactCard({ note }: { note?: string }) {
   return (
     <div className="rounded-xl border border-border bg-muted/30 p-4 sm:p-5 space-y-3">
-      <p className="font-bold text-primary text-sm">רכז הנגישות — הרבנות הראשית לישראל</p>
+      <p className="font-bold text-primary text-sm">רכז הנגישות — משרד הרב קלמן מאיר בר שליט"א</p>
       <div className="flex items-center gap-2 text-sm text-foreground min-w-0">
         <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
         <a href="mailto:Kh@rab.gov.il" className="hover:text-secondary transition-colors underline underline-offset-2 break-all">

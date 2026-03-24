@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
           {/* ── מבוא ── */}
           <section>
             <p className="text-foreground leading-relaxed">
-              מדיניות פרטיות זו מתארת כיצד הרבנות הראשית לישראל ("אנו", "הארגון") אוספת,
+              מדיניות פרטיות זו מתארת כיצד הרב קלמן מאיר בר שליט"א ("אנו", "הרב") אוסף,
               משתמשת ומגינה על המידע שאתם מוסרים בעת השימוש באתר הרשמי של הרב קלמן מאיר
               בר שליט"א (<span className="font-medium">להלן: "האתר"</span>).
             </p>
@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
           {/* ── 1. מי אנחנו ── */}
           <Section title="1. מי אנחנו">
             <p>
-              האתר מופעל על ידי הרבנות הראשית לישראל, הממוקמת ברחוב אהליאב 5, ירושלים.
+              האתר האישי מופעל על ידי הרב קלמן מאיר בר שליט"א, הממוקם ברחוב אהליאב 5, ירושלים.
               האתר מיועד להנגשת תכנים דתיים ורוחניים לציבור הרחב: מאמרים, שיעורי תורה,
               שאלות ותשובות, ולוחות שיעורים ואירועים.
             </p>
@@ -247,8 +247,8 @@ export default function PrivacyPolicyPage() {
               לכל שאלה, בקשה או תלונה בנושא פרטיות, ניתן לפנות אלינו:
             </p>
             <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-3">
-              <p className="font-bold text-primary text-sm">הרבנות הראשית לישראל</p>
-              <p className="text-sm text-foreground">רחוב אהליאב 5, ירושלים — בנין הרבנות הראשית</p>
+              <p className="font-bold text-primary text-sm">הרב קלמן מאיר בר שליט"א</p>
+              <p className="text-sm text-foreground">רחוב אהליאב 5, ירושלים</p>
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
                 <a href="mailto:Kh@rab.gov.il" className="hover:text-secondary transition-colors underline underline-offset-2 break-all">
