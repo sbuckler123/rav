@@ -37,6 +37,9 @@ import AdminEventsPage from '@/pages/admin/AdminEventsPage';
 import AdminArticlesPage from '@/pages/admin/AdminArticlesPage';
 import ArticleFormPage from '@/pages/admin/ArticleFormPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
+import AccessibilityStatementPage from '@/pages/AccessibilityStatementPage';
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
+import CookiePolicyPage from '@/pages/CookiePolicyPage';
 
 export default function App() {
   return (
@@ -90,6 +93,9 @@ export default function App() {
                     <Route path="/ask" element={<AskPage />} />
                     <Route path="/articles" element={<ArticlesPage />} />
                     <Route path="/articles/:id" element={<ArticleDetailPage />} />
+                    <Route path="/accessibility" element={<AccessibilityStatementPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/cookies" element={<CookiePolicyPage />} />
                   </Routes>
                 </main>
                 <Footer />
