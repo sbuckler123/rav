@@ -37,7 +37,7 @@ function formatDate(raw: string): string {
 export async function getVideos(): Promise<{ shiurim: ShiurItem[] }> {
   const data = await airtableFetch(
     'שיעורי וידאו',
-    {},
+    { filterByFormula: `{סטטוס} = "פעיל"` },
     [{ field: 'תאריך', direction: 'desc' }]
   );
 

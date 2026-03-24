@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CalendarDays, Plus, Pencil, Trash2, Loader2, Search, Clock, MapPin } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
-import { getCategories } from '@/api/getCategories';
+import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete, airtableGetFieldChoices } from '@/api/airtable';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,8 +85,9 @@ async function fetchShiurim(userRecords: any[] = []): Promise<Shiur[]> {
 export default function AdminShiurimPage() {
   const { user } = useAuth();
   const [shiurim, setShiurim] = useState<Shiur[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryChoices, setCategoryChoices] = useState<string[]>([]);
+  const [addingCategory, setAddingCategory] = useState(false);
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,14 +100,18 @@ export default function AdminShiurimPage() {
 
   function load() {
     setLoading(true);
-    Promise.all([getCategories(), airtableFetch('משתמשים')])
-      .then(([{ categories }, usersData]) => {
-        setCategories(categories);
-        return fetchShiurim(usersData.records ?? []);
-      })
+    airtableFetch('משתמשים')
+      .then(usersData => fetchShiurim(usersData.records ?? []))
       .then(setShiurim)
       .catch(() => toast.error('שגיאה בטעינת שיעורים'))
       .finally(() => setLoading(false));
+  }
+
+  function openDialog() {
+    setAddingCategory(false);
+    airtableGetFieldChoices('שיעורים', 'קטגוריה')
+      .then(setCategoryChoices)
+      .catch(() => {});
   }
 
   useEffect(() => { load(); }, []);
@@ -115,6 +119,7 @@ export default function AdminShiurimPage() {
   function openAdd() {
     setEditing(null);
     setForm(EMPTY_FORM);
+    openDialog();
     setDialogOpen(true);
   }
 
@@ -129,6 +134,7 @@ export default function AdminShiurimPage() {
       category: s.category,
       linkId: s.linkId,
     });
+    openDialog();
     setDialogOpen(true);
   }
 
@@ -320,16 +326,48 @@ export default function AdminShiurimPage() {
 
             <div className="space-y-1.5">
               <Label>קטגוריה</Label>
-              <select
-                value={form.category}
-                onChange={e => field('category', e.target.value)}
-                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
-              >
-                <option value="">ללא קטגוריה</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
+              {!addingCategory ? (
+                <div className="flex gap-2">
+                  <select
+                    value={form.category}
+                    onChange={e => field('category', e.target.value)}
+                    className="flex-1 h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
+                  >
+                    <option value="">ללא קטגוריה</option>
+                    {categoryChoices.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => { setAddingCategory(true); field('category', ''); }}
+                    className="inline-flex items-center gap-1 px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary hover:border-secondary transition-colors whitespace-nowrap"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    חדשה
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    value={form.category}
+                    onChange={e => field('category', e.target.value)}
+                    placeholder="שם הקטגוריה החדשה..."
+                    className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setAddingCategory(false); if (!form.category.trim()) field('category', categoryChoices[0] ?? ''); }}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              )}
+              {addingCategory && (
+                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף אוטומטית לרשימה בעת השמירה</p>
+              )}
             </div>
 
             <div className="space-y-1.5">

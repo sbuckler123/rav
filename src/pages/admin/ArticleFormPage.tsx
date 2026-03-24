@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
-import { ArrowRight, Loader2, Save, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Loader2, Save, Eye, EyeOff, Plus, Check } from 'lucide-react';
 import { airtableFetch, airtableCreate, airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -58,7 +58,10 @@ export default function ArticleFormPage() {
   const [gregYearOptions, setGregYearOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [addingTag, setAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
 
   useEffect(() => {
     const tasks: Promise<any>[] = [
@@ -308,80 +311,146 @@ export default function ArticleFormPage() {
                     {cat}
                   </button>
                 ))}
+                {!addingCategory && (
+                  <button
+                    type="button"
+                    onClick={() => { setAddingCategory(true); setNewCategoryInput(''); }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    חדשה
+                  </button>
+                )}
               </div>
+              {addingCategory && (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    autoFocus
+                    value={newCategoryInput}
+                    onChange={e => setNewCategoryInput(e.target.value)}
+                    placeholder="שם הקטגוריה החדשה..."
+                    className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newCategoryInput.trim()) {
+                          setCategoryOptions(prev => [...prev, newCategoryInput.trim()]);
+                          field('categories', newCategoryInput.trim());
+                          setAddingCategory(false);
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newCategoryInput.trim()) {
+                        setCategoryOptions(prev => [...prev, newCategoryInput.trim()]);
+                        field('categories', newCategoryInput.trim());
+                      }
+                      setAddingCategory(false);
+                    }}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddingCategory(false)}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              )}
+              {addingCategory && (
+                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף אוטומטית לרשימה בעת השמירה</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
               <Label>תגיות</Label>
-              {/* Existing options as toggles */}
-              {tagOptions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tagOptions.map(tag => {
-                    const selected = form.tags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() =>
-                          field('tags', selected
-                            ? form.tags.filter(t => t !== tag)
-                            : [...form.tags, tag]
-                          )
-                        }
-                        className={cn(
-                          'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
-                          selected
-                            ? 'bg-secondary text-primary border-secondary'
-                            : 'bg-white text-muted-foreground border-border hover:border-secondary'
-                        )}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {/* Selected custom/extra tags */}
-              {form.tags.filter(t => !tagOptions.includes(t)).length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {form.tags.filter(t => !tagOptions.includes(t)).map(tag => (
-                    <span key={tag} className="flex items-center gap-1 px-3 py-1 rounded-full bg-muted border border-border text-sm">
+              <div className="flex flex-wrap gap-2">
+                {tagOptions.map(tag => {
+                  const selected = form.tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() =>
+                        field('tags', selected
+                          ? form.tags.filter(t => t !== tag)
+                          : [...form.tags, tag]
+                        )
+                      }
+                      className={cn(
+                        'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
+                        selected
+                          ? 'bg-secondary text-primary border-secondary'
+                          : 'bg-white text-muted-foreground border-border hover:border-secondary'
+                      )}
+                    >
                       {tag}
-                      <button type="button" onClick={() => field('tags', form.tags.filter(t => t !== tag))} className="text-muted-foreground hover:text-red-500 leading-none">×</button>
-                    </span>
-                  ))}
+                    </button>
+                  );
+                })}
+                {!addingTag && (
+                  <button
+                    type="button"
+                    onClick={() => { setAddingTag(true); setNewTagInput(''); }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-border text-sm text-muted-foreground hover:border-secondary hover:text-primary transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    חדשה
+                  </button>
+                )}
+              </div>
+              {addingTag && (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    autoFocus
+                    value={newTagInput}
+                    onChange={e => setNewTagInput(e.target.value)}
+                    placeholder="שם התגית החדשה..."
+                    className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const t = newTagInput.trim();
+                        if (t && !form.tags.includes(t)) {
+                          if (!tagOptions.includes(t)) setTagOptions(prev => [...prev, t]);
+                          field('tags', [...form.tags, t]);
+                        }
+                        setAddingTag(false);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = newTagInput.trim();
+                      if (t && !form.tags.includes(t)) {
+                        if (!tagOptions.includes(t)) setTagOptions(prev => [...prev, t]);
+                        field('tags', [...form.tags, t]);
+                      }
+                      setAddingTag(false);
+                    }}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddingTag(false)}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ביטול
+                  </button>
                 </div>
               )}
-              {/* Add custom tag */}
-              <div className="flex gap-2">
-                <Input
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const t = tagInput.trim();
-                      if (t && !form.tags.includes(t)) field('tags', [...form.tags, t]);
-                      setTagInput('');
-                    }
-                  }}
-                  placeholder="הוסף תגית..."
-                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-shrink-0"
-                  onClick={() => {
-                    const t = tagInput.trim();
-                    if (t && !form.tags.includes(t)) field('tags', [...form.tags, t]);
-                    setTagInput('');
-                  }}
-                >
-                  הוסף
-                </Button>
-              </div>
+              {addingTag && (
+                <p className="text-xs text-muted-foreground">התגית תיווסף אוטומטית לרשימה בעת השמירה</p>
+              )}
             </div>
 
             {isEdit && form.readTime && (

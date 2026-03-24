@@ -43,7 +43,7 @@ export async function airtableCreate(table: string, fields: Record<string, unkno
   const res = await fetch(`${BASE_URL}/${encodeURIComponent(table)}`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ fields }),
+    body: JSON.stringify({ fields, typecast: true }),
   });
 
   if (!res.ok) {
@@ -59,7 +59,7 @@ export async function airtableUpdate(table: string, recordId: string, fields: Re
   const res = await fetch(`${BASE_URL}/${encodeURIComponent(table)}/${recordId}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ fields }),
+    body: JSON.stringify({ fields, typecast: true }),
   });
 
   if (!res.ok) {

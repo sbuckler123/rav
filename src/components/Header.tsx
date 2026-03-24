@@ -24,7 +24,7 @@ export default function Header() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 min-w-0" aria-label="דף הבית - הרב קלמן מאיר בר">
+          <Link to="/" className="flex items-center gap-3 min-w-0" aria-label="דף הבית - הרב קלמן מאיר בר" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="bg-white rounded-full p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
               <img
                 src="https://images.fillout.com/orgid-590181/flowpublicid-faiasrbeba/widgetid-default/da4RdkwRZDxv5w1uPJeYYk/pasted-image-1771332416037.png"

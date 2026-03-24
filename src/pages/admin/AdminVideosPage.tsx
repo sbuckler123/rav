@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
+import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete, airtableGetFieldChoices } from '@/api/airtable';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ interface AdminVideo {
   thumbnail: string;
   views: number;
   isNew: boolean;
+  status: string;
   linkId: string;
   createdByName: string;
   updatedByName: string;
@@ -41,12 +42,12 @@ interface FormState {
   youtubeId: string;
   views: string;
   isNew: boolean;
+  status: string;
 }
 
 const EMPTY_FORM: FormState = {
   title: '', date: '', duration: '', description: '', category: '',
-  youtubeId: '',
-  views: '', isNew: false,
+  youtubeId: '', views: '', isNew: false, status: 'פעיל',
 };
 
 function extractField(val: any): string {
@@ -86,6 +87,7 @@ async function fetchVideos(userRecords: any[] = []): Promise<AdminVideo[]> {
       thumbnail: f['תמונה ממוזערת'] ?? '',
       views: f['צפיות'] ?? 0,
       isNew: f['חדש'] ?? false,
+      status: f['סטטוס'] ?? '',
       linkId: extractField(f['מזהה קישור']),
       createdByName: getUserName(f['נוצר על ידי']),
       updatedByName: getUserName(f['עודכן על ידי']),
@@ -113,6 +115,9 @@ export default function AdminVideosPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminVideo | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [categoryChoices, setCategoryChoices] = useState<string[]>([]);
+  const [addingCategory, setAddingCategory] = useState(false);
+
   function load() {
     setLoading(true);
     airtableFetch('משתמשים')
@@ -124,9 +129,17 @@ export default function AdminVideosPage() {
 
   useEffect(() => { load(); }, []);
 
+  function openDialog() {
+    setAddingCategory(false);
+    airtableGetFieldChoices('שיעורי וידאו', 'קטגוריה')
+      .then(setCategoryChoices)
+      .catch(() => {});
+  }
+
   function openAdd() {
     setEditing(null);
     setForm(EMPTY_FORM);
+    openDialog();
     setDialogOpen(true);
   }
 
@@ -141,7 +154,9 @@ export default function AdminVideosPage() {
       youtubeId: v.youtubeId,
       views: v.views > 0 ? String(v.views) : '',
       isNew: v.isNew,
+      status: v.status,
     });
+    openDialog();
     setDialogOpen(true);
   }
 
@@ -162,6 +177,7 @@ export default function AdminVideosPage() {
       if (form.description.trim()) fields['תיאור']           = form.description.trim();
       if (form.category.trim())   fields['קטגוריה']          = form.category.trim();
       fields['סוג סרטון'] = 'youtube';
+      if (form.status) fields['סטטוס'] = form.status;
       if (form.youtubeId.trim())  fields['מזהה יוטיוב'] = form.youtubeId.trim();
       const viewsParsed = parseInt(form.views);
       if (!isNaN(viewsParsed))    fields['צפיות']            = viewsParsed;
@@ -335,9 +351,48 @@ export default function AdminVideosPage() {
 
             <div className="space-y-1.5">
               <Label>קטגוריה</Label>
-              <Input value={form.category} onChange={e => field('category', e.target.value)}
-                placeholder="למשל: הלכה, מועדים..."
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+              {!addingCategory ? (
+                <div className="flex gap-2">
+                  <select
+                    value={form.category}
+                    onChange={e => field('category', e.target.value)}
+                    className="flex-1 h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
+                  >
+                    <option value="">ללא קטגוריה</option>
+                    {categoryChoices.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => { setAddingCategory(true); field('category', ''); }}
+                    className="inline-flex items-center gap-1 px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary hover:border-secondary transition-colors whitespace-nowrap"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    חדשה
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    value={form.category}
+                    onChange={e => field('category', e.target.value)}
+                    placeholder="שם הקטגוריה החדשה..."
+                    className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setAddingCategory(false); if (!form.category.trim()) field('category', categoryChoices[0] ?? ''); }}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              )}
+              {addingCategory && (
+                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף אוטומטית לרשימה בעת השמירה</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -363,18 +418,40 @@ export default function AdminVideosPage() {
                   className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
               </div>
               <div className="space-y-1.5">
-                <Label>סימון</Label>
-                <label className="flex items-center gap-2 text-sm cursor-pointer h-10 px-3 rounded-md border border-input bg-white">
-                  <input
-                    type="checkbox"
-                    checked={form.isNew}
-                    onChange={e => field('isNew', e.target.checked)}
-                    className="rounded"
-                  />
-                  סמן כ"שיעור חדש"
-                </label>
+                <Label>סטטוס</Label>
+                <select
+                  value={form.status}
+                  onChange={e => field('status', e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
+                >
+                  <option value="פעיל">פעיל</option>
+                  <option value="לא פעיל">לא פעיל</option>
+                </select>
               </div>
             </div>
+
+            <div className="space-y-1.5">
+              <Label>סימון</Label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer h-10 px-3 rounded-md border border-input bg-white">
+                <input
+                  type="checkbox"
+                  checked={form.isNew}
+                  onChange={e => field('isNew', e.target.checked)}
+                  className="rounded"
+                />
+                סמן כ"שיעור חדש"
+              </label>
+            </div>
+
+            {editing && editing.linkId && (
+              <div className="space-y-1.5">
+                <Label>מזהה קישור</Label>
+                <div className="px-3 py-2 rounded-md border border-border bg-muted text-sm text-muted-foreground font-mono" dir="ltr">
+                  {editing.linkId}
+                </div>
+                <p className="text-xs text-muted-foreground">שדה זה נוצר אוטומטית ואינו ניתן לעריכה</p>
+              </div>
+            )}
 
             {editing && (editing.createdByName || editing.updatedByName) && (
               <div className="pt-3 border-t border-border space-y-2">
