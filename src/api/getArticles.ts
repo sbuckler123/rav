@@ -27,7 +27,7 @@ function extractField(val: any): string | undefined {
 export async function getArticles(): Promise<{ articles: Article[] }> {
   const data = await airtableFetch(
     'מאמרים',
-    {},
+    { filterByFormula: `{סטטוס} = "פעיל"` },
     [{ field: 'שנה לועזית', direction: 'desc' }]
   );
 
@@ -41,7 +41,7 @@ export async function getArticles(): Promise<{ articles: Article[] }> {
       yeshiva: f['מוסד'] ?? '',
       year: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']) ?? '',
       yearNum: f['שנה לועזית'] ?? 0,
-      categories: f['קטגוריות'] ?? [],
+      categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'] : (f['קטגוריות'] ? [f['קטגוריות']] : []),
       tags: f['תגיות'] ?? [],
       readTime: extractField(f['זמן קריאה']),
       abstract: extractField(f['תקציר']),

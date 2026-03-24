@@ -3,11 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { ArrowRight, Loader2, Save, Eye, EyeOff } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate } from '@/api/airtable';
+import { airtableFetch, airtableCreate, airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface FormState {
   title: string;
@@ -15,8 +16,9 @@ interface FormState {
   yeshiva: string;
   yearHebrew: string;
   yearNum: string;
-  categories: string;   // comma-separated
-  tags: string;         // comma-separated
+  categories: string;   // single-select
+  tags: string[];       // multi-select
+  status: string;
   readTime: string;
   abstract: string;
   fullContent: string;
@@ -27,7 +29,7 @@ interface FormState {
 
 const EMPTY_FORM: FormState = {
   title: '', journal: '', yeshiva: '', yearHebrew: '', yearNum: '',
-  categories: '', tags: '', readTime: '', abstract: '',
+  categories: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
 
@@ -44,40 +46,58 @@ export default function ArticleFormPage() {
   const isEdit = !!id;
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [loading, setLoading] = useState(isEdit);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [linkId, setLinkId] = useState('');
+  const [hebrewYearOptions, setHebrewYearOptions] = useState<string[]>([]);
+  const [gregYearOptions, setGregYearOptions] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [tagOptions, setTagOptions] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
-    if (!isEdit) return;
-    airtableFetch('מאמרים')
-      .then(data => {
-        const record = data.records.find((r: any) => r.id === id);
-        if (!record) { toast.error('המאמר לא נמצא'); return; }
-        const f = record.fields;
-        setLinkId(extractField(f['מזהה קישור']));
-        setForm({
-          title: extractField(f['כותרת']),
-          journal: extractField(f['כתב עת']),
-          yeshiva: extractField(f['מוסד']),
-          yearHebrew: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']),
-          yearNum: String(f['שנה לועזית'] ?? ''),
-          categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'].join(', ') : extractField(f['קטגוריות']),
-          tags: Array.isArray(f['תגיות']) ? f['תגיות'].join(', ') : extractField(f['תגיות']),
-          readTime: extractField(f['זמן קריאה']),
-          abstract: extractField(f['תקציר']),
-          fullContent: extractField(f['תוכן מלא']),
-          pdfUrl: extractField(f['קישור PDF']),
-          keyPoints: extractField(f['נקודות מפתח']),
-          sources: extractField(f['מקורות']),
-        });
+    const tasks: Promise<any>[] = [
+      airtableGetFieldChoices('מאמרים', 'שנה עברית'),
+      airtableGetFieldChoices('מאמרים', 'שנה לועזית'),
+      airtableGetFieldChoices('מאמרים', 'קטגוריות'),
+      airtableGetFieldChoices('מאמרים', 'תגיות'),
+    ];
+    if (isEdit) tasks.push(airtableFetch('מאמרים'));
+
+    Promise.all(tasks)
+      .then(([hebrewChoices, gregChoices, catChoices, tagChoices, articlesData]) => {
+        setHebrewYearOptions(hebrewChoices);
+        setGregYearOptions(gregChoices);
+        setCategoryOptions(catChoices);
+        setTagOptions(tagChoices);
+        if (!isEdit || !articlesData) return;
+          const record = articlesData.records.find((r: any) => r.id === id);
+          if (!record) { toast.error('המאמר לא נמצא'); return; }
+          const f = record.fields;
+          setLinkId(extractField(f['מזהה קישור']));
+          setForm({
+            title: extractField(f['כותרת']),
+            journal: extractField(f['כתב עת']),
+            yeshiva: extractField(f['מוסד']),
+            yearHebrew: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']),
+            yearNum: String(f['שנה לועזית'] ?? ''),
+            categories: Array.isArray(f['קטגוריות']) ? (f['קטגוריות'][0] ?? '') : extractField(f['קטגוריות']),
+            tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
+            status: extractField(f['סטטוס']) || 'לא פעיל',
+            readTime: extractField(f['זמן קריאה']),
+            abstract: extractField(f['תקציר']),
+            fullContent: extractField(f['תוכן מלא']),
+            pdfUrl: extractField(f['קישור PDF']),
+            keyPoints: extractField(f['נקודות מפתח']),
+            sources: extractField(f['מקורות']),
+          });
       })
-      .catch(() => toast.error('שגיאה בטעינת מאמר'))
+      .catch(() => toast.error('שגיאה בטעינת נתונים'))
       .finally(() => setLoading(false));
   }, [id]);
 
-  function field(key: keyof FormState, val: string) {
+  function field(key: keyof FormState, val: string | string[]) {
     setForm(f => ({ ...f, [key]: val }));
   }
 
@@ -85,25 +105,29 @@ export default function ArticleFormPage() {
     if (!form.title.trim()) { toast.error('כותרת היא שדה חובה'); return; }
     setSaving(true);
     try {
-      const categoriesArr = form.categories.split(',').map(s => s.trim()).filter(Boolean);
-      const tagsArr = form.tags.split(',').map(s => s.trim()).filter(Boolean);
-
       // תקציר and זמן קריאה are AI-generated by Airtable — never written via API
+      // Only include fields that have actual values — Airtable rejects empty strings
+      // for URL / select / number field types
       const fields: Record<string, unknown> = {
         'כותרת': form.title.trim(),
-        'כתב עת': form.journal.trim(),
-        'מוסד': form.yeshiva.trim(),
-        'תוכן מלא': form.fullContent.trim(),
-        'קישור PDF': form.pdfUrl.trim(),
-        'נקודות מפתח': form.keyPoints.trim(),
-        'מקורות': form.sources.trim(),
       };
 
-      if (categoriesArr.length) fields['קטגוריות'] = categoriesArr;
-      if (tagsArr.length) fields['תגיות'] = tagsArr;
-      const yearParsed = parseInt(form.yearNum);
-      if (!isNaN(yearParsed)) fields['שנה לועזית'] = yearParsed;
-      if (form.yearHebrew) fields['שנה עברית'] = form.yearHebrew.trim();
+      if (form.journal.trim())     fields['כתב עת']      = form.journal.trim();
+      if (form.yeshiva.trim())     fields['מוסד']         = form.yeshiva.trim();
+      if (form.fullContent.trim()) fields['תוכן מלא']    = form.fullContent.trim();
+      if (form.pdfUrl.trim())      fields['קישור PDF']   = form.pdfUrl.trim();
+      if (form.keyPoints.trim())   fields['נקודות מפתח'] = form.keyPoints.trim();
+      if (form.sources.trim())     fields['מקורות']       = form.sources.trim();
+      if (form.categories)         fields['קטגוריות']    = form.categories;
+      fields['סטטוס'] = form.status;
+      if (form.tags.length)        fields['תגיות']        = form.tags;
+      if (form.yearHebrew)  fields['שנה עברית']  = [form.yearHebrew]; // multi-select → array
+      if (form.yearNum.trim()) {
+        // שנה לועזית is a select field → send as array; fall back to number if no choices
+        fields['שנה לועזית'] = gregYearOptions.length
+          ? [form.yearNum.trim()]
+          : parseInt(form.yearNum);
+      }
 
       if (isEdit) {
         await airtableUpdate('מאמרים', id!, fields);
@@ -162,6 +186,29 @@ export default function ArticleFormPage() {
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
             </div>
 
+            <div className="space-y-1.5">
+              <Label>סטטוס</Label>
+              <div className="flex gap-2">
+                {['פעיל', 'לא פעיל'].map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => field('status', s)}
+                    className={cn(
+                      'flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
+                      form.status === s
+                        ? s === 'פעיל'
+                          ? 'bg-green-600 text-white border-green-600'
+                          : 'bg-primary text-white border-primary'
+                        : 'bg-white text-muted-foreground border-border hover:border-primary'
+                    )}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {isEdit && form.abstract && (
               <div className="space-y-1.5">
                 <Label>תקציר</Label>
@@ -175,15 +222,36 @@ export default function ArticleFormPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>שנה לועזית</Label>
-                <Input value={form.yearNum} onChange={e => field('yearNum', e.target.value)}
-                  placeholder="2024" type="number" dir="ltr"
-                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                {gregYearOptions.length > 0 ? (
+                  <select
+                    value={form.yearNum}
+                    onChange={e => field('yearNum', e.target.value)}
+                    className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                    dir="ltr"
+                  >
+                    <option value="">בחר שנה</option>
+                    {gregYearOptions.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input value={form.yearNum} onChange={e => field('yearNum', e.target.value)}
+                    placeholder="2024" type="number" dir="ltr"
+                    className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>שנה עברית</Label>
-                <Input value={form.yearHebrew} onChange={e => field('yearHebrew', e.target.value)}
-                  placeholder="תשפ״ה"
-                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                <select
+                  value={form.yearHebrew}
+                  onChange={e => field('yearHebrew', e.target.value)}
+                  className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                >
+                  <option value="">בחר שנה</option>
+                  {hebrewYearOptions.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -203,18 +271,96 @@ export default function ArticleFormPage() {
 
             <div className="space-y-1.5">
               <Label>קטגוריות</Label>
-              <Input value={form.categories} onChange={e => field('categories', e.target.value)}
-                placeholder="הלכה, מועדים, תפילה..."
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
-              <p className="text-xs text-muted-foreground">מופרדות בפסיק</p>
+              <div className="flex flex-wrap gap-2">
+                {categoryOptions.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => field('categories', form.categories === cat ? '' : cat)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
+                      form.categories === cat
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-muted-foreground border-border hover:border-primary'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label>תגיות</Label>
-              <Input value={form.tags} onChange={e => field('tags', e.target.value)}
-                placeholder="שבת, ברכות..."
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
-              <p className="text-xs text-muted-foreground">מופרדות בפסיק</p>
+              {/* Existing options as toggles */}
+              {tagOptions.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tagOptions.map(tag => {
+                    const selected = form.tags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() =>
+                          field('tags', selected
+                            ? form.tags.filter(t => t !== tag)
+                            : [...form.tags, tag]
+                          )
+                        }
+                        className={cn(
+                          'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
+                          selected
+                            ? 'bg-secondary text-primary border-secondary'
+                            : 'bg-white text-muted-foreground border-border hover:border-secondary'
+                        )}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Selected custom/extra tags */}
+              {form.tags.filter(t => !tagOptions.includes(t)).length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.tags.filter(t => !tagOptions.includes(t)).map(tag => (
+                    <span key={tag} className="flex items-center gap-1 px-3 py-1 rounded-full bg-muted border border-border text-sm">
+                      {tag}
+                      <button type="button" onClick={() => field('tags', form.tags.filter(t => t !== tag))} className="text-muted-foreground hover:text-red-500 leading-none">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Add custom tag */}
+              <div className="flex gap-2">
+                <Input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const t = tagInput.trim();
+                      if (t && !form.tags.includes(t)) field('tags', [...form.tags, t]);
+                      setTagInput('');
+                    }
+                  }}
+                  placeholder="הוסף תגית..."
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={() => {
+                    const t = tagInput.trim();
+                    if (t && !form.tags.includes(t)) field('tags', [...form.tags, t]);
+                    setTagInput('');
+                  }}
+                >
+                  הוסף
+                </Button>
+              </div>
             </div>
 
             {isEdit && form.readTime && (

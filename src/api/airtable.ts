@@ -64,10 +64,40 @@ export async function airtableUpdate(table: string, recordId: string, fields: Re
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    console.error('Airtable error:', res.status, body);
     throw new Error(body?.error?.message ?? `Airtable error: ${res.status}`);
   }
 
   return res.json();
+}
+
+/**
+ * Fetches the choices for a single-select or multi-select field via the Airtable Meta API.
+ * Returns an array of choice name strings in the order defined in Airtable.
+ */
+export async function airtableGetFieldChoices(
+  tableName: string,
+  fieldName: string
+): Promise<string[]> {
+  const res = await fetch(
+    `https://api.airtable.com/v0/meta/bases/${BASE_ID}/tables`,
+    { headers }
+  );
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    console.error('Airtable meta error:', res.status, body);
+    throw new Error(`Airtable meta error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  const table = data.tables?.find((t: any) => t.name === tableName);
+  if (!table) return [];
+
+  const field = table.fields?.find((f: any) => f.name === fieldName);
+  if (!field?.options?.choices) return [];
+
+  return field.options.choices.map((c: any) => c.name as string);
 }
 
 export async function airtableDelete(table: string, recordId: string) {

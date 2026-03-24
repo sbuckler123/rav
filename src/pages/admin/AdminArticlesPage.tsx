@@ -20,6 +20,7 @@ interface AdminArticle {
   categories: string[];
   abstract: string;
   linkId: string;
+  status: string;
 }
 
 function extractField(val: any): string {
@@ -39,9 +40,10 @@ async function fetchArticles(): Promise<AdminArticle[]> {
       journal: extractField(f['כתב עת']),
       yeshiva: extractField(f['מוסד']),
       yearNum: f['שנה לועזית'] ?? 0,
-      categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'] : [],
+      categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'] : (f['קטגוריות'] ? [f['קטגוריות']] : []),
       abstract: extractField(f['תקציר']),
       linkId: extractField(f['מזהה קישור']),
+      status: extractField(f['סטטוס']) || 'לא פעיל',
     };
   });
 }
@@ -141,6 +143,11 @@ export default function AdminArticlesPage() {
                     ))}
                   </div>
                 </div>
+                <Badge className={a.status === 'פעיל'
+                  ? 'bg-green-100 text-green-800 border-green-200 text-xs flex-shrink-0'
+                  : 'bg-muted text-muted-foreground border-border text-xs flex-shrink-0'}>
+                  {a.status}
+                </Badge>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" asChild>
                     <Link to={`/admin/articles/${a.id}/edit`}>
