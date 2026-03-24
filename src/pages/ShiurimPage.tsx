@@ -2,45 +2,32 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, MapPin, Clock, Search, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Clock, Search, X, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
 
 const dateFilters = [
-  { label: 'השבוע', value: 'week' },
-  { label: 'החודש', value: 'month' },
-  { label: 'הכל', value: 'all' },
+  { label: 'הכל',      value: 'all' },
+  { label: 'השבוע',   value: 'week' },
+  { label: 'החודש',   value: 'month' },
 ];
 
-const categoryColors: Record<string, string> = {
-  'שיעור': 'bg-secondary/10 text-secondary border-secondary/20',
-  'כנס': 'bg-primary/10 text-primary border-primary/20',
-  'הרצאה': 'bg-secondary/10 text-secondary border-secondary/20',
-  'אירוע': 'bg-primary/10 text-primary border-primary/20',
-};
-
-const categoryBorder: Record<string, string> = {
-  'שיעור': 'border-r-secondary',
-  'כנס': 'border-r-primary',
-  'הרצאה': 'border-r-secondary',
-  'אירוע': 'border-r-primary',
-};
+const monthNames = ['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
 
 const parseDate = (dateStr: string): Date => {
   const [day, month, year] = dateStr.split('.').map(Number);
   return new Date(year, month - 1, day);
 };
 
-const monthNames = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
-
 export default function ShiurimPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery]           = useState('');
   const [selectedCategory, setSelectedCategory] = useState('הכל');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
-  const [events, setEvents] = useState<ShiurEvent[]>([]);
+  const [events, setEvents]   = useState<ShiurEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     getShiurim()
@@ -49,230 +36,314 @@ export default function ShiurimPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const allCategories = useMemo(() => ['הכל', ...new Set(events.map((e) => e.category).filter(Boolean))], [events]);
+  const allCategories = useMemo(
+    () => ['הכל', ...new Set(events.map(e => e.category).filter(Boolean))],
+    [events]
+  );
 
   const filteredEvents = useMemo(() => {
-    const now = new Date();
-    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const now          = new Date();
+    const weekFromNow  = new Date(now.getTime() + 7  * 24 * 60 * 60 * 1000);
     const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    return events.filter((event) => {
-      const q = searchQuery.trim().toLowerCase();
-      const searchMatch = !q || event.title.toLowerCase().includes(q) || event.description.toLowerCase().includes(q) || event.location.toLowerCase().includes(q);
-      const categoryMatch = selectedCategory === 'הכל' || event.category === selectedCategory;
+    return events.filter(event => {
+      const q           = searchQuery.trim().toLowerCase();
+      const searchMatch = !q || event.title.toLowerCase().includes(q)
+        || event.description.toLowerCase().includes(q)
+        || event.location.toLowerCase().includes(q);
+      const catMatch  = selectedCategory === 'הכל' || event.category === selectedCategory;
       const eventDate = parseDate(event.date);
-      let dateMatch = true;
-      if (selectedDateFilter === 'week') dateMatch = eventDate >= now && eventDate <= weekFromNow;
-      else if (selectedDateFilter === 'month') dateMatch = eventDate >= now && eventDate <= monthFromNow;
-      return searchMatch && categoryMatch && dateMatch;
+      let dateMatch   = true;
+      if (selectedDateFilter === 'week')  dateMatch = eventDate >= now && eventDate <= weekFromNow;
+      if (selectedDateFilter === 'month') dateMatch = eventDate >= now && eventDate <= monthFromNow;
+      return searchMatch && catMatch && dateMatch;
     });
   }, [events, searchQuery, selectedCategory, selectedDateFilter]);
 
   const hasActiveFilters = searchQuery !== '' || selectedCategory !== 'הכל' || selectedDateFilter !== 'all';
-  const clearAllFilters = () => { setSearchQuery(''); setSelectedCategory('הכל'); setSelectedDateFilter('all'); };
-
-  if (loading) return (
-    <div className="min-h-screen bg-background">
-      <PageHeader title="לוח שיעורים" subtitle="כל השיעורים וההרצאות הקרובים" />
-      <div className="container mx-auto px-4 max-w-7xl py-16 text-center text-muted-foreground">טוען שיעורים...</div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen bg-background">
-      <PageHeader title="לוח שיעורים" subtitle="כל השיעורים וההרצאות הקרובים" />
-      <div className="container mx-auto px-4 max-w-7xl py-16 text-center text-destructive">{error}</div>
-    </div>
-  );
+  const clearAll = () => { setSearchQuery(''); setSelectedCategory('הכל'); setSelectedDateFilter('all'); };
 
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="לוח שיעורים" subtitle="כל השיעורים וההרצאות הקרובים" />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-8">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 
-          {/* Events List */}
-          <section className="flex-1 order-2 lg:order-1 min-w-0" aria-label="רשימת שיעורים">
+        {/* ── Mobile filters (above list) ── */}
+        <div className="lg:hidden mb-6 space-y-3">
+          {/* Mobile search */}
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="חיפוש שם, מיקום..."
+              className="pr-9 bg-white border-border"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          {/* Mobile filter pills */}
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {dateFilters.map(f => (
+              <button
+                key={f.value}
+                onClick={() => setSelectedDateFilter(f.value)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                  selectedDateFilter === f.value
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-muted-foreground border-border hover:border-primary'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+            {allCategories.filter(c => c !== 'הכל').map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? 'הכל' : cat)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                  selectedCategory === cat
+                    ? 'bg-secondary text-primary border-secondary'
+                    : 'bg-white text-muted-foreground border-border hover:border-secondary'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearAll}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+              נקה סינון
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+          {/* ── Main content ── */}
+          <main className="lg:col-span-3" aria-label="רשימת שיעורים">
 
             {/* Section header */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 pb-4 border-b">
-              <h2 className="font-serif font-bold text-base sm:text-lg text-primary">שיעורים קרובים</h2>
-              <span className="bg-secondary/15 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
-                {filteredEvents.length}
-              </span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <h2 className="font-serif font-bold text-xl text-primary">שיעורים קרובים</h2>
+                <span className="bg-secondary/15 text-secondary text-xs font-semibold px-2.5 py-1 rounded-full">
+                  {loading ? '...' : filteredEvents.length}
+                </span>
+              </div>
               {hasActiveFilters && (
                 <button
-                  onClick={clearAllFilters}
-                  className="mr-auto text-xs text-muted-foreground hover:text-destructive flex items-center gap-1 transition-colors min-h-[36px] sm:min-h-0"
+                  onClick={clearAll}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3.5 w-3.5" />
                   נקה סינון
                 </button>
               )}
             </div>
 
-            {/* Empty state */}
-            {filteredEvents.length === 0 ? (
-              <Card className="text-center py-12 sm:py-16 bg-[#FAF8F2]">
+            {/* Loading skeletons */}
+            {loading && (
+              <div className="space-y-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-32 bg-muted animate-pulse rounded-xl" />
+                ))}
+              </div>
+            )}
+
+            {/* Error */}
+            {error && (
+              <Card className="text-center py-12 bg-[#FAF8F2]">
                 <CardContent>
-                  <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/40 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4 text-sm sm:text-base">לא נמצאו שיעורים התואמים לחיפוש</p>
-                  <Button variant="outline" onClick={clearAllFilters} className="min-h-[44px]">נקה פילטרים</Button>
+                  <p className="text-destructive text-sm">{error}</p>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="space-y-3 sm:space-y-4">
-                {filteredEvents.map((event) => {
+            )}
+
+            {/* Empty state */}
+            {!loading && !error && filteredEvents.length === 0 && (
+              <Card className="text-center py-16 bg-[#FAF8F2]">
+                <CardContent>
+                  <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">לא נמצאו שיעורים התואמים לחיפוש</p>
+                  <Button variant="outline" onClick={clearAll} className="min-h-[44px]">
+                    נקה פילטרים
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Shiurim list */}
+            {!loading && !error && filteredEvents.length > 0 && (
+              <div className="space-y-4">
+                {filteredEvents.map(event => {
                   const [day, month] = event.date.split('.');
                   const monthLabel = monthNames[parseInt(month) - 1];
-                  const borderClass = categoryBorder[event.category] ?? 'border-r-primary';
-                  const badgeClass = categoryColors[event.category] ?? 'bg-primary/10 text-primary border-primary/20';
-
                   return (
                     <Link key={event.id} to={`/shiurim/${event.linkId}`}>
-                    <Card
-                      className={`border-r-4 ${borderClass} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group`}
-                    >
-                      <CardContent className="p-0">
-                        <div className="flex">
-                          {/* Date column */}
-                          <div className="flex-shrink-0 w-16 sm:w-24 flex flex-col items-center justify-center py-4 sm:py-5 px-1 sm:px-2 bg-muted/30">
-                            <span className="text-2xl sm:text-4xl font-bold text-primary leading-none">{day}</span>
-                            <span className="text-[10px] sm:text-xs text-muted-foreground mt-1 font-medium">{monthLabel}</span>
-                          </div>
+                      <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border border-border">
+                        <CardContent className="p-0">
+                          <div className="flex">
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0 p-3 sm:p-5">
-                            <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                              <h2 className="font-bold text-sm sm:text-base lg:text-lg leading-snug group-hover:text-secondary transition-colors">
-                                {event.title}
-                              </h2>
-                              <span className={`text-[10px] sm:text-xs border px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${badgeClass}`}>
-                                {event.category}
-                              </span>
+                            {/* Date block */}
+                            <div className="flex-shrink-0 w-20 sm:w-24 flex flex-col items-center justify-center bg-primary text-white py-5 px-2 gap-0.5">
+                              <span className="text-3xl sm:text-4xl font-bold leading-none">{day}</span>
+                              <span className="text-xs font-medium opacity-80 tracking-wide">{monthLabel}</span>
                             </div>
 
-                            <p className="text-muted-foreground text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 leading-relaxed">
-                              {event.description}
-                            </p>
-
-                            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-x-4 sm:gap-y-1.5 text-xs sm:text-sm text-muted-foreground mb-3">
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-secondary flex-shrink-0" />
-                                <span>{event.time}</span>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 p-4 sm:p-5">
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <h3 className="font-serif font-bold text-base sm:text-lg text-primary leading-snug group-hover:text-secondary transition-colors">
+                                  {event.title}
+                                </h3>
+                                {event.category && (
+                                  <Badge variant="secondary" className="flex-shrink-0 text-xs hidden sm:inline-flex">
+                                    {event.category}
+                                  </Badge>
+                                )}
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-secondary flex-shrink-0" />
-                                <span className="truncate">{event.location}</span>
+
+                              {event.description && (
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                                  {event.description}
+                                </p>
+                              )}
+
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                {event.time && (
+                                  <span className="flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                                    {event.time}
+                                  </span>
+                                )}
+                                {event.location && (
+                                  <span className="flex items-center gap-1.5">
+                                    <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                                    <span className="truncate">{event.location}</span>
+                                  </span>
+                                )}
                               </div>
                             </div>
 
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-8 min-h-[36px] sm:min-h-0 border-secondary/40 text-secondary hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                            >
-                              הוסף ליומן
-                            </Button>
+                            {/* Arrow */}
+                            <div className="flex items-center px-3 sm:px-4 text-muted-foreground group-hover:text-secondary transition-colors flex-shrink-0">
+                              <ChevronLeft className="h-4 w-4" />
+                            </div>
+
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
                     </Link>
                   );
                 })}
               </div>
             )}
-          </section>
+          </main>
 
-          {/* Sidebar */}
-          <aside className="w-full lg:w-72 flex-shrink-0 order-1 lg:order-2" aria-label="סינון שיעורים">
-            <div className="lg:sticky lg:top-24 space-y-3 sm:space-y-4">
+          {/* ── Sidebar ── */}
+          <aside className="hidden lg:block space-y-6" aria-label="סינון שיעורים">
+            <div className="sticky top-24 space-y-4">
 
               {/* Search */}
-              <Card className="bg-white border shadow-sm">
-                <CardContent className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-sm text-primary mb-3 flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    חיפוש שיעור
+              <Card className="bg-[#FAF8F2]">
+                <CardContent className="p-5">
+                  <h3 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
+                    <Search className="h-4 w-4 text-secondary" />
+                    חיפוש
                   </h3>
                   <div className="relative">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
                       type="text"
-                      placeholder="חפש לפי שם, מיקום..."
-                      className="w-full pr-9 bg-muted/30 border-0 focus-visible:ring-1 min-h-[44px] sm:min-h-0"
+                      placeholder="שם, מיקום..."
+                      className="pr-9 bg-white border-border"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      aria-label="חיפוש שיעורים"
+                      onChange={e => setSearchQuery(e.target.value)}
                     />
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery('')}
                         className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1"
-                        aria-label="נקה חיפוש"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Category filter */}
-              <Card className="bg-white border shadow-sm">
-                <CardContent className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-sm text-primary mb-3">סוג אירוע</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {allCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-3 py-1.5 min-h-[36px] sm:min-h-0 rounded-full text-sm font-medium border transition-all ${
-                          selectedCategory === cat
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-muted/30 text-muted-foreground border-transparent hover:border-primary/30 hover:text-primary'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Date filter */}
-              <Card className="bg-white border shadow-sm">
-                <CardContent className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-sm text-primary mb-3 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
+              <Card className="bg-[#FAF8F2]">
+                <CardContent className="p-5">
+                  <h3 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-secondary" />
                     טווח תאריכים
                   </h3>
-                  <div className="flex rounded-lg overflow-hidden border">
-                    {dateFilters.map((filter, i) => (
+                  <div className="flex rounded-lg overflow-hidden border border-border">
+                    {dateFilters.map((f, i) => (
                       <button
-                        key={filter.value}
-                        onClick={() => setSelectedDateFilter(filter.value)}
-                        className={`flex-1 py-2 min-h-[44px] sm:min-h-[36px] text-xs sm:text-sm font-medium transition-colors ${
-                          i < dateFilters.length - 1 ? 'border-l' : ''
+                        key={f.value}
+                        onClick={() => setSelectedDateFilter(f.value)}
+                        className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                          i < dateFilters.length - 1 ? 'border-l border-border' : ''
                         } ${
-                          selectedDateFilter === filter.value
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-transparent text-muted-foreground hover:bg-muted/50'
+                          selectedDateFilter === f.value
+                            ? 'bg-primary text-white'
+                            : 'bg-white text-muted-foreground hover:bg-muted/50'
                         }`}
                       >
-                        {filter.label}
+                        {f.label}
                       </button>
                     ))}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Clear all */}
+              {/* Category filter */}
+              {allCategories.length > 1 && (
+                <Card className="bg-[#FAF8F2]">
+                  <CardContent className="p-5">
+                    <h3 className="font-bold text-sm text-primary mb-3">קטגוריה</h3>
+                    <ul className="space-y-1" role="list">
+                      {allCategories.map(cat => (
+                        <li key={cat}>
+                          <button
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`w-full text-right text-sm py-1.5 px-2 rounded-md transition-colors flex items-center justify-between ${
+                              selectedCategory === cat
+                                ? 'text-secondary font-semibold bg-secondary/10'
+                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
+                            }`}
+                          >
+                            {cat}
+                            {selectedCategory === cat && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-secondary flex-shrink-0" />
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Clear */}
               {hasActiveFilters && (
                 <button
-                  onClick={clearAllFilters}
-                  className="w-full text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-1.5 py-2 min-h-[44px] sm:min-h-0 transition-colors"
+                  onClick={clearAll}
+                  className="w-full text-sm text-muted-foreground hover:text-destructive flex items-center justify-center gap-1.5 py-2 transition-colors"
                 >
                   <X className="h-3.5 w-3.5" />
                   נקה את כל הפילטרים
@@ -280,7 +351,9 @@ export default function ShiurimPage() {
               )}
             </div>
           </aside>
+
         </div>
+
       </div>
     </div>
   );

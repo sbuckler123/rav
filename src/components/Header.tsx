@@ -44,6 +44,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 to={link.href}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 className={`text-sm transition-colors relative pb-1 whitespace-nowrap ${
                   isActive(link.href)
                     ? 'text-secondary font-semibold after:absolute after:bottom-0 after:right-0 after:left-0 after:h-0.5 after:bg-secondary after:rounded-full'
@@ -82,7 +83,7 @@ export default function Header() {
                     ? 'text-secondary font-semibold bg-white/10'
                     : 'hover:text-secondary hover:bg-white/5'
                 }`}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => { setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 aria-current={isActive(link.href) ? 'page' : undefined}
               >
                 {isActive(link.href) && (
