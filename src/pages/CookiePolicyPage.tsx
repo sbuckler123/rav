@@ -6,8 +6,8 @@ export default function CookiePolicyPage() {
     <div className="min-h-screen bg-background">
       <PageHeader title="מדיניות עוגיות" subtitle="מידע על השימוש בקבצי Cookie באתר" />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-12">
-        <article className="space-y-10" lang="he" dir="rtl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-8 sm:py-12">
+        <article className="space-y-8 sm:space-y-10" lang="he" dir="rtl">
 
           {/* ── מבוא ── */}
           <section>
@@ -276,7 +276,7 @@ export default function CookiePolicyPage() {
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
                 <a
                   href="mailto:Kh@rab.gov.il"
-                  className="hover:text-secondary transition-colors underline underline-offset-2"
+                  className="hover:text-secondary transition-colors underline underline-offset-2 break-all"
                 >
                   Kh@rab.gov.il
                 </a>
@@ -302,7 +302,7 @@ export default function CookiePolicyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-primary mb-3">{title}</h2>
+      <h2 className="font-serif text-lg sm:text-xl font-bold text-primary mb-3">{title}</h2>
       <div className="text-foreground leading-relaxed space-y-2">{children}</div>
     </section>
   );

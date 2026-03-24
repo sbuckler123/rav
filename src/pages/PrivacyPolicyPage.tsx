@@ -6,8 +6,8 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-background">
       <PageHeader title="מדיניות פרטיות" subtitle="כיצד אנו מטפלים במידע שלך" />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-12">
-        <article className="space-y-10" lang="he" dir="rtl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-8 sm:py-12">
+        <article className="space-y-8 sm:space-y-10" lang="he" dir="rtl">
 
           {/* ── מבוא ── */}
           <section>
@@ -251,7 +251,7 @@ export default function PrivacyPolicyPage() {
               <p className="text-sm text-foreground">רחוב אהליאב 5, ירושלים — בנין הרבנות הראשית</p>
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
-                <a href="mailto:Kh@rab.gov.il" className="hover:text-secondary transition-colors underline underline-offset-2">
+                <a href="mailto:Kh@rab.gov.il" className="hover:text-secondary transition-colors underline underline-offset-2 break-all">
                   Kh@rab.gov.il
                 </a>
               </div>
@@ -296,7 +296,7 @@ export default function PrivacyPolicyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-primary mb-3">{title}</h2>
+      <h2 className="font-serif text-lg sm:text-xl font-bold text-primary mb-3">{title}</h2>
       <div className="text-foreground leading-relaxed space-y-2">{children}</div>
     </section>
   );
@@ -306,7 +306,7 @@ function BulletList({ items }: { items: string[] }) {
   return (
     <ul className="space-y-2">
       {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-foreground">
+        <li key={i} className="flex items-start gap-2 text-sm sm:text-base text-foreground">
           <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-secondary" aria-hidden="true" />
           <span>{item}</span>
         </li>
