@@ -21,6 +21,7 @@ import EventDetailPage from '@/pages/EventDetailPage';
 import ArticleDetailPage from '@/pages/ArticleDetailPage';
 import { Toaster } from '@/components/ui/sonner';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
+import CookieBanner from '@/components/CookieBanner';
 
 // Admin
 import { AuthProvider } from '@/auth/AuthContext';
@@ -40,6 +41,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AccessibilityStatementPage from '@/pages/AccessibilityStatementPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import CookiePolicyPage from '@/pages/CookiePolicyPage';
+import TermsPage from '@/pages/TermsPage';
 
 export default function App() {
   return (
@@ -96,6 +98,7 @@ export default function App() {
                     <Route path="/accessibility" element={<AccessibilityStatementPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/cookies" element={<CookiePolicyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
                   </Routes>
                 </main>
                 <Footer />
@@ -104,6 +107,7 @@ export default function App() {
           />
 
         </Routes>
+        <CookieBanner />
         <Toaster />
       </Router>
     </AuthProvider>

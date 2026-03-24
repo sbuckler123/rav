@@ -67,6 +67,10 @@ export default function Footer() {
         <div className="border-t border-white/20 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-1.5 text-sm opacity-75 flex-wrap text-center">
           <p>© {new Date().getFullYear()} כל הזכויות שמורות | הרב הראשי לישראל</p>
           <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <Link to="/terms" className="hover:text-secondary transition-colors underline underline-offset-2">
+            תנאי שימוש
+          </Link>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
           <Link to="/privacy" className="hover:text-secondary transition-colors underline underline-offset-2">
             מדיניות פרטיות
           </Link>
