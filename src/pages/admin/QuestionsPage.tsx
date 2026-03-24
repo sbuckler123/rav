@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft } from 'lucide-react';
-import { getAllQuestions, type AdminQuestion } from '@/api/adminQuestionsApi';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2, Tag } from 'lucide-react';
+import { getAllQuestions, createQuestion, submitReply, type AdminQuestion } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const STATUS_TABS = [
@@ -36,14 +40,30 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
   );
 }
 
+const EMPTY_FORM = {
+  content: '',
+  askerName: '',
+  category: '',
+  status: 'ממתין',
+  consentToPublish: false,
+  approvedForPublish: false,
+  answerContent: '',
+};
+
 export default function QuestionsPage() {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
-  useEffect(() => {
+  const [showDialog, setShowDialog] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  function loadData() {
+    setLoading(true);
     Promise.all([getAllQuestions(), getCategories()])
       .then(([{ questions }, { categories }]) => {
         setQuestions(questions);
@@ -51,7 +71,9 @@ export default function QuestionsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadData(); }, []);
 
   const getCategoryName = (id?: string) =>
     id ? (categories.find(c => c.id === id)?.name ?? '') : '';
@@ -68,14 +90,55 @@ export default function QuestionsPage() {
   const totalAnswered = questions.filter(q => q.status === 'נענה').length;
   const totalRejected = questions.filter(q => q.status === 'נדחה').length;
 
+  async function handleCreate() {
+    if (!form.content.trim()) { toast.error('תוכן השאלה הוא שדה חובה'); return; }
+    setSaving(true);
+    try {
+      const { id } = await createQuestion({
+        content: form.content.trim(),
+        askerName: form.askerName,
+        category: form.category || undefined,
+        status: form.answerContent.trim() ? 'נענה' : form.status,
+        consentToPublish: form.consentToPublish,
+        approvedForPublish: form.approvedForPublish,
+      });
+      if (form.answerContent.trim()) {
+        await submitReply({ questionId: id, content: form.answerContent.trim() });
+      }
+      toast.success('השאלה נוצרה בהצלחה');
+      setShowDialog(false);
+      setForm(EMPTY_FORM);
+      navigate(`/admin/questions/${id}`);
+    } catch {
+      toast.error('שגיאה ביצירת השאלה');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6">
+        <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
           <MessageCircleQuestion className="h-5 w-5 text-primary" />
         </div>
-        <h1 className="text-xl font-bold text-primary">שאלות ותשובות</h1>
+        <h1 className="text-xl font-bold text-primary flex-1 min-w-0 truncate">שאלות ותשובות</h1>
+        <Link
+          to="/admin/categories"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 h-11 rounded-md border border-input bg-white text-sm font-medium text-foreground hover:bg-muted transition-colors flex-shrink-0"
+        >
+          <Tag className="h-4 w-4 flex-shrink-0" />
+          <span className="hidden sm:inline">קטגוריות</span>
+        </Link>
+        <Button
+          onClick={() => setShowDialog(true)}
+          className="bg-secondary text-primary hover:bg-secondary/90 inline-flex items-center gap-2 h-11 flex-shrink-0"
+        >
+          <Plus className="h-4 w-4 flex-shrink-0" />
+          <span className="hidden xs:inline sm:inline">שאלה חדשה</span>
+          <span className="sm:hidden">חדשה</span>
+        </Button>
       </div>
 
       {/* Stats */}
@@ -88,7 +151,6 @@ export default function QuestionsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-border p-4 mb-4 flex flex-col sm:flex-row gap-3">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -98,8 +160,6 @@ export default function QuestionsPage() {
             className="pr-9 border border-input bg-white"
           />
         </div>
-
-        {/* Status tabs */}
         <div className="flex gap-1 bg-muted rounded-lg p-1 flex-shrink-0 overflow-x-auto">
           {STATUS_TABS.map(tab => (
             <button
@@ -138,14 +198,11 @@ export default function QuestionsPage() {
                 to={`/admin/questions/${q.id}`}
                 className="flex items-center gap-4 px-4 sm:px-6 py-4 hover:bg-muted/40 transition-colors group"
               >
-                {/* Status dot */}
                 <div className={cn(
                   'w-2 h-2 rounded-full flex-shrink-0',
                   q.status === 'נענה' ? 'bg-green-500' :
                   q.status === 'נדחה' ? 'bg-red-500' : 'bg-amber-400'
                 )} />
-
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-primary truncate">
                     {q.questionContent}
@@ -162,8 +219,6 @@ export default function QuestionsPage() {
                     )}
                   </p>
                 </div>
-
-                {/* Right side */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {statusBadge(q.status)}
                   {q.answers.length > 0 && (
@@ -178,6 +233,125 @@ export default function QuestionsPage() {
           </div>
         )}
       </div>
+
+      {/* Create dialog */}
+      {showDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowDialog(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6" dir="rtl">
+            <h2 className="text-lg font-bold text-primary mb-4 sm:mb-5">שאלה חדשה</h2>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label>תוכן השאלה <span className="text-red-500">*</span></Label>
+                <Textarea
+                  value={form.content}
+                  onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+                  placeholder="כתוב את השאלה כאן..."
+                  rows={4}
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>שם השואל</Label>
+                <Input
+                  value={form.askerName}
+                  onChange={e => setForm(f => ({ ...f, askerName: e.target.value }))}
+                  placeholder="שם השואל (אופציונלי)"
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>קטגוריה</Label>
+                <select
+                  value={form.category}
+                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                >
+                  <option value="">ללא קטגוריה</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>סטטוס</Label>
+                <div className="flex gap-2">
+                  {['ממתין', 'נענה', 'נדחה'].map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, status: s }))}
+                      className={cn(
+                        'flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
+                        form.status === s
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-muted-foreground border-border hover:border-primary'
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.consentToPublish}
+                    onChange={e => setForm(f => ({ ...f, consentToPublish: e.target.checked }))}
+                    className="rounded"
+                  />
+                  הסכמה לפרסום
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.approvedForPublish}
+                    onChange={e => setForm(f => ({ ...f, approvedForPublish: e.target.checked }))}
+                    className="rounded"
+                  />
+                  מאושר לפרסום
+                </label>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>תשובה ראשונה (אופציונלי)</Label>
+                <Textarea
+                  value={form.answerContent}
+                  onChange={e => setForm(f => ({ ...f, answerContent: e.target.value }))}
+                  placeholder="כתוב תשובה ראשונה..."
+                  rows={4}
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={handleCreate}
+                disabled={saving}
+                className="flex-1 bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px]"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {saving ? 'יוצר...' : 'צור שאלה'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => { setShowDialog(false); setForm(EMPTY_FORM); }}
+                disabled={saving}
+                className="min-h-[44px]"
+              >
+                ביטול
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

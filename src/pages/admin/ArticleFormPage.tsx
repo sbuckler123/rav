@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { ArrowRight, Loader2, Save, Eye, EyeOff } from 'lucide-react';
 import { airtableFetch, airtableCreate, airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
+import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +44,7 @@ function extractField(val: any): string {
 export default function ArticleFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isEdit = !!id;
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -50,6 +52,8 @@ export default function ArticleFormPage() {
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [linkId, setLinkId] = useState('');
+  const [createdByName, setCreatedByName] = useState('');
+  const [updatedByName, setUpdatedByName] = useState('');
   const [hebrewYearOptions, setHebrewYearOptions] = useState<string[]>([]);
   const [gregYearOptions, setGregYearOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
@@ -63,35 +67,49 @@ export default function ArticleFormPage() {
       airtableGetFieldChoices('מאמרים', 'קטגוריות'),
       airtableGetFieldChoices('מאמרים', 'תגיות'),
     ];
-    if (isEdit) tasks.push(airtableFetch('מאמרים'));
+    if (isEdit) {
+      tasks.push(airtableFetch('מאמרים'));
+      tasks.push(airtableFetch('משתמשים'));
+    }
 
     Promise.all(tasks)
-      .then(([hebrewChoices, gregChoices, catChoices, tagChoices, articlesData]) => {
+      .then(([hebrewChoices, gregChoices, catChoices, tagChoices, articlesData, usersData]) => {
         setHebrewYearOptions(hebrewChoices);
         setGregYearOptions(gregChoices);
         setCategoryOptions(catChoices);
         setTagOptions(tagChoices);
         if (!isEdit || !articlesData) return;
-          const record = articlesData.records.find((r: any) => r.id === id);
-          if (!record) { toast.error('המאמר לא נמצא'); return; }
-          const f = record.fields;
-          setLinkId(extractField(f['מזהה קישור']));
-          setForm({
-            title: extractField(f['כותרת']),
-            journal: extractField(f['כתב עת']),
-            yeshiva: extractField(f['מוסד']),
-            yearHebrew: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']),
-            yearNum: String(f['שנה לועזית'] ?? ''),
-            categories: Array.isArray(f['קטגוריות']) ? (f['קטגוריות'][0] ?? '') : extractField(f['קטגוריות']),
-            tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
-            status: extractField(f['סטטוס']) || 'לא פעיל',
-            readTime: extractField(f['זמן קריאה']),
-            abstract: extractField(f['תקציר']),
-            fullContent: extractField(f['תוכן מלא']),
-            pdfUrl: extractField(f['קישור PDF']),
-            keyPoints: extractField(f['נקודות מפתח']),
-            sources: extractField(f['מקורות']),
-          });
+
+        const record = articlesData.records.find((r: any) => r.id === id);
+        if (!record) { toast.error('המאמר לא נמצא'); return; }
+        const f = record.fields;
+
+        // Resolve linked user names
+        const userRecords: any[] = usersData?.records ?? [];
+        const getUserName = (ids: any) => {
+          if (!Array.isArray(ids) || !ids.length) return '';
+          return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
+        };
+        setCreatedByName(getUserName(f['נוצר על ידי']));
+        setUpdatedByName(getUserName(f['עודכן על ידי']));
+
+        setLinkId(extractField(f['מזהה קישור']));
+        setForm({
+          title: extractField(f['כותרת']),
+          journal: extractField(f['כתב עת']),
+          yeshiva: extractField(f['מוסד']),
+          yearHebrew: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']),
+          yearNum: String(f['שנה לועזית'] ?? ''),
+          categories: Array.isArray(f['קטגוריות']) ? (f['קטגוריות'][0] ?? '') : extractField(f['קטגוריות']),
+          tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
+          status: extractField(f['סטטוס']) || 'לא פעיל',
+          readTime: extractField(f['זמן קריאה']),
+          abstract: extractField(f['תקציר']),
+          fullContent: extractField(f['תוכן מלא']),
+          pdfUrl: extractField(f['קישור PDF']),
+          keyPoints: extractField(f['נקודות מפתח']),
+          sources: extractField(f['מקורות']),
+        });
       })
       .catch(() => toast.error('שגיאה בטעינת נתונים'))
       .finally(() => setLoading(false));
@@ -129,10 +147,13 @@ export default function ArticleFormPage() {
           : parseInt(form.yearNum);
       }
 
+      if (user?.id) fields['עודכן על ידי'] = [user.id];
+
       if (isEdit) {
         await airtableUpdate('מאמרים', id!, fields);
         toast.success('המאמר עודכן');
       } else {
+        if (user?.id) fields['נוצר על ידי'] = [user.id];
         await airtableCreate('מאמרים', fields);
         toast.success('המאמר נוסף');
       }
@@ -402,6 +423,24 @@ export default function ArticleFormPage() {
                   {linkId}
                 </div>
                 <p className="text-xs text-muted-foreground">שדה זה נוצר אוטומטית</p>
+              </div>
+            )}
+
+            {isEdit && (createdByName || updatedByName) && (
+              <div className="pt-3 border-t border-border space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">מעקב שינויים</p>
+                {createdByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">נוצר על ידיי</span>
+                    <span className="font-medium text-primary">{createdByName}</span>
+                  </div>
+                )}
+                {updatedByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">עודכן על ידי</span>
+                    <span className="font-medium text-primary">{updatedByName}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

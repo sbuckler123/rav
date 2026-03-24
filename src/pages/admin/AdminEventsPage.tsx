@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Tv2, Plus, Pencil, Trash2, Loader2, Search, MapPin, CalendarDays } from 'lucide-react';
+import { Tv2, Plus, Pencil, Trash2, Loader2, Search, MapPin, CalendarDays, Images, Check, X } from 'lucide-react';
 import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
+import { useAuth } from '@/auth/AuthContext';
+import ImageUpload from '@/components/admin/ImageUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter, DialogClose,
@@ -21,8 +22,17 @@ interface AdminEvent {
   dateLocale: string;
   location: string;
   excerpt: string;
-  participants: string;
   linkId: string;
+  galleryIds: string[];
+  createdByName: string;
+  updatedByName: string;
+}
+
+interface GalleryItem {
+  id: string;
+  url: string;
+  caption: string;
+  order: number;
 }
 
 interface FormState {
@@ -32,13 +42,14 @@ interface FormState {
   dateLocale: string;
   location: string;
   excerpt: string;
-  participants: string;
 }
 
 const EMPTY_FORM: FormState = {
   title: '', eventType: '', dateHebrew: '', dateLocale: '',
-  location: '', excerpt: '', participants: '',
+  location: '', excerpt: '',
 };
+
+const EMPTY_GALLERY_FORM = { url: '', caption: '', order: '' };
 
 function extractField(val: any): string {
   if (!val) return '';
@@ -47,8 +58,12 @@ function extractField(val: any): string {
   return '';
 }
 
-async function fetchEvents(): Promise<AdminEvent[]> {
+async function fetchEvents(userRecords: any[] = []): Promise<AdminEvent[]> {
   const data = await airtableFetch('אירועים', {}, [{ field: 'תאריך לועזי', direction: 'desc' }]);
+  const getUserName = (ids: any) => {
+    if (!Array.isArray(ids) || !ids.length) return '';
+    return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
+  };
   return data.records.map((r: any) => {
     const f = r.fields;
     return {
@@ -59,13 +74,16 @@ async function fetchEvents(): Promise<AdminEvent[]> {
       dateLocale: extractField(f['תאריך לועזי']),
       location: extractField(f['מיקום']),
       excerpt: extractField(f['תקציר קצר']),
-      participants: extractField(f['משתתפים']),
       linkId: extractField(f['מזהה קישור']) || extractField(f['מזהה URL']),
+      galleryIds: Array.isArray(f['גלריה']) ? f['גלריה'] : [],
+      createdByName: getUserName(f['נוצר על ידי']),
+      updatedByName: getUserName(f['עודכן על ידי']),
     };
   });
 }
 
 export default function AdminEventsPage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -78,9 +96,18 @@ export default function AdminEventsPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminEvent | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Gallery state
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [newGallery, setNewGallery] = useState(EMPTY_GALLERY_FORM);
+  const [savingGallery, setSavingGallery] = useState(false);
+  const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
+  const [galleryEditForm, setGalleryEditForm] = useState(EMPTY_GALLERY_FORM);
+
   function load() {
     setLoading(true);
-    fetchEvents()
+    airtableFetch('משתמשים')
+      .then(usersData => fetchEvents(usersData.records ?? []))
       .then(setEvents)
       .catch(() => toast.error('שגיאה בטעינת אירועים'))
       .finally(() => setLoading(false));
@@ -88,9 +115,37 @@ export default function AdminEventsPage() {
 
   useEffect(() => { load(); }, []);
 
+  async function loadGallery(ids: string[]) {
+    if (!ids.length) { setGallery([]); return; }
+    setGalleryLoading(true);
+    try {
+      const formula = ids.length === 1
+        ? `RECORD_ID()='${ids[0]}'`
+        : `OR(${ids.map(id => `RECORD_ID()='${id}'`).join(',')})`;
+      const data = await airtableFetch('גלריה', { filterByFormula: formula });
+      setGallery(
+        data.records
+          .map((r: any) => ({
+            id: r.id,
+            url: r.fields['URL תמונה'] ?? '',
+            caption: r.fields['כיתוב'] ?? '',
+            order: r.fields['סדר'] ?? 0,
+          }))
+          .sort((a: GalleryItem, b: GalleryItem) => a.order - b.order)
+      );
+    } catch {
+      toast.error('שגיאה בטעינת גלריה');
+    } finally {
+      setGalleryLoading(false);
+    }
+  }
+
   function openAdd() {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setGallery([]);
+    setNewGallery(EMPTY_GALLERY_FORM);
+    setEditingGalleryId(null);
     setDialogOpen(true);
   }
 
@@ -103,9 +158,11 @@ export default function AdminEventsPage() {
       dateLocale: e.dateLocale,
       location: e.location,
       excerpt: e.excerpt,
-      participants: e.participants,
     });
+    setNewGallery(EMPTY_GALLERY_FORM);
+    setEditingGalleryId(null);
     setDialogOpen(true);
+    loadGallery(e.galleryIds);
   }
 
   function field(key: keyof FormState, val: string) {
@@ -118,18 +175,20 @@ export default function AdminEventsPage() {
     try {
       const fields: Record<string, unknown> = {
         'כותרת': form.title.trim(),
-        'סוג אירוע': form.eventType.trim(),
-        'תאריך עברי': form.dateHebrew.trim(),
-        'תאריך לועזי': form.dateLocale.trim(),
-        'מיקום': form.location.trim(),
-        'תקציר קצר': form.excerpt.trim(),
-        'משתתפים': form.participants.trim(),
       };
+      if (form.eventType.trim())   fields['סוג אירוע']    = form.eventType.trim();
+      if (form.dateHebrew.trim())  fields['תאריך עברי']   = form.dateHebrew.trim();
+      if (form.dateLocale.trim())  fields['תאריך לועזי']  = form.dateLocale.trim();
+      if (form.location.trim())    fields['מיקום']         = form.location.trim();
+      if (form.excerpt.trim())     fields['תקציר קצר']    = form.excerpt.trim();
+
+      if (user?.id) fields['עודכן על ידי'] = [user.id];
 
       if (editing) {
         await airtableUpdate('אירועים', editing.id, fields);
         toast.success('האירוע עודכן');
       } else {
+        if (user?.id) fields['נוצר על ידי'] = [user.id];
         await airtableCreate('אירועים', fields);
         toast.success('האירוע נוסף');
       }
@@ -139,6 +198,72 @@ export default function AdminEventsPage() {
       toast.error('שגיאה בשמירה');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAddGalleryItem() {
+    if (!newGallery.url.trim() || !editing) return;
+    setSavingGallery(true);
+    try {
+      const fields: Record<string, unknown> = { 'URL תמונה': newGallery.url.trim() };
+      if (newGallery.caption.trim()) fields['כיתוב'] = newGallery.caption.trim();
+      const orderNum = parseInt(newGallery.order);
+      if (!isNaN(orderNum)) fields['סדר'] = orderNum;
+
+      const record = await airtableCreate('גלריה', fields);
+      const newIds = [...editing.galleryIds, record.id];
+      await airtableUpdate('אירועים', editing.id, { 'גלריה': newIds });
+
+      const updated = { ...editing, galleryIds: newIds };
+      setEditing(updated);
+      setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
+      setNewGallery(EMPTY_GALLERY_FORM);
+      loadGallery(newIds);
+      toast.success('התמונה נוספה');
+    } catch {
+      toast.error('שגיאה בהוספת תמונה');
+    } finally {
+      setSavingGallery(false);
+    }
+  }
+
+  async function handleSaveGalleryEdit(itemId: string) {
+    if (!galleryEditForm.url.trim()) return;
+    setSavingGallery(true);
+    try {
+      const fields: Record<string, unknown> = { 'URL תמונה': galleryEditForm.url.trim() };
+      if (galleryEditForm.caption.trim()) fields['כיתוב'] = galleryEditForm.caption.trim();
+      const orderNum = parseInt(galleryEditForm.order);
+      if (!isNaN(orderNum)) fields['סדר'] = orderNum;
+
+      await airtableUpdate('גלריה', itemId, fields);
+      setEditingGalleryId(null);
+      loadGallery(editing?.galleryIds ?? []);
+      toast.success('התמונה עודכנה');
+    } catch {
+      toast.error('שגיאה בעדכון תמונה');
+    } finally {
+      setSavingGallery(false);
+    }
+  }
+
+  async function handleDeleteGalleryItem(itemId: string) {
+    if (!editing) return;
+    setSavingGallery(true);
+    try {
+      await airtableDelete('גלריה', itemId);
+      const newIds = editing.galleryIds.filter(id => id !== itemId);
+      await airtableUpdate('אירועים', editing.id, { 'גלריה': newIds });
+
+      const updated = { ...editing, galleryIds: newIds };
+      setEditing(updated);
+      setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
+      loadGallery(newIds);
+      toast.success('התמונה נמחקה');
+    } catch {
+      toast.error('שגיאה במחיקת תמונה');
+    } finally {
+      setSavingGallery(false);
     }
   }
 
@@ -164,19 +289,21 @@ export default function AdminEventsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Tv2 className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-primary">אירועים</h1>
-            <p className="text-sm text-muted-foreground">{events.length} אירועים</p>
-          </div>
+      <div className="flex items-center gap-2 sm:gap-3 mb-6">
+        <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+          <Tv2 className="h-5 w-5 text-primary" />
         </div>
-        <Button onClick={openAdd} className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px]">
-          <Plus className="h-4 w-4" />
-          אירוע חדש
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-primary">אירועים</h1>
+          <p className="text-sm text-muted-foreground">{events.length} אירועים</p>
+        </div>
+        <Button
+          onClick={openAdd}
+          className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0"
+        >
+          <Plus className="h-4 w-4 flex-shrink-0" />
+          <span className="hidden sm:inline">אירוע חדש</span>
+          <span className="sm:hidden">חדש</span>
         </Button>
       </div>
 
@@ -209,10 +336,16 @@ export default function AdminEventsPage() {
             {filtered.map(e => {
               const style = getEventTypeStyle(e.eventType);
               return (
-                <div key={e.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
-                  {/* Info */}
+                <div key={e.id} className="flex items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-primary truncate">{e.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-primary truncate text-sm">{e.title}</p>
+                      {e.galleryIds.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                          <Images className="h-3 w-3" />{e.galleryIds.length}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground mt-0.5">
                       {e.dateLocale && (
                         <span className="flex items-center gap-1">
@@ -220,14 +353,13 @@ export default function AdminEventsPage() {
                         </span>
                       )}
                       {e.location && (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 hidden sm:flex">
                           <MapPin className="h-3 w-3" />{e.location}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Event type badge */}
                   {e.eventType && (
                     <span
                       className="text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 hidden sm:block"
@@ -237,14 +369,19 @@ export default function AdminEventsPage() {
                     </span>
                   )}
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" onClick={() => openEdit(e)}>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <button
+                      onClick={() => openEdit(e)}
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                    >
                       <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-red-600" onClick={() => setDeleteTarget(e)}>
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(e)}
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               );
@@ -262,7 +399,9 @@ export default function AdminEventsPage() {
             <DialogDescription>{editing ? 'עדכן את פרטי האירוע' : 'הוסף אירוע חדש'}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pl-1">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pl-1">
+
+            {/* ── Event fields ── */}
             <div className="space-y-1.5">
               <Label>כותרת *</Label>
               <Input value={form.title} onChange={e => field('title', e.target.value)}
@@ -306,13 +445,6 @@ export default function AdminEventsPage() {
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none" />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>משתתפים</Label>
-              <Textarea value={form.participants} onChange={e => field('participants', e.target.value)}
-                placeholder="שם משתתף אחד בכל שורה..." rows={3}
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none" />
-              <p className="text-xs text-muted-foreground">שם אחד בכל שורה</p>
-            </div>
 
             {editing && editing.linkId && (
               <div className="space-y-1.5">
@@ -321,6 +453,159 @@ export default function AdminEventsPage() {
                   {editing.linkId}
                 </div>
                 <p className="text-xs text-muted-foreground">שדה זה נוצר אוטומטית ואינו ניתן לעריכה</p>
+              </div>
+            )}
+
+            {editing && (editing.createdByName || editing.updatedByName) && (
+              <div className="pt-3 border-t border-border space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">מעקב שינויים</p>
+                {editing.createdByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">נוצר על ידי</span>
+                    <span className="font-medium text-primary">{editing.createdByName}</span>
+                  </div>
+                )}
+                {editing.updatedByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">עודכן על ידי</span>
+                    <span className="font-medium text-primary">{editing.updatedByName}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Gallery section (edit only) ── */}
+            {editing && (
+              <div className="pt-3 border-t border-border space-y-3">
+                <div className="flex items-center gap-2">
+                  <Images className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-primary">גלריה</p>
+                  {galleryLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                </div>
+
+                {/* Existing images */}
+                {gallery.length > 0 && (
+                  <div className="space-y-2">
+                    {gallery.map(item => (
+                      <div key={item.id} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+                        {editingGalleryId === item.id ? (
+                          /* Edit row */
+                          <div className="p-3 space-y-2">
+                            <ImageUpload
+                              value={galleryEditForm.url}
+                              onUpload={url => setGalleryEditForm(f => ({ ...f, url }))}
+                              onClear={() => setGalleryEditForm(f => ({ ...f, url: '' }))}
+                              disabled={savingGallery}
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                value={galleryEditForm.caption}
+                                onChange={e => setGalleryEditForm(f => ({ ...f, caption: e.target.value }))}
+                                placeholder="כיתוב"
+                                className="border border-input bg-white text-sm focus-visible:ring-1 focus-visible:border-secondary"
+                              />
+                              <Input
+                                value={galleryEditForm.order}
+                                onChange={e => setGalleryEditForm(f => ({ ...f, order: e.target.value }))}
+                                placeholder="סדר"
+                                type="number"
+                                dir="ltr"
+                                className="border border-input bg-white text-sm focus-visible:ring-1 focus-visible:border-secondary"
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => handleSaveGalleryEdit(item.id)}
+                                disabled={savingGallery || !galleryEditForm.url.trim()}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-primary text-xs font-medium hover:bg-secondary/90 disabled:opacity-50 transition-colors"
+                              >
+                                {savingGallery ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                                שמור
+                              </button>
+                              <button
+                                onClick={() => setEditingGalleryId(null)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
+                              >
+                                <X className="h-3 w-3" />
+                                ביטול
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Display row */
+                          <div className="flex items-center gap-3 p-2">
+                            {/* Thumbnail */}
+                            <div className="w-14 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
+                              {item.url
+                                ? <img src={item.url} alt={item.caption} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                : <div className="w-full h-full flex items-center justify-center"><Images className="h-4 w-4 text-muted-foreground" /></div>
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              {item.caption && <p className="text-sm font-medium text-primary truncate">{item.caption}</p>}
+                              <p className="text-xs text-muted-foreground truncate" dir="ltr">{item.url}</p>
+                              {item.order > 0 && <p className="text-xs text-muted-foreground">סדר: {item.order}</p>}
+                            </div>
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <button
+                                onClick={() => { setEditingGalleryId(item.id); setGalleryEditForm({ url: item.url, caption: item.caption, order: item.order > 0 ? String(item.order) : '' }); }}
+                                className="inline-flex items-center justify-center h-8 w-8 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteGalleryItem(item.id)}
+                                disabled={savingGallery}
+                                className="inline-flex items-center justify-center h-8 w-8 rounded text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!galleryLoading && gallery.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">אין תמונות בגלריה</p>
+                )}
+
+                {/* Add new image */}
+                <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">הוסף תמונה</p>
+                  <ImageUpload
+                    value={newGallery.url}
+                    onUpload={url => setNewGallery(f => ({ ...f, url }))}
+                    onClear={() => setNewGallery(f => ({ ...f, url: '' }))}
+                    disabled={savingGallery}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={newGallery.caption}
+                      onChange={e => setNewGallery(f => ({ ...f, caption: e.target.value }))}
+                      placeholder="כיתוב"
+                      className="border border-input bg-white text-sm focus-visible:ring-1 focus-visible:border-secondary"
+                    />
+                    <Input
+                      value={newGallery.order}
+                      onChange={e => setNewGallery(f => ({ ...f, order: e.target.value }))}
+                      placeholder="סדר"
+                      type="number"
+                      dir="ltr"
+                      className="border border-input bg-white text-sm focus-visible:ring-1 focus-visible:border-secondary"
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddGalleryItem}
+                    disabled={savingGallery || !newGallery.url.trim()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-white text-xs font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  >
+                    {savingGallery ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                    הוסף תמונה
+                  </button>
+                </div>
               </div>
             )}
           </div>

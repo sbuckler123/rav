@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { CalendarDays, Plus, Pencil, Trash2, Loader2, Search, Clock, MapPin } from 'lucide-react';
 import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
 import { getCategories } from '@/api/getCategories';
+import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,8 @@ interface Shiur {
   description: string;
   category: string;
   linkId: string;
+  createdByName: string;
+  updatedByName: string;
 }
 
 interface FormState {
@@ -55,8 +58,12 @@ function formatDisplay(raw: string): string {
   return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
 }
 
-async function fetchShiurim(): Promise<Shiur[]> {
+async function fetchShiurim(userRecords: any[] = []): Promise<Shiur[]> {
   const data = await airtableFetch('שיעורים', {}, [{ field: 'תאריך', direction: 'desc' }]);
+  const getUserName = (ids: any) => {
+    if (!Array.isArray(ids) || !ids.length) return '';
+    return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
+  };
   return data.records.map((r: any) => {
     const f = r.fields;
     const dateRaw = extractField(f['תאריך']);
@@ -70,11 +77,14 @@ async function fetchShiurim(): Promise<Shiur[]> {
       description: extractField(f['תיאור']),
       category: extractField(f['קטגוריה']) || extractField(f['סוג']),
       linkId: extractField(f['מזהה קישור']),
+      createdByName: getUserName(f['נוצר על ידי']),
+      updatedByName: getUserName(f['עודכן על ידי']),
     };
   });
 }
 
 export default function AdminShiurimPage() {
+  const { user } = useAuth();
   const [shiurim, setShiurim] = useState<Shiur[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,11 +100,12 @@ export default function AdminShiurimPage() {
 
   function load() {
     setLoading(true);
-    Promise.all([fetchShiurim(), getCategories()])
-      .then(([shiurim, { categories }]) => {
-        setShiurim(shiurim);
+    Promise.all([getCategories(), airtableFetch('משתמשים')])
+      .then(([{ categories }, usersData]) => {
         setCategories(categories);
+        return fetchShiurim(usersData.records ?? []);
       })
+      .then(setShiurim)
       .catch(() => toast.error('שגיאה בטעינת שיעורים'))
       .finally(() => setLoading(false));
   }
@@ -138,10 +149,13 @@ export default function AdminShiurimPage() {
       if (form.date) fields['תאריך'] = form.date;
       if (form.category) fields['קטגוריה'] = form.category;
 
+      if (user?.id) fields['עודכן על ידי'] = [user.id];
+
       if (editing) {
         await airtableUpdate('שיעורים', editing.id, fields);
         toast.success('השיעור עודכן');
       } else {
+        if (user?.id) fields['נוצר על ידי'] = [user.id];
         await airtableCreate('שיעורים', fields);
         toast.success('השיעור נוסף');
       }
@@ -332,6 +346,24 @@ export default function AdminShiurimPage() {
                   {form.linkId}
                 </div>
                 <p className="text-xs text-muted-foreground">שדה זה נוצר אוטומטית ואינו ניתן לעריכה</p>
+              </div>
+            )}
+
+            {editing && (editing.createdByName || editing.updatedByName) && (
+              <div className="pt-3 border-t border-border space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">מעקב שינויים</p>
+                {editing.createdByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">נוצר על ידי</span>
+                    <span className="font-medium text-primary">{editing.createdByName}</span>
+                  </div>
+                )}
+                {editing.updatedByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">עודכן על ידי</span>
+                    <span className="font-medium text-primary">{editing.updatedByName}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

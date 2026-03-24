@@ -87,22 +87,21 @@ export default function AdminArticlesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-primary">מאמרים</h1>
-            <p className="text-sm text-muted-foreground">{articles.length} מאמרים</p>
-          </div>
+      <div className="flex items-center gap-2 sm:gap-3 mb-6">
+        <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+          <BookOpen className="h-5 w-5 text-primary" />
         </div>
-        <Button asChild className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px]">
-          <Link to="/admin/articles/new">
-            <Plus className="h-4 w-4" />
-            מאמר חדש
-          </Link>
-        </Button>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-primary">מאמרים</h1>
+          <p className="text-sm text-muted-foreground">{articles.length} מאמרים</p>
+        </div>
+        <Link
+          to="/admin/articles/new"
+          className="inline-flex items-center gap-2 h-11 px-4 rounded-md bg-secondary text-primary hover:bg-secondary/90 text-sm font-medium transition-colors flex-shrink-0"
+        >
+          <Plus className="h-4 w-4 flex-shrink-0" />
+          מאמר חדש
+        </Link>
       </div>
 
       {/* Search */}
@@ -132,14 +131,14 @@ export default function AdminArticlesPage() {
         ) : (
           <div className="divide-y divide-border">
             {filtered.map(a => (
-              <div key={a.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
+              <div key={a.id} className="flex items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-primary truncate">{a.title}</p>
-                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  <p className="font-medium text-primary truncate text-sm sm:text-base">{a.title}</p>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
                     {a.yearNum > 0 && <span className="text-xs text-muted-foreground">{a.yearNum}</span>}
-                    {a.journal && <span className="text-xs text-muted-foreground">{a.journal}</span>}
+                    {a.journal && <span className="text-xs text-muted-foreground hidden sm:inline">{a.journal}</span>}
                     {a.categories.slice(0, 2).map(c => (
-                      <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>
+                      <Badge key={c} variant="secondary" className="text-xs hidden sm:inline-flex">{c}</Badge>
                     ))}
                   </div>
                 </div>
@@ -148,15 +147,19 @@ export default function AdminArticlesPage() {
                   : 'bg-muted text-muted-foreground border-border text-xs flex-shrink-0'}>
                   {a.status}
                 </Badge>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" asChild>
-                    <Link to={`/admin/articles/${a.id}/edit`}>
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-red-600" onClick={() => setDeleteTarget(a)}>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <Link
+                    to={`/admin/articles/${a.id}/edit`}
+                    className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                  <button
+                    className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                    onClick={() => setDeleteTarget(a)}
+                  >
                     <Trash2 className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}

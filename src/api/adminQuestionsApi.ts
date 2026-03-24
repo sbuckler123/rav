@@ -1,4 +1,4 @@
-import { airtableFetch, airtableUpdate } from './airtable';
+import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from './airtable';
 import { submitReply } from './submitReply';
 
 export interface AdminAnswer {
@@ -71,6 +71,43 @@ export async function rejectQuestion(questionId: string) {
 
 export async function markAnswered(questionId: string) {
   return airtableUpdate('שאלות', questionId, { 'סטטוס': 'נענה' });
+}
+
+export async function createQuestion(input: {
+  content: string;
+  askerName?: string;
+  category?: string;
+  status?: string;
+  consentToPublish?: boolean;
+  approvedForPublish?: boolean;
+}): Promise<{ id: string }> {
+  const fields: Record<string, unknown> = {
+    'תוכן השאלה': input.content,
+    'סטטוס': input.status ?? 'ממתין',
+    'הסכמה לפרסום': input.consentToPublish ?? false,
+    'מאושר לפרסום': input.approvedForPublish ?? false,
+    'תאריך הגשה': new Date().toISOString().split('T')[0],
+  };
+  if (input.askerName?.trim()) fields['שם השואל'] = input.askerName.trim();
+  if (input.category) fields['קטגוריה'] = [input.category];
+  const record = await airtableCreate('שאלות', fields);
+  return { id: record.id };
+}
+
+export async function updateQuestion(questionId: string, fields: Record<string, unknown>) {
+  return airtableUpdate('שאלות', questionId, fields);
+}
+
+export async function deleteQuestion(questionId: string) {
+  return airtableDelete('שאלות', questionId);
+}
+
+export async function updateAnswer(answerId: string, content: string) {
+  return airtableUpdate('תשובות', answerId, { 'תוכן התשובה': content });
+}
+
+export async function deleteAnswer(answerId: string) {
+  return airtableDelete('תשובות', answerId);
 }
 
 export { submitReply };

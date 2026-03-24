@@ -8,7 +8,7 @@ import {
   CalendarDays,
   Tv2,
   BookOpen,
-  Tag,
+  Video,
   Users,
   LogOut,
   Menu,
@@ -22,9 +22,9 @@ const navItems = [
   { label: 'ראשי',             path: '/admin',           icon: LayoutDashboard },
   { label: 'שאלות ותשובות',   path: '/admin/questions', icon: MessageCircleQuestion },
   { label: 'שיעורים',         path: '/admin/shiurim',   icon: CalendarDays },
+  { label: 'שיעורי וידאו',   path: '/admin/videos',    icon: Video },
   { label: 'אירועים',         path: '/admin/events',    icon: Tv2 },
   { label: 'מאמרים',          path: '/admin/articles',  icon: BookOpen },
-  { label: 'קטגוריות',        path: '/admin/categories',icon: Tag },
   { label: 'משתמשים',         path: '/admin/users',     icon: Users },
 ];
 
