@@ -135,7 +135,7 @@ export default function AccessibilityWidget() {
     // Fixed to physical bottom-left regardless of RTL direction
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: '1.5rem', left: '1rem', zIndex: 9999 }}
+      style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 9999 }}
       dir="rtl"
     >
       {/* ── Panel ── */}
@@ -144,8 +144,8 @@ export default function AccessibilityWidget() {
           role="dialog"
           aria-modal="true"
           aria-label="הגדרות נגישות"
-          className="mb-3 w-72 rounded-2xl border border-border bg-white shadow-xl"
-          style={{ maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}
+          className="mb-3 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-white shadow-xl"
+          style={{ maxHeight: 'calc(100svh - 5rem)', overflowY: 'auto' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -243,7 +243,7 @@ export default function AccessibilityWidget() {
         aria-label={isOpen ? 'סגור הגדרות נגישות' : 'פתח הגדרות נגישות'}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        className={`relative flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
           isOpen
             ? 'bg-primary/90 text-white'
             : 'bg-primary text-white hover:bg-primary/90'
