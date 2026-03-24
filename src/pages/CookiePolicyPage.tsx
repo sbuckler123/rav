@@ -120,10 +120,10 @@ export default function CookiePolicyPage() {
                       expires: 'סיום הפגישה',
                     },
                     {
-                      name: '_ga / _gid',
-                      type: 'Cookie ניתוח',
-                      purpose: 'סטטיסטיקת גלישה אנונימית (Google Analytics, אם מופעל)',
-                      expires: '2 שנים / 24 שעות',
+                      name: 'umami.uuid',
+                      type: 'ללא עוגיות',
+                      purpose: 'Umami Analytics — ניתוח תנועה אנונימי ללא עוגיות. זיהוי מבוסס session בלבד, ללא מעקב בין אתרים',
+                      expires: 'לא רלוונטי (ללא עוגיות)',
                     },
                   ].map((row, i) => (
                     <tr
@@ -159,6 +159,13 @@ export default function CookiePolicyPage() {
             <ul className="mt-3 space-y-3">
               {[
                 {
+                  name: 'Umami Analytics',
+                  desc: 'כלי ניתוח תנועה ידידותי לפרטיות. אינו משתמש בעוגיות ואינו שומר מידע אישי מזהה.',
+                  link: 'https://umami.is/privacy',
+                  linkLabel: 'מדיניות Umami',
+                  noCookies: true,
+                },
+                {
                   name: 'Airtable',
                   desc: 'שירות לאחסון טפסי יצירת קשר. עשוי לשמור עוגיות טכניות לתפקוד.',
                   link: 'https://airtable.com/privacy',
@@ -175,6 +182,11 @@ export default function CookiePolicyPage() {
                   <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-secondary" aria-hidden="true" />
                   <span>
                     <span className="font-medium text-primary">{item.name}</span>
+                    {(item as { noCookies?: boolean }).noCookies && (
+                      <span className="mr-1.5 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                        ✓ ללא עוגיות
+                      </span>
+                    )}
                     {' — '}
                     {item.desc}{' '}
                     <a

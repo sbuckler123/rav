@@ -114,15 +114,69 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
-          {/* ── 6. צדדים שלישיים ── */}
-          <Section title="6. שיתוף מידע עם צדדים שלישיים">
+          {/* ── 6. אנליטיקה ── */}
+          <Section title="6. כלי אנליטיקה — Umami Analytics">
+            <p>
+              האתר משתמש ב-{' '}
+              <a
+                href="https://umami.is"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary underline underline-offset-2 hover:text-secondary/80 transition-colors font-medium"
+              >
+                Umami Analytics
+              </a>
+              {' '}לניתוח תנועה ושיפור חוויית המשתמש. Umami הוא כלי ידידותי לפרטיות
+              שאינו עוקב אחר משתמשים בין אתרים ואינו משתמש בעוגיות.
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="font-semibold text-primary text-sm mb-2">מה נאסף</p>
+                <BulletList items={[
+                  'דפים שנצפו',
+                  'משך הביקור',
+                  'מדינה/עיר (משוער)',
+                  'סוג הדפדפן והמכשיר',
+                  'מקור ההפניה',
+                ]} />
+              </div>
+              <div className="rounded-lg border border-green-100 bg-green-50/50 p-4">
+                <p className="font-semibold text-primary text-sm mb-2">מה לא נאסף</p>
+                <BulletList items={[
+                  'מידע אישי מזהה',
+                  'כתובת IP מלאה',
+                  'עוגיות מעקב',
+                  'פרופיל התנהגות אישי',
+                ]} />
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-3">
+              כל הנתונים מצטברים ואנונימיים לחלוטין. למידע נוסף ראו{' '}
+              <a
+                href="https://umami.is/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary underline underline-offset-2 hover:text-secondary/80 transition-colors"
+              >
+                מדיניות הפרטיות של Umami
+              </a>
+              .
+            </p>
+          </Section>
+
+          <Divider />
+
+          {/* ── 8. צדדים שלישיים ── */}
+          <Section title="8. שיתוף מידע עם צדדים שלישיים">
             <p className="mb-3">
               אנו עשויים לשתף מידע עם ספקי שירות חיצוניים הפועלים מטעמנו בלבד:
             </p>
             <BulletList items={[
               'Airtable — לאחסון ועיבוד שאלות שנשלחו דרך הטופס (ספק אמריקאי, עם הסכם עיבוד נתונים)',
               'שירותי אחסון ענן — לצורך אחסון תמונות ותכנים (Cloudinary)',
-              'ספקי ניתוח גלישה — לניתוח אנונימי של תנועת הגולשים',
+              'Umami Analytics — לניתוח אנונימי של תנועת הגולשים (ראו סעיף 6)',
             ]} />
             <p className="mt-3 text-foreground">
               ספקים אלו אינם רשאים לעשות שימוש במידע למטרות משלהם. כל העברת מידע מחוץ
@@ -136,8 +190,8 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
-          {/* ── 7. זכויות המשתמש ── */}
-          <Section title="7. זכויות המשתמש">
+          {/* ── 9. זכויות המשתמש ── */}
+          <Section title="9. זכויות המשתמש">
             <p className="mb-3">
               בהתאם לחוק הגנת הפרטיות הישראלי, ולתקנות ה-GDPR עבור משתמשים מאירופה,
               עומדות לכם הזכויות הבאות:
@@ -150,15 +204,15 @@ export default function PrivacyPolicyPage() {
               'זכות ניידות — לקבל עותק של המידע שלכם בפורמט מובנה',
             ]} />
             <p className="mt-3 text-sm text-muted-foreground">
-              למימוש זכויות אלו, פנו אלינו בכתובת המפורטת בסעיף 10. נטפל בבקשתכם
+              למימוש זכויות אלו, פנו אלינו בכתובת המפורטת בסעיף 11. נטפל בבקשתכם
               תוך 30 יום.
             </p>
           </Section>
 
           <Divider />
 
-          {/* ── 8. אבטחת מידע ── */}
-          <Section title="8. אבטחת מידע">
+          {/* ── 10. אבטחת מידע ── */}
+          <Section title="10. אבטחת מידע">
             <p>
               אנו נוקטים באמצעים טכניים וארגוניים סבירים להגנה על המידע שלכם בהתאם
               לתקנות הגנת הפרטיות (אבטחת מידע), התשע"ז–2017, לרבות:
@@ -176,8 +230,8 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
-          {/* ── 9. שינויים במדיניות ── */}
-          <Section title="9. שינויים במדיניות">
+          {/* ── 11. שינויים במדיניות ── */}
+          <Section title="11. שינויים במדיניות">
             <p>
               אנו עשויים לעדכן מדיניות פרטיות זו מעת לעת. שינויים מהותיים יפורסמו
               באתר לפחות 14 יום לפני כניסתם לתוקף. המשך השימוש באתר לאחר עדכון
@@ -187,8 +241,8 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
-          {/* ── 10. יצירת קשר ── */}
-          <Section title="10. יצירת קשר">
+          {/* ── 12. יצירת קשר ── */}
+          <Section title="12. יצירת קשר">
             <p className="mb-4">
               לכל שאלה, בקשה או תלונה בנושא פרטיות, ניתן לפנות אלינו:
             </p>
