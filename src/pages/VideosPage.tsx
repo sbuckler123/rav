@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ function getThumb(video: ShiurItem): string {
   return "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180" fill="%23E5E7EB"><rect width="320" height="180" fill="%231B2A4A"/><polygon points="130,60 130,120 190,90" fill="%23C9A84C"/></svg>');
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +25,7 @@ export default function VideosPage() {
   const [videos, setVideos] = useState<ShiurItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getVideos()
@@ -34,6 +35,11 @@ export default function VideosPage() {
   }, []);
 
   const clearFilters = () => { setSearchQuery(''); setCategoryFilter('all'); setYearFilter('all'); setSortBy('date-desc'); setPage(1); };
+
+  const goToPage = (n: number) => {
+    setPage(n);
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };;
 
   const allCategories = useMemo(() => [...new Set(videos.map((v) => v.category).filter(Boolean))], [videos]);
   const allYears = useMemo(() => [...new Set(videos.map((v) => v.dateRaw ? new Date(v.dateRaw).getFullYear().toString() : '').filter(Boolean))].sort((a, b) => Number(b) - Number(a)), [videos]);
@@ -144,12 +150,14 @@ export default function VideosPage() {
                     </Select>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={clearFilters} className="min-h-[44px]">
-                      <X className="h-4 w-4 ml-2" aria-hidden="true" />
-                      נקה
-                    </Button>
-                  </div>
+                  {hasActiveFilter && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={clearFilters} className="min-h-[44px]">
+                        <X className="h-4 w-4 ml-2" aria-hidden="true" />
+                        נקה סינון
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -200,29 +208,41 @@ export default function VideosPage() {
             )}
 
             {/* Video Grid */}
+            <div ref={gridRef} className="scroll-mt-24" />
             {pageVideos.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <p className="text-lg mb-2">לא נמצאו שיעורים</p>
                 <button type="button" onClick={clearFilters} className="text-secondary hover:underline text-sm">נקה סינון</button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
                 {pageVideos.map((video) => <VideoCard key={video.id} video={video} />)}
               </div>
             )}
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <nav className="flex justify-center items-center gap-2 mt-12" aria-label="ניווט בין דפים">
-                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="דף קודם">
+              <nav className="flex justify-center items-center gap-1 sm:gap-2 mt-12 flex-wrap" aria-label="ניווט בין דפים">
+                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page <= 1} onClick={() => goToPage(page - 1)} aria-label="דף קודם">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                  <Button key={n} variant={n === page ? 'default' : 'outline'} onClick={() => setPage(n)} className={`rounded-full w-10 h-10 min-h-[44px] ${n === page ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`} aria-label={`דף ${n}`} aria-current={n === page ? 'page' : undefined}>
-                    {n}
-                  </Button>
-                ))}
-                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="דף הבא">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                  .reduce<(number | '...')[]>((acc, n, i, arr) => {
+                    if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
+                    acc.push(n);
+                    return acc;
+                  }, [])
+                  .map((n, i) =>
+                    n === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <Button key={n} variant={n === page ? 'default' : 'outline'} onClick={() => goToPage(n as number)} className={`rounded-full min-h-[44px] min-w-[44px] w-11 h-11 ${n === page ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`} aria-label={`דף ${n}`} aria-current={n === page ? 'page' : undefined}>
+                        {n}
+                      </Button>
+                    )
+                  )}
+                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page >= totalPages} onClick={() => goToPage(page + 1)} aria-label="דף הבא">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </nav>
@@ -258,9 +278,9 @@ export default function VideosPage() {
 function VideoCard({ video }: { video: ShiurItem }) {
   const thumbnailUrl = getThumb(video);
   return (
-    <Link to={`/videos/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`}>
-      <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:bg-[#F5F0E8] transition-all duration-300 cursor-pointer group">
-        <div className="relative aspect-video bg-primary">
+    <Link to={`/videos/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`} className="h-full block">
+      <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:bg-[#F5F0E8] transition-all duration-300 cursor-pointer group h-full flex flex-col">
+        <div className="relative aspect-video bg-primary flex-shrink-0">
           <img src={thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center" aria-hidden="true">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
@@ -270,9 +290,9 @@ function VideoCard({ video }: { video: ShiurItem }) {
           {video.duration && <div className="absolute bottom-2 left-2 bg-black/80 text-white px-2 py-0.5 rounded text-xs font-semibold">{video.duration}</div>}
           {video.category && <div className="absolute top-2 right-2 bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full text-xs font-semibold shadow-md">{video.category}</div>}
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-serif font-bold text-primary mb-2 line-clamp-2 group-hover:text-secondary transition-colors text-sm sm:text-base">{video.title}</h3>
-          <p className="text-sm text-muted-foreground mb-3">{video.date}{video.duration ? ` • ${video.duration}` : ''}</p>
+        <CardContent className="p-4 flex flex-col flex-1">
+          <h3 className="font-serif font-bold text-primary mb-2 line-clamp-2 group-hover:text-secondary transition-colors text-sm sm:text-base flex-1">{video.title}</h3>
+          <p className="text-sm text-muted-foreground mb-1">{video.date}{video.duration ? ` • ${video.duration}` : ''}</p>
           {video.views > 0 && (
             <p className="text-xs text-muted-foreground">{video.views.toLocaleString()} צפיות</p>
           )}

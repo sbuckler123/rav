@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, FileText, Grid, List } from 'lucide-react';
+import { Search, FileText, Grid, List, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PageHeader from '@/components/PageHeader';
 import { getArticles, type Article } from '@/api/getArticles';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,8 +16,12 @@ export default function ArticlesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     getArticles()
@@ -27,7 +31,13 @@ export default function ArticlesPage() {
   }, []);
 
   const allCategories = [...new Set(articles.flatMap((a) => a.categories))].sort();
-  const allYears = [...new Set(articles.map((a) => a.year).filter(Boolean))].sort((a, b) => String(b).localeCompare(String(a)));
+  const allYears = [...new Set(articles.map((a) => a.yearNum > 0 ? String(a.yearNum) : '').filter(Boolean))].sort((a, b) => Number(b) - Number(a));
+  const allTags = [...new Set(articles.flatMap((a) => a.tags))].sort();
+
+  const goToPage = (n: number) => {
+    setPage(n);
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const filteredArticles = articles.filter((a) => {
     const q = searchQuery.trim().toLowerCase();
@@ -37,8 +47,9 @@ export default function ArticlesPage() {
       a.categories.some((c) => c.toLowerCase().includes(q)) ||
       a.tags.some((t) => t.toLowerCase().includes(q));
     const matchesCategory = selectedCategory === '' || a.categories.includes(selectedCategory);
-    const matchesYear = selectedYear === '' || a.year === selectedYear;
-    return matchesSearch && matchesCategory && matchesYear;
+    const matchesYear = selectedYear === '' || String(a.yearNum) === selectedYear;
+    const matchesTag = selectedTags.length === 0 || selectedTags.some(t => a.tags.includes(t));
+    return matchesSearch && matchesCategory && matchesYear && matchesTag;
   });
 
   return (
@@ -50,66 +61,132 @@ export default function ArticlesPage() {
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         {/* Filter Bar */}
-        <Card className="mb-8 bg-[#FAF8F2]">
-          <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="sm:col-span-2 relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                <Input
-                  type="text"
-                  placeholder="חפש מאמר..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10 min-h-[44px]"
-                  aria-label="חיפוש מאמרים"
-                />
-              </div>
-              <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v === 'all' ? '' : v)}>
-                <SelectTrigger className="min-h-[44px] bg-white" aria-label="בחר קטגוריה">
-                  <SelectValue placeholder="כל הקטגוריות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הקטגוריות</SelectItem>
-                  {allCategories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <div className="mb-8 rounded-2xl border border-border/60 bg-[#F7F4EE] p-5 sm:p-6 space-y-4">
 
-              <Select value={selectedYear} onValueChange={(v) => setSelectedYear(v === 'all' ? '' : v)}>
-                <SelectTrigger className="min-h-[44px] bg-white" aria-label="בחר שנה">
-                  <SelectValue placeholder="כל השנים" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל השנים</SelectItem>
-                  {allYears.map((year) => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-between items-center flex-wrap gap-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm text-muted-foreground">
-                  נמצאו <span className="font-bold text-foreground">{filteredArticles.length}</span> מאמרים
-                </span>
-                {(searchQuery || selectedCategory || selectedYear) && (
-                  <Button size="sm" variant="outline" className="min-h-[36px] text-destructive border-destructive/40 hover:bg-destructive/10" onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedYear(''); }}>
-                    נקה סינון
-                  </Button>
-                )}
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 bg-secondary rounded-full flex-shrink-0" />
+            <span className="text-sm font-semibold text-primary">חיפוש וסינון</span>
+          </div>
+
+          {/* Search input */}
+          <div className="relative">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <Input
+              type="text"
+              placeholder="חפש לפי כותרת, תקציר, קטגוריה..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              className="pr-11 h-12 bg-white border-border/60 rounded-xl shadow-sm text-sm focus-visible:ring-secondary/30 focus-visible:border-secondary/50"
+              aria-label="חיפוש מאמרים"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); setPage(1); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors p-1 rounded"
+                aria-label="נקה חיפוש"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Selects row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Select value={selectedCategory || undefined} onValueChange={(v) => { setSelectedCategory(v === '__clear__' ? '' : v); setPage(1); }}>
+              <SelectTrigger className={`min-h-[44px] bg-white border-border/60 rounded-xl shadow-sm text-sm ${selectedCategory ? 'border-secondary/50 text-primary font-medium' : ''}`} aria-label="בחר קטגוריה">
+                <SelectValue placeholder="כל הקטגוריות" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedCategory && <SelectItem value="__clear__">כל הקטגוריות</SelectItem>}
+                {allCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedYear || undefined} onValueChange={(v) => { setSelectedYear(v === '__clear__' ? '' : v); setPage(1); }}>
+              <SelectTrigger className={`min-h-[44px] bg-white border-border/60 rounded-xl shadow-sm text-sm ${selectedYear ? 'border-secondary/50 text-primary font-medium' : ''}`} aria-label="בחר שנה">
+                <SelectValue placeholder="כל השנים" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedYear && <SelectItem value="__clear__">כל השנים</SelectItem>}
+                {allYears.map((year) => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tags multi-select pills */}
+          {allTags.length > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 font-medium">תגיות</p>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => {
+                  const active = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        setSelectedTags(prev =>
+                          active ? prev.filter(t => t !== tag) : [...prev, tag]
+                        );
+                        setPage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 min-h-[32px] ${
+                        active
+                          ? 'bg-secondary text-primary border-secondary shadow-sm'
+                          : 'bg-white text-muted-foreground border-border/60 hover:border-secondary/50 hover:text-primary'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex gap-2" role="group" aria-label="בחר תצוגה">
-                <Button size="icon" variant={viewMode === 'list' ? 'default' : 'outline'} onClick={() => setViewMode('list')} aria-label="תצוגת רשימה" aria-pressed={viewMode === 'list'} className="min-h-[44px] min-w-[44px]">
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant={viewMode === 'grid' ? 'default' : 'outline'} onClick={() => setViewMode('grid')} aria-label="תצוגת רשת" aria-pressed={viewMode === 'grid'} className="min-h-[44px] min-w-[44px]">
-                  <Grid className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {/* Bottom row */}
+          <div className="flex items-center justify-between gap-3 flex-wrap pt-1 border-t border-border/40">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-muted-foreground">
+                נמצאו{' '}
+                <span className="font-bold text-primary">{filteredArticles.length}</span>
+                {' '}מאמרים
+              </span>
+              {(searchQuery || selectedCategory || selectedYear || selectedTags.length > 0) && (
+                <button
+                  onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedYear(''); setSelectedTags([]); setPage(1); }}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  נקה סינון
+                </button>
+              )}
+            </div>
+            <div className="flex gap-1.5" role="group" aria-label="בחר תצוגה">
+              <button
+                onClick={() => setViewMode('list')}
+                aria-label="תצוגת רשימה"
+                aria-pressed={viewMode === 'list'}
+                className={`p-2.5 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${viewMode === 'list' ? 'bg-primary text-white border-primary' : 'bg-white text-muted-foreground border-border/60 hover:border-primary/40'}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                aria-label="תצוגת רשת"
+                aria-pressed={viewMode === 'grid'}
+                className={`p-2.5 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${viewMode === 'grid' ? 'bg-primary text-white border-primary' : 'bg-white text-muted-foreground border-border/60 hover:border-primary/40'}`}
+              >
+                <Grid className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+        </div>
 
         {/* Articles list */}
         {loading ? (
@@ -129,12 +206,17 @@ export default function ArticlesPage() {
         ) : filteredArticles.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg mb-2">לא נמצאו מאמרים</p>
-            <button type="button" onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedYear(''); }} className="text-secondary hover:underline text-sm">נקה סינון</button>
+            <button type="button" onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedYear(''); setSelectedTags([]); setPage(1); }} className="text-secondary hover:underline text-sm">נקה סינון</button>
           </div>
-        ) : (
-          <>{viewMode === 'grid' ? (
+        ) : (() => {
+          const totalPages = Math.max(1, Math.ceil(filteredArticles.length / ITEMS_PER_PAGE));
+          const pageArticles = filteredArticles.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+          return (
+          <>{
+          <div ref={gridRef} className="scroll-mt-24" />
+          }{viewMode === 'grid' ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredArticles.map((article) => (
+              {pageArticles.map((article) => (
                 <Card key={article.id} className="hover:shadow-lg transition-shadow flex flex-col">
                   <CardContent className="p-4 flex flex-col flex-1">
                     <div className="h-20 bg-gradient-to-br from-secondary/10 to-primary/10 rounded-lg flex items-center justify-center mb-3" aria-hidden="true">
@@ -168,7 +250,7 @@ export default function ArticlesPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredArticles.map((article) => (
+              {pageArticles.map((article) => (
                 <article key={article.id}>
                   <Card className="hover:shadow-md transition-shadow border-r-4 border-r-secondary/40 hover:border-r-secondary">
                     <CardContent className="p-5">
@@ -217,8 +299,35 @@ export default function ArticlesPage() {
                 </article>
               ))}
             </div>
-          )}</>
-        )}
+          )}
+          {totalPages > 1 && (
+            <nav className="flex justify-center items-center gap-1 sm:gap-2 mt-10 flex-wrap" aria-label="ניווט בין דפים">
+              <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page <= 1} onClick={() => goToPage(page - 1)} aria-label="דף קודם">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce<(number | '...')[]>((acc, n, i, arr) => {
+                  if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
+                  acc.push(n);
+                  return acc;
+                }, [])
+                .map((n, i) =>
+                  n === '...' ? (
+                    <span key={`e-${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                  ) : (
+                    <Button key={n} variant={n === page ? 'default' : 'outline'} onClick={() => goToPage(n as number)} className={`rounded-full min-h-[44px] min-w-[44px] w-11 h-11 ${n === page ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`} aria-label={`דף ${n}`} aria-current={n === page ? 'page' : undefined}>
+                      {n}
+                    </Button>
+                  )
+                )}
+              <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page >= totalPages} onClick={() => goToPage(page + 1)} aria-label="דף הבא">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </nav>
+          )}
+          </>);
+        })()}
       </main>
     </div>
   );

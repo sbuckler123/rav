@@ -11,17 +11,47 @@ function parseDate(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
+function isPastShiur(event: ShiurEvent): boolean {
+  const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
+  const d = new Date(base);
+  const timeMatch = event.time?.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+  } else {
+    d.setHours(23, 59, 59, 0);
+  }
+  return d < new Date();
+}
+
+function isTodayShiur(event: ShiurEvent): boolean {
+  const now  = new Date();
+  const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
+  return (
+    base.getFullYear() === now.getFullYear() &&
+    base.getMonth()    === now.getMonth()    &&
+    base.getDate()     === now.getDate()
+  );
+}
+
 function ShiurCard({ event }: { event: ShiurEvent }) {
   const [day, month] = event.date.split('.');
-  const monthLabel = month ? monthNames[parseInt(month) - 1] : '';
+  const monthLabel   = month ? monthNames[parseInt(month) - 1] : '';
+  const today        = isTodayShiur(event);
 
   return (
     <Link to={`/shiurim/${event.linkId}`}>
-      <div className="flex border border-border rounded-xl overflow-hidden bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer">
+      <div className={`flex rounded-xl overflow-hidden bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border-2 ${
+        today ? 'border-secondary shadow-sm' : 'border-border'
+      }`}>
         {/* Date column */}
         <div className="flex-shrink-0 w-16 sm:w-20 flex flex-col items-center justify-center py-4 px-2 bg-primary">
           <span className="text-2xl sm:text-3xl font-bold text-secondary leading-none">{day}</span>
           <span className="text-[10px] sm:text-xs text-primary-foreground/70 mt-1 font-medium">{monthLabel}</span>
+          {today && (
+            <span className="mt-1 text-[9px] font-bold text-secondary bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
+              היום
+            </span>
+          )}
         </div>
 
         {/* Content */}
@@ -30,11 +60,19 @@ function ShiurCard({ event }: { event: ShiurEvent }) {
             <h3 className="font-bold text-sm sm:text-base leading-snug group-hover:text-secondary transition-colors line-clamp-2">
               {event.title}
             </h3>
-            {event.category && (
-              <span className="text-[10px] sm:text-xs border px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium bg-secondary/10 text-secondary border-secondary/20">
-                {event.category}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {today && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 border border-secondary/30 px-2 py-0.5 text-[10px] font-semibold text-secondary">
+                  <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
+                  היום
+                </span>
+              )}
+              {event.category && !today && (
+                <span className="text-[10px] sm:text-xs border px-1.5 py-0.5 rounded-full font-medium bg-secondary/10 text-secondary border-secondary/20">
+                  {event.category}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-2">
             {event.time && (
@@ -63,8 +101,7 @@ export default function EventsSection() {
   useEffect(() => {
     getShiurim()
       .then(({ shiurim }) => {
-        const now = new Date();
-        const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= now);
+        const upcoming = shiurim.filter(s => s.date && !isPastShiur(s));
         setShiurim((upcoming.length > 0 ? upcoming : shiurim).slice(0, 3));
       })
       .catch(() => {})

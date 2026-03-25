@@ -21,6 +21,28 @@ const parseDate = (dateStr: string): Date => {
   return new Date(year, month - 1, day);
 };
 
+const isPastShiur = (event: ShiurEvent): boolean => {
+  const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
+  const d = new Date(base);
+  const timeMatch = event.time?.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+  } else {
+    d.setHours(23, 59, 59, 0);
+  }
+  return d < new Date();
+};
+
+const isTodayShiur = (event: ShiurEvent): boolean => {
+  const now = new Date();
+  const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
+  return (
+    base.getFullYear() === now.getFullYear() &&
+    base.getMonth() === now.getMonth() &&
+    base.getDate() === now.getDate()
+  );
+};
+
 export default function ShiurimPage() {
   const [searchQuery, setSearchQuery]           = useState('');
   const [selectedCategory, setSelectedCategory] = useState('הכל');
@@ -190,29 +212,56 @@ export default function ShiurimPage() {
                 {filteredEvents.map(event => {
                   const [day, month] = event.date.split('.');
                   const monthLabel = monthNames[parseInt(month) - 1];
+                  const past   = isPastShiur(event);
+                  const today  = isTodayShiur(event);
+                  const todayUpcoming = today && !past;
                   return (
                     <Link key={event.id} to={`/shiurim/${event.linkId}`}>
-                      <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border border-border">
+                      <Card className={`overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border-2 ${
+                        todayUpcoming ? 'border-secondary shadow-md'
+                        : past        ? 'border-border/50 opacity-60 hover:opacity-80'
+                        :               'border-border'
+                      }`}>
                         <CardContent className="p-0">
                           <div className="flex">
 
                             {/* Date block */}
-                            <div className="flex-shrink-0 w-20 sm:w-24 flex flex-col items-center justify-center bg-primary text-white py-5 px-2 gap-0.5">
+                            <div className={`flex-shrink-0 w-20 sm:w-24 flex flex-col items-center justify-center py-5 px-2 gap-0.5 ${
+                              past ? 'bg-muted text-muted-foreground' : 'bg-primary text-white'
+                            }`}>
                               <span className="text-3xl sm:text-4xl font-bold leading-none">{day}</span>
                               <span className="text-xs font-medium opacity-80 tracking-wide">{monthLabel}</span>
+                              {todayUpcoming && (
+                                <span className="mt-1 text-[9px] font-bold text-secondary bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
+                                  היום
+                                </span>
+                              )}
                             </div>
 
                             {/* Content */}
                             <div className="flex-1 min-w-0 p-4 sm:p-5">
                               <div className="flex items-start justify-between gap-3 mb-2">
-                                <h3 className="font-serif font-bold text-base sm:text-lg text-primary leading-snug group-hover:text-secondary transition-colors">
+                                <h3 className={`font-serif font-bold text-base sm:text-lg leading-snug transition-colors ${past ? 'text-muted-foreground' : 'text-primary group-hover:text-secondary'}`}>
                                   {event.title}
                                 </h3>
-                                {event.category && (
-                                  <Badge variant="secondary" className="flex-shrink-0 text-xs hidden sm:inline-flex">
-                                    {event.category}
-                                  </Badge>
-                                )}
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  {todayUpcoming && (
+                                    <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-secondary/15 border border-secondary/30 px-2 py-0.5 text-[10px] font-semibold text-secondary">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
+                                      היום
+                                    </span>
+                                  )}
+                                  {past && (
+                                    <span className="hidden sm:inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                      התקיים
+                                    </span>
+                                  )}
+                                  {event.category && (
+                                    <Badge variant="secondary" className={`text-xs hidden sm:inline-flex ${past ? 'opacity-60' : ''}`}>
+                                      {event.category}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {event.description && (
@@ -224,13 +273,13 @@ export default function ShiurimPage() {
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                                 {event.time && (
                                   <span className="flex items-center gap-1.5">
-                                    <Clock className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                                    <Clock className={`h-3.5 w-3.5 flex-shrink-0 ${past ? 'text-muted-foreground/60' : 'text-secondary'}`} />
                                     {event.time}
                                   </span>
                                 )}
                                 {event.location && (
                                   <span className="flex items-center gap-1.5">
-                                    <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                                    <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${past ? 'text-muted-foreground/60' : 'text-secondary'}`} />
                                     <span className="truncate">{event.location}</span>
                                   </span>
                                 )}

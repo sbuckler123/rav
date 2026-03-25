@@ -12,6 +12,18 @@ function parseDate(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
+function isPastShiur(event: ShiurEvent): boolean {
+  const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
+  const d = new Date(base);
+  const timeMatch = event.time?.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+  } else {
+    d.setHours(23, 59, 59, 0);
+  }
+  return d < new Date();
+}
+
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 function addToCalendar(shiur: ShiurEvent) {
@@ -75,8 +87,8 @@ export default function Dashboard() {
     getShiurim()
       .then(({ shiurim }) => {
         const now = new Date();
-        const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= now);
-        setNextShiur(upcoming.length > 0 ? upcoming[0] : shiurim[0] ?? null);
+        const upcoming = shiurim.filter(s => s.date && !isPastShiur(s));
+        setNextShiur(upcoming.length > 0 ? upcoming[0] : null);
       })
       .catch(() => {})
       .finally(() => setShiurLoading(false));
@@ -96,7 +108,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
 
         {/* השיעור הבא */}
-        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full">
+        <Link to={nextShiur ? `/shiurim/${nextShiur.linkId}` : '/shiurim'} className="block h-full">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
             <div className="flex flex-col items-center text-center h-full">
               <div className="inline-flex items-center justify-center w-14 h-14 lg:w-16 lg:h-16 bg-secondary/10 rounded-full mb-4">
@@ -138,16 +151,18 @@ export default function Dashboard() {
                 variant="outline"
                 className="w-full min-h-[44px] hover:bg-secondary hover:text-white transition-colors"
                 disabled={!nextShiur || shiurLoading}
-                onClick={() => nextShiur && addToCalendar(nextShiur)}
+                onClick={e => { e.preventDefault(); nextShiur && addToCalendar(nextShiur); }}
               >
                 הוסף ליומן
               </Button>
             </div>
           </CardContent>
         </Card>
+        </Link>
 
         {/* מאמר אחרון */}
-        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-primary h-full">
+        <Link to={latestArticle ? `/articles/${latestArticle.linkId}` : '/articles'} className="block h-full">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-primary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
             <div className="flex flex-col items-center text-center h-full">
               <div className="inline-flex items-center justify-center w-14 h-14 lg:w-16 lg:h-16 bg-primary/10 rounded-full mb-4">
@@ -181,21 +196,15 @@ export default function Dashboard() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full min-h-[44px] hover:bg-primary hover:text-white transition-colors"
+                className="w-full min-h-[44px] hover:bg-primary hover:text-white transition-colors pointer-events-none"
                 disabled={!latestArticle || articleLoading}
-                asChild={!!latestArticle && !articleLoading}
               >
-                {latestArticle && !articleLoading ? (
-                  <Link to={`/articles/${latestArticle.linkId}`}>
-                    לקריאה המלאה
-                  </Link>
-                ) : (
-                  <span>לקריאה המלאה</span>
-                )}
+                לקריאה המלאה
               </Button>
             </div>
           </CardContent>
         </Card>
+        </Link>
 
         {/* שאל את הרב */}
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full sm:col-span-2 md:col-span-1">
