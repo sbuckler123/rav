@@ -32,7 +32,7 @@ export default function QuestionForm({ categories }: Props) {
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => c.id === categoryId);
-      await submitQuestion({
+      const result = await submitQuestion({
         name,
         email,
         categoryId: categoryId || undefined,
@@ -40,6 +40,19 @@ export default function QuestionForm({ categories }: Props) {
         question,
         allowPublic,
       });
+      // Notify Make.com webhook after DB save (fire-and-forget)
+      fetch('https://hook.eu1.make.com/o8mtrjupxtpqcuu4uftc203ecdtb9pd7', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId: result.id,
+          name,
+          email,
+          topic: selectedCategory?.name ?? '',
+          question,
+          allowPublic,
+        }),
+      }).catch(() => {});
       setSubmitted(true);
       toast.success('שאלתך נשלחה בהצלחה!');
     } catch {
@@ -53,8 +66,8 @@ export default function QuestionForm({ categories }: Props) {
     return (
       <Card className="border shadow-sm bg-white">
         <CardContent className="flex flex-col items-center justify-center py-10 sm:py-16 text-center">
-          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="h-9 w-9 text-green-500" />
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="h-9 w-9 text-primary" />
           </div>
           <h3 className="text-xl font-serif font-bold text-primary mb-2">שאלתך נתקבלה!</h3>
           <p className="text-muted-foreground text-sm max-w-xs mx-auto mb-6 leading-relaxed">
@@ -114,7 +127,9 @@ export default function QuestionForm({ categories }: Props) {
               <Label className="text-sm font-medium">נושא השאלה</Label>
               <Select value={categoryId} onValueChange={setCategoryId} dir="rtl">
                 <SelectTrigger className="min-h-[44px] border border-input bg-white focus:ring-1 focus:border-secondary">
-                  <SelectValue placeholder="בחר נושא (אופציונלי)" />
+                  <span className={categoryId ? '' : 'text-muted-foreground'}>
+                    {categoryId ? categories.find(c => c.id === categoryId)?.name : 'בחר נושא (אופציונלי)'}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(c => (
