@@ -10,6 +10,29 @@ import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
 const monthNames = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
 const monthNamesFull = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
+function parseDate(dateStr: string): Date {
+  const [day, month, year] = dateStr.split('.');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+}
+
+function getShiurStatus(shiur: ShiurEvent): 'today' | 'past' | 'upcoming' {
+  const base = shiur.dateRaw ? new Date(shiur.dateRaw) : parseDate(shiur.date);
+  const now = new Date();
+  const isToday =
+    base.getFullYear() === now.getFullYear() &&
+    base.getMonth() === now.getMonth() &&
+    base.getDate() === now.getDate();
+  if (isToday) return 'today';
+  const d = new Date(base);
+  const timeMatch = shiur.time?.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    d.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+  } else {
+    d.setHours(23, 59, 59, 0);
+  }
+  return d < now ? 'past' : 'upcoming';
+}
+
 export default function ShiurDetailPage() {
   const { id } = useParams();
   const [shiurim, setShiurim] = useState<ShiurEvent[]>([]);
@@ -51,6 +74,7 @@ export default function ShiurDetailPage() {
   const [day, month, year] = shiur.date.split('.');
   const monthLabel = month ? monthNames[parseInt(month) - 1] : '';
   const monthFull = month ? monthNamesFull[parseInt(month) - 1] : '';
+  const status = getShiurStatus(shiur);
 
   const handleAddToCalendar = () => {
     // Build YYYYMMDD date string
@@ -171,11 +195,23 @@ export default function ShiurDetailPage() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              {shiur.category && (
-                <span className="inline-block text-xs font-semibold bg-secondary/15 text-secondary border border-secondary/25 px-3 py-1 rounded-full mb-3">
-                  {shiur.category}
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {shiur.category && (
+                  <span className="inline-block text-xs font-semibold bg-secondary/15 text-secondary border border-secondary/25 px-3 py-1 rounded-full">
+                    {shiur.category}
+                  </span>
+                )}
+                {status === 'today' && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300 px-3 py-1 rounded-full animate-pulse">
+                    ● היום
+                  </span>
+                )}
+                {status === 'past' && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold bg-red-100 text-red-600 border border-red-300 px-3 py-1 rounded-full">
+                    עבר
+                  </span>
+                )}
+              </div>
               <h1 className="text-xl sm:text-3xl md:text-4xl font-serif font-bold leading-snug text-primary mb-3 sm:mb-4 break-words">
                 {shiur.title}
               </h1>
@@ -362,20 +398,24 @@ export default function ShiurDetailPage() {
               </Card>
             )}
 
-            {/* CTA */}
-            <Card className="border shadow-sm bg-white">
-              <CardContent className="p-4 sm:p-5 text-center">
-                <Calendar className="h-8 w-8 text-secondary mx-auto mb-2" />
-                <h3 className="font-bold text-sm mb-1">הוסף ליומן</h3>
-                <p className="text-xs text-muted-foreground mb-3">אל תפספס את השיעור הקרוב</p>
-                <Button
-                  className="w-full bg-secondary text-primary hover:bg-secondary/90 min-h-[44px]"
-                  onClick={handleAddToCalendar}
-                >
-                  הוסף ליומן
-                </Button>
-              </CardContent>
-            </Card>
+            {/* CTA — only for upcoming / today */}
+            {status !== 'past' && (
+              <Card className="border shadow-sm bg-white">
+                <CardContent className="p-4 sm:p-5 text-center">
+                  <Calendar className="h-8 w-8 text-secondary mx-auto mb-2" />
+                  <h3 className="font-bold text-sm mb-1">הוסף ליומן</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {status === 'today' ? 'השיעור מתקיים היום!' : 'אל תפספס את השיעור הקרוב'}
+                  </p>
+                  <Button
+                    className="w-full bg-secondary text-primary hover:bg-secondary/90 min-h-[44px]"
+                    onClick={handleAddToCalendar}
+                  >
+                    הוסף ליומן
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

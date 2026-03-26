@@ -219,6 +219,7 @@ function QuestionCard({ question, categories }: { question: Question; categories
 
   return (
     <div
+      id={`q-${question.id}`}
       className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden"
       data-question-ref={question.referenceId}
       data-question-id={question.id}

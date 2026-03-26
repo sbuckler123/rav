@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
 import { getArticles, type Article } from '@/api/getArticles';
+import FadeIn from '@/components/FadeIn';
 
 function parseDate(dateStr: string): Date {
   const [day, month, year] = dateStr.split('.').map(Number);
@@ -25,6 +26,7 @@ function isPastShiur(event: ShiurEvent): boolean {
 }
 
 const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const monthNamesShort = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
 
 function addToCalendar(shiur: ShiurEvent) {
   const [day, month, year] = shiur.date.split('.');
@@ -99,8 +101,10 @@ export default function Dashboard() {
       .finally(() => setArticleLoading(false));
   }, []);
 
-  const shiurDayLabel = nextShiur?.date
-    ? `יום ${dayNames[parseDate(nextShiur.date).getDay()]}`
+  const shiurParsed = nextShiur?.date ? parseDate(nextShiur.date) : null;
+  const shiurDayLabel = shiurParsed ? `יום ${dayNames[shiurParsed.getDay()]}` : null;
+  const shiurDateLabel = nextShiur?.date
+    ? (() => { const [d, m] = nextShiur.date.split('.'); return `${d} ${monthNamesShort[parseInt(m) - 1]}`; })()
     : null;
 
   return (
@@ -108,6 +112,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
 
         {/* השיעור הבא */}
+        <FadeIn delay={100}>
         <Link to={nextShiur ? `/shiurim/${nextShiur.linkId}` : '/shiurim'} className="block h-full">
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
@@ -127,10 +132,16 @@ export default function Dashboard() {
                   <div className="space-y-2" dir="rtl">
                     <p className="text-sm sm:text-base font-semibold line-clamp-2 leading-snug">{nextShiur.title}</p>
                     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                      {shiurDayLabel && nextShiur.time && (
+                      {shiurDayLabel && shiurDateLabel && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                          {shiurDayLabel}, {shiurDateLabel}
+                        </span>
+                      )}
+                      {nextShiur.time && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
-                          {shiurDayLabel}, {nextShiur.time}
+                          {nextShiur.time}
                         </span>
                       )}
                       {nextShiur.location && (
@@ -159,8 +170,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         </Link>
+        </FadeIn>
 
         {/* מאמר אחרון */}
+        <FadeIn delay={220}>
         <Link to={latestArticle ? `/articles/${latestArticle.linkId}` : '/articles'} className="block h-full">
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-primary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
@@ -205,8 +218,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         </Link>
+        </FadeIn>
 
         {/* שאל את הרב */}
+        <FadeIn delay={340} className="sm:col-span-2 md:col-span-1">
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full sm:col-span-2 md:col-span-1">
           <CardContent className="p-6 lg:p-8 h-full">
             <div className="flex flex-col items-center text-center h-full">
@@ -229,6 +244,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        </FadeIn>
 
       </div>
     </section>

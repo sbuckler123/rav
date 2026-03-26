@@ -38,7 +38,16 @@ export default function AskPage() {
     getPublishedQuestions({})
       .then(r => setQuestions(r.questions))
       .catch(() => {})
-      .finally(() => setLoadingQuestions(false));
+      .finally(() => {
+        setLoadingQuestions(false);
+        // Scroll to a specific question if hash is present (e.g. /ask#q-recXXX)
+        if (window.location.hash) {
+          setTimeout(() => {
+            const el = document.querySelector(window.location.hash);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 300);
+        }
+      });
   }, []);
 
   return (
@@ -63,7 +72,7 @@ export default function AskPage() {
         </section>
 
         {/* Published Q&A */}
-        <section aria-label="שאלות ותשובות מפורסמות">
+        <section id="qa-section" aria-label="שאלות ותשובות מפורסמות">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שאלות ותשובות מפורסמות</h2>

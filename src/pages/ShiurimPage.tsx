@@ -21,6 +21,24 @@ const parseDate = (dateStr: string): Date => {
   return new Date(year, month - 1, day);
 };
 
+const HEBREW_NUMERALS: Record<number, string> = {
+  1:'א׳', 2:'ב׳', 3:'ג׳', 4:'ד׳', 5:'ה׳', 6:'ו׳', 7:'ז׳', 8:'ח׳', 9:'ט׳', 10:'י׳',
+  11:'י״א', 12:'י״ב', 13:'י״ג', 14:'י״ד', 15:'ט״ו', 16:'ט״ז', 17:'י״ז', 18:'י״ח',
+  19:'י״ט', 20:'כ׳', 21:'כ״א', 22:'כ״ב', 23:'כ״ג', 24:'כ״ד', 25:'כ״ה', 26:'כ״ו',
+  27:'כ״ז', 28:'כ״ח', 29:'כ״ט', 30:'ל׳',
+};
+const hebrewDayFmt   = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric' });
+const hebrewMonthFmt = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { month: 'long' });
+const toHebrewDate = (dateStr: string): string => {
+  try {
+    const d = parseDate(dateStr);
+    const dayNum = parseInt(hebrewDayFmt.format(d), 10);
+    const month  = hebrewMonthFmt.format(d);
+    const dayHeb = HEBREW_NUMERALS[dayNum] ?? String(dayNum);
+    return `${dayHeb} ${month}`;
+  } catch { return ''; }
+};
+
 const isPastShiur = (event: ShiurEvent): boolean => {
   const base = event.dateRaw ? new Date(event.dateRaw) : parseDate(event.date);
   const d = new Date(base);
@@ -212,6 +230,7 @@ export default function ShiurimPage() {
                 {filteredEvents.map(event => {
                   const [day, month] = event.date.split('.');
                   const monthLabel = monthNames[parseInt(month) - 1];
+                  const hebrewDate = toHebrewDate(event.date);
                   const past   = isPastShiur(event);
                   const today  = isTodayShiur(event);
                   const todayUpcoming = today && !past;
@@ -226,11 +245,14 @@ export default function ShiurimPage() {
                           <div className="flex">
 
                             {/* Date block */}
-                            <div className={`flex-shrink-0 w-20 sm:w-24 flex flex-col items-center justify-center py-5 px-2 gap-0.5 ${
+                            <div className={`flex-shrink-0 w-[84px] sm:w-24 flex flex-col items-center justify-center py-4 sm:py-5 px-1.5 gap-0.5 ${
                               past ? 'bg-muted text-muted-foreground' : 'bg-primary text-white'
                             }`}>
-                              <span className="text-3xl sm:text-4xl font-bold leading-none">{day}</span>
-                              <span className="text-xs font-medium opacity-80 tracking-wide">{monthLabel}</span>
+                              <span className="text-2xl sm:text-4xl font-bold leading-none">{day}</span>
+                              <span className="text-[11px] sm:text-xs font-medium opacity-80 tracking-wide">{monthLabel}</span>
+                              {hebrewDate && (
+                                <span className="text-[9px] sm:text-[10px] opacity-70 leading-tight text-center w-full px-1 break-words">{hebrewDate}</span>
+                              )}
                               {todayUpcoming && (
                                 <span className="mt-1 text-[9px] font-bold text-secondary bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
                                   היום

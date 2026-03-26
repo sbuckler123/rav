@@ -135,7 +135,7 @@ export default function AccessibilityWidget() {
     // Fixed to physical bottom-left regardless of RTL direction
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 9999 }}
+      style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 9999, maxWidth: 'calc(100vw - 2rem)' }}
       dir="rtl"
     >
       {/* ── Panel ── */}
@@ -144,13 +144,20 @@ export default function AccessibilityWidget() {
           role="dialog"
           aria-modal="true"
           aria-label="הגדרות נגישות"
-          className="mb-3 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-white shadow-xl"
+          className="mb-3 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-white shadow-2xl"
           style={{ maxHeight: 'calc(100svh - 5rem)', overflowY: 'auto' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-lg" aria-hidden="true">♿</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
+                <svg aria-hidden="true" viewBox="0 0 100 100" className="h-4 w-4 text-white" fill="currentColor">
+                  <circle cx="50" cy="16" r="10" />
+                  <path d="M50 28 c-2 0-4 1-5 3 L38 52 c-1 2 0 4 2 5 l10 4 -4 16 c-1 3 1 6 4 7 3 1 6-1 7-4 l5-19 c1-3-1-6-4-7 l-6-2 5-14 c1 0 2 0 3 0 h14 c3 0 5-2 5-5 s-2-5-5-5 H55 l-3-3 c-1-1-2-1-2-1 z" />
+                  <circle cx="38" cy="78" r="13" fill="none" stroke="currentColor" strokeWidth="7" />
+                  <path d="M60 58 c4 2 8 6 10 11" stroke="currentColor" strokeWidth="7" strokeLinecap="round" fill="none" />
+                </svg>
+              </div>
               <h2 className="text-sm font-bold text-primary">נגישות</h2>
             </div>
             <button
@@ -243,20 +250,35 @@ export default function AccessibilityWidget() {
         aria-label={isOpen ? 'סגור הגדרות נגישות' : 'פתח הגדרות נגישות'}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className={`relative flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-200 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
           isOpen
-            ? 'bg-primary/90 text-white'
-            : 'bg-primary text-white hover:bg-primary/90'
+            ? 'bg-primary/90 scale-95'
+            : 'bg-primary hover:scale-105 hover:shadow-2xl'
         }`}
       >
         {/* Active indicator dot */}
         {hasChanges && !isOpen && (
           <span
             aria-hidden="true"
-            className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-secondary"
+            className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-secondary"
           />
         )}
-        <span className="text-xl leading-none" aria-hidden="true">♿</span>
+        {/* Accessibility SVG icon — fills the circle */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 100 100"
+          className="h-9 w-9 text-white"
+          fill="currentColor"
+        >
+          {/* Head */}
+          <circle cx="50" cy="16" r="10" />
+          {/* Body */}
+          <path d="M50 28 c-2 0-4 1-5 3 L38 52 c-1 2 0 4 2 5 l10 4 -4 16 c-1 3 1 6 4 7 3 1 6-1 7-4 l5-19 c1-3-1-6-4-7 l-6-2 5-14 c1 0 2 0 3 0 h14 c3 0 5-2 5-5 s-2-5-5-5 H55 l-3-3 c-1-1-2-1-2-1 z" />
+          {/* Wheel */}
+          <circle cx="38" cy="78" r="13" fill="none" stroke="currentColor" strokeWidth="7" />
+          {/* Arm pushing */}
+          <path d="M60 58 c4 2 8 6 10 11" stroke="currentColor" strokeWidth="7" strokeLinecap="round" fill="none" />
+        </svg>
       </button>
     </div>
   );

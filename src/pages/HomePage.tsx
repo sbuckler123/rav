@@ -11,20 +11,21 @@ export default function HomePage() {
   return (
     <div>
       <HeroSection />
-      <FadeIn delay={0}>
-        <Dashboard />
-      </FadeIn>
-      <FadeIn delay={0}>
+      <Dashboard />
+      <FadeIn>
         <VideosSection />
       </FadeIn>
-      <FadeIn delay={0}>
+      <FadeIn>
         <EventsSection />
       </FadeIn>
-      <FadeIn delay={0}>
+      <FadeIn>
         <EventsHomeSection />
       </FadeIn>
-      <FadeIn delay={0}>
+      <FadeIn>
         <ArticlesSection />
+      </FadeIn>
+      <FadeIn>
+        <AskRabbiSection />
       </FadeIn>
     </div>
   );
