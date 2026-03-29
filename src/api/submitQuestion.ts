@@ -7,7 +7,7 @@ export async function submitQuestion(input: {
   topic?: string;
   question: string;
   allowPublic: boolean;
-}): Promise<{ success: boolean; id?: string }> {
+}): Promise<{ success: boolean; id?: string; referenceId?: string }> {
   const fields: Record<string, unknown> = {
     'תוכן השאלה': input.question,
     'שם השואל': input.name,
