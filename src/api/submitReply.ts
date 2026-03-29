@@ -9,7 +9,7 @@ export async function submitReply(input: {
     'שאלה': [input.questionId],
     'תוכן התשובה': input.content,
     'סוג כותב': input.writerType ?? 'רב',
-    'תאריך': new Date().toISOString().split('T')[0],
+    'תאריך': new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
   };
 
   const record = await airtableCreate('תשובות', fields);
