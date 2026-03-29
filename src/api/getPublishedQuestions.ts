@@ -51,7 +51,7 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
         questionContent: r.fields['תוכן השאלה'] ?? '',
         askerName: r.fields['שם השואל'],
         category: Array.isArray(r.fields['קטגוריה']) ? r.fields['קטגוריה'][0] : undefined,
-        createdAt: r.fields['תאריך הגשה'],
+        createdAt: r.fields['תאריך'],
         answers,
       };
     });

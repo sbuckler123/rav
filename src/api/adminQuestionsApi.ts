@@ -24,7 +24,7 @@ export interface AdminQuestion {
 
 export async function getAllQuestions(): Promise<{ questions: AdminQuestion[] }> {
   const [questionsData, answersData] = await Promise.all([
-    airtableFetch('שאלות', {}, [{ field: 'תאריך הגשה', direction: 'desc' }]),
+    airtableFetch('שאלות', {}, [{ field: 'תאריך', direction: 'desc' }]),
     airtableFetch('תשובות', { filterByFormula: 'NOT({שאלה}="")' }).catch(() => ({ records: [] })),
   ]);
 
@@ -50,7 +50,7 @@ export async function getAllQuestions(): Promise<{ questions: AdminQuestion[] }>
       askerName: f['שם השואל'],
       askerEmail: f['אימייל השואל'],
       category: Array.isArray(f['קטגוריה']) ? f['קטגוריה'][0] : undefined,
-      createdAt: f['תאריך הגשה'],
+      createdAt: f['תאריך'],
       status: f['סטטוס'] ?? 'ממתין',
       approvedForPublish: f['מאושר לפרסום'] === true,
       consentToPublish: f['הסכמה לפרסום'] === true,
@@ -86,7 +86,7 @@ export async function createQuestion(input: {
     'סטטוס': input.status ?? 'ממתין',
     'הסכמה לפרסום': input.consentToPublish ?? false,
     'מאושר לפרסום': input.approvedForPublish ?? false,
-    'תאריך הגשה': new Date().toISOString().split('T')[0],
+    'תאריך': new Date().toISOString().split('T')[0],
   };
   if (input.askerName?.trim()) fields['שם השואל'] = input.askerName.trim();
   if (input.category) fields['קטגוריה'] = [input.category];

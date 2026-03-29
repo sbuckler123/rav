@@ -13,9 +13,6 @@ import { cn } from '@/lib/utils';
 
 interface FormState {
   title: string;
-  journal: string;
-  yeshiva: string;
-  yearHebrew: string;
   yearNum: string;
   categories: string;   // single-select
   tags: string[];       // multi-select
@@ -29,7 +26,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  title: '', journal: '', yeshiva: '', yearHebrew: '', yearNum: '',
+  title: '', yearNum: '',
   categories: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
@@ -54,7 +51,6 @@ export default function ArticleFormPage() {
   const [linkId, setLinkId] = useState('');
   const [createdByName, setCreatedByName] = useState('');
   const [updatedByName, setUpdatedByName] = useState('');
-  const [hebrewYearOptions, setHebrewYearOptions] = useState<string[]>([]);
   const [gregYearOptions, setGregYearOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>([]);
@@ -65,7 +61,6 @@ export default function ArticleFormPage() {
 
   useEffect(() => {
     const tasks: Promise<any>[] = [
-      airtableGetFieldChoices('מאמרים', 'שנה עברית'),
       airtableGetFieldChoices('מאמרים', 'שנה לועזית'),
       airtableGetFieldChoices('מאמרים', 'קטגוריות'),
       airtableGetFieldChoices('מאמרים', 'תגיות'),
@@ -76,8 +71,7 @@ export default function ArticleFormPage() {
     }
 
     Promise.all(tasks)
-      .then(([hebrewChoices, gregChoices, catChoices, tagChoices, articlesData, usersData]) => {
-        setHebrewYearOptions(hebrewChoices);
+      .then(([gregChoices, catChoices, tagChoices, articlesData, usersData]) => {
         setGregYearOptions(gregChoices);
         setCategoryOptions(catChoices);
         setTagOptions(tagChoices);
@@ -99,9 +93,6 @@ export default function ArticleFormPage() {
         setLinkId(extractField(f['מזהה קישור']));
         setForm({
           title: extractField(f['כותרת']),
-          journal: extractField(f['כתב עת']),
-          yeshiva: extractField(f['מוסד']),
-          yearHebrew: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']),
           yearNum: String(f['שנה לועזית'] ?? ''),
           categories: Array.isArray(f['קטגוריות']) ? (f['קטגוריות'][0] ?? '') : extractField(f['קטגוריות']),
           tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
@@ -133,8 +124,6 @@ export default function ArticleFormPage() {
         'כותרת': form.title.trim(),
       };
 
-      if (form.journal.trim())     fields['כתב עת']      = form.journal.trim();
-      if (form.yeshiva.trim())     fields['מוסד']         = form.yeshiva.trim();
       if (form.fullContent.trim()) fields['תוכן מלא']    = form.fullContent.trim();
       if (form.pdfUrl.trim())      fields['קישור PDF']   = form.pdfUrl.trim();
       if (form.keyPoints.trim())   fields['נקודות מפתח'] = form.keyPoints.trim();
@@ -142,7 +131,6 @@ export default function ArticleFormPage() {
       if (form.categories)         fields['קטגוריות']    = form.categories;
       fields['סטטוס'] = form.status;
       if (form.tags.length)        fields['תגיות']        = form.tags;
-      if (form.yearHebrew)  fields['שנה עברית']  = [form.yearHebrew]; // multi-select → array
       if (form.yearNum.trim()) {
         // שנה לועזית is a select field → send as array; fall back to number if no choices
         fields['שנה לועזית'] = gregYearOptions.length
@@ -243,54 +231,25 @@ export default function ArticleFormPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>שנה לועזית</Label>
-                {gregYearOptions.length > 0 ? (
-                  <select
-                    value={form.yearNum}
-                    onChange={e => field('yearNum', e.target.value)}
-                    className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
-                    dir="ltr"
-                  >
-                    <option value="">בחר שנה</option>
-                    {gregYearOptions.map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input value={form.yearNum} onChange={e => field('yearNum', e.target.value)}
-                    placeholder="2024" type="number" dir="ltr"
-                    className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label>שנה עברית</Label>
+            <div className="space-y-1.5">
+              <Label>שנה לועזית</Label>
+              {gregYearOptions.length > 0 ? (
                 <select
-                  value={form.yearHebrew}
-                  onChange={e => field('yearHebrew', e.target.value)}
+                  value={form.yearNum}
+                  onChange={e => field('yearNum', e.target.value)}
                   className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                  dir="ltr"
                 >
                   <option value="">בחר שנה</option>
-                  {hebrewYearOptions.map(y => (
+                  {gregYearOptions.map(y => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>כתב עת</Label>
-              <Input value={form.journal} onChange={e => field('journal', e.target.value)}
-                placeholder="שם כתב העת"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>מוסד</Label>
-              <Input value={form.yeshiva} onChange={e => field('yeshiva', e.target.value)}
-                placeholder="שם המוסד"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+              ) : (
+                <Input value={form.yearNum} onChange={e => field('yearNum', e.target.value)}
+                  placeholder="2024" type="number" dir="ltr"
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+              )}
             </div>
 
             <div className="space-y-1.5">

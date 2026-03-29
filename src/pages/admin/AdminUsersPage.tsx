@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="חיפוש לפי שם או אימייל..."
-          className="pr-9 border border-input bg-white"
+          className="pr-9 border border-input bg-white min-h-[44px]"
         />
       </div>
 
@@ -219,7 +219,7 @@ export default function AdminUsersPage() {
         ) : (
           <div className="divide-y divide-border">
             {filtered.map(u => (
-              <div key={u.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
+              <div key={u.id} className="flex items-center gap-3 px-3 sm:px-5 py-3 sm:py-3.5 hover:bg-muted/30 transition-colors">
                 {/* Avatar */}
                 <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-primary">{u.name.charAt(0)}</span>
@@ -228,18 +228,22 @@ export default function AdminUsersPage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-primary">{u.name}</p>
+                    <p className="font-medium text-primary truncate">{u.name}</p>
                     {u.id === currentUser?.id && (
-                      <span className="text-xs text-muted-foreground">(אתה)</span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">(אתה)</span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate" dir="ltr">{u.email}</p>
                 </div>
 
                 {/* Badges */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                   {roleBadge(u.role)}
                   {statusBadge(u.status)}
+                </div>
+                {/* Mobile: role badge only */}
+                <div className="flex sm:hidden flex-shrink-0">
+                  {roleBadge(u.role)}
                 </div>
 
                 {/* Actions */}
@@ -276,21 +280,21 @@ export default function AdminUsersPage() {
               <Label>שם מלא *</Label>
               <Input value={form.name} onChange={e => field('name', e.target.value)}
                 placeholder="ישראל ישראלי"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
             </div>
 
             <div className="space-y-1.5">
               <Label>אימייל *</Label>
               <Input value={form.email} onChange={e => field('email', e.target.value)}
                 placeholder="user@example.com" type="email" dir="ltr"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
             </div>
 
             <div className="space-y-1.5">
               <Label>{editing ? 'סיסמה חדשה (השאר ריק לאי שינוי)' : 'סיסמה *'}</Label>
               <Input value={form.password} onChange={e => field('password', e.target.value)}
                 placeholder={editing ? '••••••••' : 'בחר סיסמה'} type="password" dir="ltr"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
             </div>
 
             <div className="space-y-1.5">
@@ -299,7 +303,7 @@ export default function AdminUsersPage() {
                 {ROLES.map(r => (
                   <button key={r} onClick={() => field('role', r)}
                     className={cn(
-                      'flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
+                      'flex-1 min-h-[44px] rounded-lg border text-sm font-medium transition-all',
                       form.role === r
                         ? 'bg-primary text-white border-primary'
                         : 'bg-white text-muted-foreground border-border hover:border-primary'
@@ -316,7 +320,7 @@ export default function AdminUsersPage() {
                 {STATUSES.map(s => (
                   <button key={s} onClick={() => field('status', s)}
                     className={cn(
-                      'flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
+                      'flex-1 min-h-[44px] rounded-lg border text-sm font-medium transition-all',
                       form.status === s
                         ? 'bg-primary text-white border-primary'
                         : 'bg-white text-muted-foreground border-border hover:border-primary'
@@ -328,11 +332,11 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>ביטול</Button>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving} className="min-h-[44px] w-full sm:w-auto">ביטול</Button>
             <Button onClick={handleSave}
               disabled={!form.name.trim() || !form.email.trim() || saving}
-              className="bg-secondary text-primary hover:bg-secondary/90 gap-2">
+              className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px] w-full sm:w-auto">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {editing ? 'שמור שינויים' : 'הוסף משתמש'}
             </Button>
@@ -350,9 +354,9 @@ export default function AdminUsersPage() {
               האם למחוק את המשתמש <strong>"{deleteTarget?.name}"</strong>? פעולה זו אינה ניתנת לביטול.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>ביטול</Button>
-            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 text-white hover:bg-red-700 gap-2">
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting} className="min-h-[44px] w-full sm:w-auto">ביטול</Button>
+            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 text-white hover:bg-red-700 gap-2 min-h-[44px] w-full sm:w-auto">
               {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               מחק
             </Button>

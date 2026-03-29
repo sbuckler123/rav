@@ -46,6 +46,7 @@ export default function QuestionForm({ categories }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           questionId: result.id,
+          referenceId: result.referenceId,
           name,
           email,
           topic: selectedCategory?.name ?? '',

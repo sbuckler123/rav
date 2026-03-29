@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitReply } from '@/api/submitReply';
+import { airtableUpdate } from '@/api/airtable';
 import type { getPublishedQuestions } from '@/api/getPublishedQuestions';
 
 type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
@@ -31,13 +32,13 @@ function ExpandableText({ text, className }: { text: string; className?: string 
 
   return (
     <div>
-      <p className={`text-sm leading-relaxed ${className ?? ''}`}>
+      <p className={`text-sm leading-relaxed break-words ${className ?? ''}`}>
         {isLong && !expanded ? text.slice(0, CHAR_LIMIT) + '...' : text}
       </p>
       {isLong && (
         <button
           onClick={() => setExpanded(prev => !prev)}
-          className="mt-2 text-xs font-medium text-secondary hover:text-secondary/80 transition-colors flex items-center gap-1 focus:outline-none"
+          className="mt-1 text-xs font-medium text-secondary hover:text-secondary/80 transition-colors flex items-center gap-1 min-h-[36px] focus:outline-none"
         >
           {expanded
             ? <><ChevronUp className="h-3 w-3" />הצג פחות</>
@@ -78,7 +79,7 @@ function AnswerBlock({ answer, index }: { answer: Answer; index: number }) {
             </span>
           )}
         </div>
-        <div className={`rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed ${isRabbi ? 'bg-[#F7F4EE] border border-secondary/15' : 'bg-muted/30 border border-border'}`}>
+        <div className={`rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed break-words ${isRabbi ? 'bg-[#F7F4EE] border border-secondary/15' : 'bg-muted/30 border border-border'}`}>
           <ExpandableText text={answer.content} />
         </div>
       </div>
@@ -129,7 +130,7 @@ export default function PublishedQA({ questions, categories }: Props) {
         <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           <button
             onClick={() => handleCategoryChange('all')}
-            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all min-h-[36px] ${
+            className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[44px] ${
               selectedCategory === 'all'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary'
@@ -146,7 +147,7 @@ export default function PublishedQA({ questions, categories }: Props) {
               <button
                 key={c.id}
                 onClick={() => handleCategoryChange(c.id)}
-                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all min-h-[36px] ${
+                className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[44px] ${
                   selectedCategory === c.id
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary'
@@ -205,7 +206,8 @@ function QuestionCard({ question, categories }: { question: Question; categories
     if (!replyText.trim()) return;
     setSubmitting(true);
     try {
-      await submitReply({ questionId: question.id, content: replyText });
+      await submitReply({ questionId: question.id, content: replyText, writerType: 'השואל' });
+      await airtableUpdate('שאלות', question.id, { 'סטטוס': 'ממתין' });
       setSent(true);
       setReplyText('');
       setReplyOpen(false);
@@ -274,7 +276,7 @@ function QuestionCard({ question, categories }: { question: Question; categories
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic mr-9 sm:mr-11">התשובה בהכנה...</p>
+          <p className="text-xs text-muted-foreground italic">התשובה בהכנה...</p>
         )}
 
         {/* Reply */}
@@ -287,9 +289,9 @@ function QuestionCard({ question, categories }: { question: Question; categories
             <>
               <button
                 onClick={() => setReplyOpen(prev => !prev)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-secondary transition-colors min-h-[36px]"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-secondary transition-colors min-h-[44px] w-full sm:w-auto"
               >
-                {replyOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                {replyOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                 {replyOpen ? 'סגור' : 'שלח שאלת המשך לרב'}
               </button>
               {replyOpen && (
@@ -298,14 +300,14 @@ function QuestionCard({ question, categories }: { question: Question; categories
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     placeholder="כתוב שאלת המשך..."
-                    rows={3}
-                    className="text-sm resize-none border border-input bg-white focus-visible:ring-1"
+                    rows={4}
+                    className="text-sm resize-none border border-input bg-white focus-visible:ring-1 w-full"
                   />
                   <Button
                     size="sm"
                     onClick={handleReply}
                     disabled={submitting || !replyText.trim()}
-                    className="gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[40px]"
+                    className="gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] w-full sm:w-auto"
                   >
                     <Send className="h-3.5 w-3.5" />
                     {submitting ? 'שולח...' : 'שלח'}

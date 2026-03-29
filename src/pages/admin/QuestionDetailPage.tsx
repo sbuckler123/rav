@@ -22,7 +22,7 @@ import {
   type AdminQuestion,
 } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
-import { airtableUpdate } from '@/api/airtable';
+import { airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
 import { cn } from '@/lib/utils';
 
 function writerIcon(type: string) {
@@ -47,6 +47,8 @@ export default function QuestionDetailPage() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
+  const [replyWriterType, setReplyWriterType] = useState('');
+  const [writerTypeOptions, setWriterTypeOptions] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -74,6 +76,15 @@ export default function QuestionDetailPage() {
 
   useEffect(() => { reload(); }, [id]);
 
+  useEffect(() => {
+    airtableGetFieldChoices('תשובות', 'סוג כותב')
+      .then(choices => {
+        setWriterTypeOptions(choices);
+        if (choices.length > 0) setReplyWriterType(choices[0]);
+      })
+      .catch(() => {});
+  }, []);
+
   const categoryName = question?.category
     ? (categories.find(c => c.id === question.category)?.name ?? '')
     : '';
@@ -82,8 +93,24 @@ export default function QuestionDetailPage() {
     if (!replyText.trim() || !id) return;
     setSubmitting(true);
     try {
-      await submitReply({ questionId: id, content: replyText.trim() });
+      await submitReply({ questionId: id, content: replyText.trim(), writerType: replyWriterType });
       if (question?.status === 'ממתין') await markAnswered(id);
+
+      // Notify asker via Make.com (fire-and-forget)
+      fetch('https://hook.eu1.make.com/ahzc1fp7fcwotv6hd14o6m5dlprvmref', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId: id,
+          referenceId: question?.referenceId ?? '',
+          askerName: question?.askerName ?? '',
+          askerEmail: question?.askerEmail ?? '',
+          questionContent: question?.questionContent ?? '',
+          answerContent: replyText.trim(),
+          questionUrl: `${window.location.origin}/ask#q-${id}`,
+        }),
+      }).catch(() => {});
+
       toast.success('התשובה נשלחה בהצלחה');
       setReplyText('');
       reload();
@@ -373,6 +400,18 @@ export default function QuestionDetailPage() {
               rows={5}
               className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary mb-3 resize-none"
             />
+            <div className="mb-3">
+              <label className="text-xs text-muted-foreground block mb-1">סוג כותב</label>
+              <select
+                value={replyWriterType}
+                onChange={e => setReplyWriterType(e.target.value)}
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+              >
+                {writerTypeOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
             <Button
               onClick={handleReply}
               disabled={!replyText.trim() || submitting}
@@ -395,6 +434,12 @@ export default function QuestionDetailPage() {
           <div className="bg-white rounded-xl border border-border p-5">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">פרטי שאלה</p>
             <dl className="space-y-3 text-sm">
+              {question.referenceId && (
+                <div>
+                  <dt className="text-xs text-muted-foreground">מזהה שאלה</dt>
+                  <dd className="font-mono font-bold text-secondary">{question.referenceId}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-xs text-muted-foreground">שואל</dt>
                 <dd className="font-medium text-primary">{question.askerName ?? '—'}</dd>
@@ -406,7 +451,7 @@ export default function QuestionDetailPage() {
                 </div>
               )}
               <div>
-                <dt className="text-xs text-muted-foreground">תאריך הגשה</dt>
+                <dt className="text-xs text-muted-foreground">תאריך</dt>
                 <dd className="font-medium text-primary">{question.createdAt ?? '—'}</dd>
               </div>
               {categoryName && (

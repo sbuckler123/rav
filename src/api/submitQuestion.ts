@@ -11,9 +11,10 @@ export async function submitQuestion(input: {
   const fields: Record<string, unknown> = {
     'תוכן השאלה': input.question,
     'שם השואל': input.name,
+    'אימייל השואל': input.email,
     'הסכמה לפרסום': input.allowPublic,
     'סטטוס': 'ממתין',
-    'תאריך הגשה': new Date().toISOString().split('T')[0],
+    'תאריך': new Date().toISOString().split('T')[0],
   };
 
   if (input.categoryId) {
@@ -21,5 +22,5 @@ export async function submitQuestion(input: {
   }
 
   const record = await airtableCreate('שאלות', fields);
-  return { success: true, id: record.id };
+  return { success: true, id: record.id, referenceId: record.fields?.['מזהה שאלה'] ?? '' };
 }

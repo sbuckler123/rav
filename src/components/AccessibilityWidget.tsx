@@ -65,8 +65,8 @@ interface ToggleProps {
 
 function Toggle({ checked, onChange, label, id }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between py-1.5 gap-3">
-      <label htmlFor={id} className="text-sm font-medium text-primary cursor-pointer select-none flex-1 text-right">
+    <div className="flex items-center justify-between gap-3 min-h-[44px]">
+      <label htmlFor={id} className="text-sm font-medium text-primary cursor-pointer select-none flex-1 text-right leading-snug">
         {label}
       </label>
       {/* dir="ltr" keeps thumb direction consistent regardless of page RTL */}
@@ -77,12 +77,12 @@ function Toggle({ checked, onChange, label, id }: ToggleProps) {
         aria-label={label}
         onClick={onChange}
         dir="ltr"
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
           checked ? 'bg-primary' : 'bg-muted-foreground/30'
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
             checked ? 'translate-x-5' : 'translate-x-1'
           }`}
         />
@@ -153,7 +153,12 @@ export default function AccessibilityWidget() {
     <div
       ref={containerRef}
       dir="rtl"
-      style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 9999, maxWidth: 'calc(100vw - 2rem)' }}
+      style={{
+        position: 'fixed',
+        bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+        left: '1rem',
+        zIndex: 9999,
+      }}
     >
       {/* ── Panel ── */}
       {isOpen && (
@@ -161,11 +166,18 @@ export default function AccessibilityWidget() {
           role="dialog"
           aria-modal="true"
           aria-label="הגדרות נגישות"
-          className="w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-white shadow-2xl"
-          style={{ position: 'absolute', bottom: 'calc(100% + 0.75rem)', left: 0, maxHeight: 'calc(100svh - 5rem)', overflowY: 'auto' }}
+          className="rounded-2xl border border-border bg-white shadow-2xl"
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 0.75rem)',
+            left: 0,
+            width: 'min(288px, calc(100vw - 2rem))',
+            maxHeight: 'calc(100svh - 6rem)',
+            overflowY: 'auto',
+          }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary flex-shrink-0">
                 <AccessIcon className="h-4 w-4 text-white" />
@@ -175,7 +187,7 @@ export default function AccessibilityWidget() {
             <button
               onClick={() => setIsOpen(false)}
               aria-label="סגור פאנל נגישות"
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              className="flex items-center justify-center rounded-md w-10 h-10 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
@@ -199,7 +211,7 @@ export default function AccessibilityWidget() {
                       key={size}
                       onClick={() => update({ textSize: size })}
                       aria-pressed={active}
-                      className={`flex flex-col items-center gap-1 rounded-xl border py-2.5 transition-all ${
+                      className={`flex flex-col items-center gap-1 rounded-xl border py-3 min-h-[56px] transition-all ${
                         active
                           ? 'border-primary bg-primary text-white shadow-sm'
                           : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/50 hover:bg-muted'
@@ -271,7 +283,7 @@ export default function AccessibilityWidget() {
                 <div className="border-t border-border" />
                 <button
                   onClick={reset}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-muted-foreground/40 py-2 text-xs text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-muted-foreground/40 py-2.5 min-h-[44px] text-xs text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     <path d="M10 6A4 4 0 1 1 6 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

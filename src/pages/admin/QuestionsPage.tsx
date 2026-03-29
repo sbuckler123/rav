@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2, Tag } from 'lucide-react';
 import { getAllQuestions, createQuestion, submitReply, type AdminQuestion } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
+import { airtableGetFieldChoices } from '@/api/airtable';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ const EMPTY_FORM = {
   consentToPublish: false,
   approvedForPublish: false,
   answerContent: '',
+  answerWriterType: 'רב',
 };
 
 export default function QuestionsPage() {
@@ -61,6 +63,7 @@ export default function QuestionsPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [writerTypeOptions, setWriterTypeOptions] = useState<string[]>([]);
 
   function loadData() {
     setLoading(true);
@@ -74,6 +77,15 @@ export default function QuestionsPage() {
   }
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    airtableGetFieldChoices('תשובות', 'סוג כותב')
+      .then(choices => {
+        setWriterTypeOptions(choices);
+        if (choices.length > 0) setForm(f => ({ ...f, answerWriterType: choices[0] }));
+      })
+      .catch(() => {});
+  }, []);
 
   const getCategoryName = (id?: string) =>
     id ? (categories.find(c => c.id === id)?.name ?? '') : '';
@@ -103,7 +115,7 @@ export default function QuestionsPage() {
         approvedForPublish: form.approvedForPublish,
       });
       if (form.answerContent.trim()) {
-        await submitReply({ questionId: id, content: form.answerContent.trim() });
+        await submitReply({ questionId: id, content: form.answerContent.trim(), writerType: form.answerWriterType });
       }
       toast.success('השאלה נוצרה בהצלחה');
       setShowDialog(false);
@@ -329,6 +341,21 @@ export default function QuestionsPage() {
                   className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none"
                 />
               </div>
+
+              {form.answerContent.trim() && (
+                <div className="space-y-1.5">
+                  <Label>סוג כותב</Label>
+                  <select
+                    value={form.answerWriterType}
+                    onChange={e => setForm(f => ({ ...f, answerWriterType: e.target.value }))}
+                    className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                  >
+                    {writerTypeOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6">
