@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, MapPin, LayoutGrid, List, X, Users, Plane, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { getEvents, type EventItem } from '@/api/getEvents';
 import { getEventTypeStyle } from '@/lib/yoman';
@@ -90,6 +91,10 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="אירועים"
+        description="אירועים ופגישות רשמיות של הרב קלמן מאיר בר, הרב הראשי לישראל."
+      />
 
       {/* Page header — title + subtitle only, no search bar inside */}
       <PageHeader

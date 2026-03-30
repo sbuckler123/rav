@@ -1,9 +1,11 @@
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { Mail, Calendar } from 'lucide-react';
 
 export default function CookiePolicyPage() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="מדיניות עוגיות" description="מדיניות השימוש בעוגיות באתר הרב קלמן מאיר בר." noindex />
       <PageHeader title="מדיניות עוגיות" subtitle="מידע על השימוש בקבצי Cookie באתר" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-8 sm:py-12">

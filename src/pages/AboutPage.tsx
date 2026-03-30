@@ -1,12 +1,18 @@
+import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="אודות הרב קלמן מאיר בר"
+        description='היכרות עם הגאון הרב קלמן מאיר בר שליט"א, הרב הראשי לישראל ונשיא מועצת הרבנות הראשית לישראל.'
+      />
       <PageHeader
         title='הגאון הרב קלמן מאיר בר שליט"א'
         subtitle="הרב הראשי לישראל ונשיא מועצת הרבנות הראשית לישראל"
+        breadcrumbs={[{ label: 'דף הבית', href: '/' }, { label: 'אודות' }]}
       />
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">

@@ -1,9 +1,11 @@
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { Mail, Phone, Calendar } from 'lucide-react';
 
 export default function AccessibilityStatementPage() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="הצהרת נגישות" description="הצהרת הנגישות של אתר הרב קלמן מאיר בר." noindex />
       <PageHeader title="הצהרת נגישות" subtitle="מחויבות לנגישות דיגיטלית לכלל המשתמשים" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-8 sm:py-12">

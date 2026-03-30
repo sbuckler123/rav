@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { Share2, Eye, Clock, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import SEO from '@/components/SEO';
 import { getVideos, type ShiurItem } from '@/api/getVideos';
 
 function getThumb(video: ShiurItem): string {
@@ -71,6 +72,11 @@ export default function VideoDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      <SEO
+        title={video.title}
+        description={`שיעור וידאו מאת הרב קלמן מאיר בר: ${video.title}`}
+        image={getThumb(video)}
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },

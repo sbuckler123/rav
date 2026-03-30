@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import SEO from '@/components/SEO';
 import { getEventByLinkId, type EventDetail } from '@/api/getEventByLinkId';
 import { getEvents, type EventItem } from '@/api/getEvents';
 import { getEventTypeStyle } from '@/lib/yoman';
@@ -81,6 +82,10 @@ export default function EventDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={entry.title}
+        description={`אירוע של הרב קלמן מאיר בר: ${entry.title}`}
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs
           items={[

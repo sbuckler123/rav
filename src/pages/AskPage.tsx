@@ -5,6 +5,7 @@ import { getCategories } from '@/api/getCategories';
 import { getPublishedQuestions } from '@/api/getPublishedQuestions';
 import QuestionForm from '@/components/ask/QuestionForm';
 import PublishedQA from '@/components/ask/PublishedQA';
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { Info, Clock, AlertCircle } from 'lucide-react';
 
@@ -52,6 +53,10 @@ export default function AskPage() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SEO
+        title="שאל את הרב"
+        description="שלחו שאלה הלכתית לרב קלמן מאיר בר ותקבלו מענה מלשכת הרב הראשי לישראל."
+      />
       <Toaster />
 
       <PageHeader

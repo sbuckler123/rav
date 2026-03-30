@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { Printer, Share2, ExternalLink, Clock, ChevronRight, ChevronLeft, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import SEO from '@/components/SEO';
 import { getArticleByLinkId, type ArticleDetail } from '@/api/getArticleByLinkId';
 import { getArticles, type Article } from '@/api/getArticles';
 
@@ -61,6 +62,11 @@ export default function ArticleDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      <SEO
+        title={article.title}
+        description={(article.abstract ?? '').slice(0, 155) || `מאמר מאת הרב קלמן מאיר בר: ${article.title}`}
+        type="article"
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },

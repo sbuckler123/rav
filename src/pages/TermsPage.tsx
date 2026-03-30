@@ -1,9 +1,11 @@
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { Mail, Phone, Calendar } from 'lucide-react';
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="תנאי שימוש" description="תנאי השימוש באתר הרב קלמן מאיר בר." noindex />
       <PageHeader title="תנאי שימוש" subtitle="אנא קראו את התנאים לפני השימוש באתר" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl py-8 sm:py-12">

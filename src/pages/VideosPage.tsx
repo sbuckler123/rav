@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Play, Download, FileText, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { getVideos, type ShiurItem } from '@/api/getVideos';
 
@@ -85,6 +86,10 @@ export default function VideosPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="שיעורי וידאו"
+        description="צפו בשיעורי הוידאו של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
+      />
       <PageHeader title="שיעורי וידאו" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">

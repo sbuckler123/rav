@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, FileText, Grid, List, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { getArticles, type Article } from '@/api/getArticles';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,6 +56,10 @@ export default function ArticlesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="מאמרים ופסקי הלכה"
+        description="מאמרים תורניים ופסקי הלכה מאת הרב קלמן מאיר בר, הרב הראשי לישראל."
+      />
       <PageHeader
         title="מאמרים ופסקי הלכה"
         subtitle="פסקי הלכה, מאמרים תורניים וחידושים מעט הרב הראשי"

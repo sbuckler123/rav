@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { useEffect } from 'react';
 
 function ScrollToTop() {
@@ -45,6 +46,7 @@ import TermsPage from '@/pages/TermsPage';
 
 export default function App() {
   return (
+    <HelmetProvider>
     <AuthProvider>
       <Router>
         <ScrollToTop />
@@ -111,5 +113,6 @@ export default function App() {
         <Toaster />
       </Router>
     </AuthProvider>
+    </HelmetProvider>
   );
 }

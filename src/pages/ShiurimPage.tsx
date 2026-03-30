@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Clock, Search, X, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
 
@@ -104,6 +105,10 @@ export default function ShiurimPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="לוח שיעורים"
+        description="לוח השיעורים העדכני של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה."
+      />
       <PageHeader title="לוח שיעורים" subtitle="כל השיעורים וההרצאות הקרובים" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
