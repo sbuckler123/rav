@@ -31,6 +31,7 @@ const TABLE: Record<string, string> = {
   events:   'אירועים',
   articles: 'מאמרים',
   videos:   'שיעורי וידאו',
+  shiurim:  'שיעורים',
 };
 
 // ─── index.html (bundled via vercel.json includeFiles) ───────────────────────
@@ -90,7 +91,7 @@ async function getOgData(
   const f = data.records?.[0]?.fields;
   if (!f) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
 
-  const title = extractText(f['כותרת']) || SITE_NAME;
+  const title = extractText(f['כותרת']) || extractText(f['שם']) || SITE_NAME;
   let description = DEFAULT_DESC;
   let image = DEFAULT_IMAGE;
 
@@ -103,6 +104,8 @@ async function getOgData(
     description = extractText(f['תיאור']) || DEFAULT_DESC;
     const ytId = extractText(f['מזהה יוטיוב']).split('&')[0].split('?')[0].trim();
     if (ytId) image = `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+  } else if (section === 'shiurim') {
+    description = extractText(f['תיאור']) || DEFAULT_DESC;
   }
 
   return { title, description, image };
