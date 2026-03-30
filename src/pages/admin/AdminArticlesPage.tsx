@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
 import { airtableFetch, airtableDelete } from '@/api/airtable';
+import { fetchCategories } from '@/api/categoriesApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,7 @@ interface AdminArticle {
   journal: string;
   yeshiva: string;
   yearNum: number;
-  categories: string[];
+  category: string;
   abstract: string;
   linkId: string;
   status: string;
@@ -31,16 +32,23 @@ function extractField(val: any): string {
 }
 
 async function fetchArticles(): Promise<AdminArticle[]> {
-  const data = await airtableFetch('מאמרים', {}, [{ field: 'שנה לועזית', direction: 'desc' }]);
+  const [data, cats] = await Promise.all([
+    airtableFetch('מאמרים', {}, [{ field: 'שנה לועזית', direction: 'desc' }]),
+    fetchCategories('מאמרים'),
+  ]);
+  const catMap: Record<string, string> = {};
+  cats.forEach(c => { catMap[c.id] = c.name; });
+
   return data.records.map((r: any) => {
     const f = r.fields;
+    const catIds: string[] = f['קטגוריה'] ?? [];
     return {
       id: r.id,
       title: extractField(f['כותרת']),
       journal: extractField(f['כתב עת']),
       yeshiva: extractField(f['מוסד']),
       yearNum: f['שנה לועזית'] ?? 0,
-      categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'] : (f['קטגוריות'] ? [f['קטגוריות']] : []),
+      category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
       abstract: extractField(f['תקציר']),
       linkId: extractField(f['מזהה קישור']),
       status: extractField(f['סטטוס']) || 'לא פעיל',
@@ -81,7 +89,7 @@ export default function AdminArticlesPage() {
   }
 
   const filtered = articles.filter(a =>
-    !search || a.title.includes(search) || a.journal.includes(search) || a.yeshiva.includes(search)
+    !search || a.title.includes(search) || a.journal.includes(search) || a.yeshiva.includes(search) || a.category.includes(search)
   );
 
   return (
@@ -134,12 +142,17 @@ export default function AdminArticlesPage() {
               <div key={a.id} className="flex items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-primary truncate text-sm sm:text-base">{a.title}</p>
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                     {a.yearNum > 0 && <span className="text-xs text-muted-foreground">{a.yearNum}</span>}
-                    {a.journal && <span className="text-xs text-muted-foreground hidden sm:inline">{a.journal}</span>}
-                    {a.categories.slice(0, 2).map(c => (
-                      <Badge key={c} variant="secondary" className="text-xs hidden sm:inline-flex">{c}</Badge>
-                    ))}
+                    {a.journal && (
+                      <>
+                        {a.yearNum > 0 && <span className="text-xs text-muted-foreground">·</span>}
+                        <span className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{a.journal}</span>
+                      </>
+                    )}
+                    {a.category && (
+                      <Badge variant="secondary" className="text-xs flex-shrink-0">{a.category}</Badge>
+                    )}
                   </div>
                 </div>
                 <Badge className={a.status === 'פעיל'

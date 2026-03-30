@@ -35,15 +35,22 @@ function formatDate(raw: string): string {
 }
 
 export async function getVideos(): Promise<{ shiurim: ShiurItem[] }> {
-  const data = await airtableFetch(
-    'שיעורי וידאו',
-    { filterByFormula: `{סטטוס} = "פעיל"` },
-    [{ field: 'תאריך', direction: 'desc' }]
-  );
+  const [videosData, catsData] = await Promise.all([
+    airtableFetch(
+      'שיעורי וידאו',
+      { filterByFormula: `{סטטוס} = "פעיל"` },
+      [{ field: 'תאריך', direction: 'desc' }]
+    ),
+    airtableFetch('קטגוריות', {}),
+  ]);
 
-  const shiurim: ShiurItem[] = data.records.map((r: any) => {
+  const catMap: Record<string, string> = {};
+  catsData.records.forEach((r: any) => { catMap[r.id] = r.fields['שם'] ?? ''; });
+
+  const shiurim: ShiurItem[] = videosData.records.map((r: any) => {
     const f = r.fields;
     const dateRaw = f['תאריך'] ?? '';
+    const catIds: string[] = f['קטגוריה'] ?? [];
     return {
       id: r.id,
       linkId: extractField(f['מזהה קישור']) ?? r.id,
@@ -52,7 +59,7 @@ export async function getVideos(): Promise<{ shiurim: ShiurItem[] }> {
       dateRaw,
       duration: f['משך'] ?? '',
       description: extractField(f['תיאור']) ?? '',
-      category: f['קטגוריה'] ?? '',
+      category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
       videoType: f['סוג סרטון'] ?? '',
       youtubeId: (f['מזהה יוטיוב'] ?? '').split('&')[0].split('?')[0].trim(),
       videoUrl: f['קישור סרטון'] ?? '',

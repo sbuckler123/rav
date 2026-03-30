@@ -16,9 +16,11 @@ interface Category {
   id: string;
   name: string;
   status: string;
+  tables: string[];
 }
 
 const STATUS_OPTIONS = ['פעיל', 'לא פעיל'];
+const TABLE_OPTIONS = ['מאמרים', 'שיעורים', 'שיעורי וידאו', 'אירועים', 'שאלות'];
 
 async function fetchAllCategories(): Promise<Category[]> {
   const data = await airtableFetch('קטגוריות', {}, [{ field: 'שם', direction: 'asc' }]);
@@ -26,6 +28,7 @@ async function fetchAllCategories(): Promise<Category[]> {
     id: r.id,
     name: r.fields['שם'] ?? '',
     status: r.fields['סטטוס'] ?? 'פעיל',
+    tables: r.fields['טבלה'] ?? [],
   }));
 }
 
@@ -34,14 +37,13 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [formName, setFormName] = useState('');
   const [formStatus, setFormStatus] = useState('פעיל');
+  const [formTables, setFormTables] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Delete confirm state
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -59,6 +61,7 @@ export default function CategoriesPage() {
     setEditing(null);
     setFormName('');
     setFormStatus('פעיל');
+    setFormTables([]);
     setDialogOpen(true);
   }
 
@@ -66,7 +69,14 @@ export default function CategoriesPage() {
     setEditing(cat);
     setFormName(cat.name);
     setFormStatus(cat.status);
+    setFormTables(cat.tables);
     setDialogOpen(true);
+  }
+
+  function toggleTable(t: string) {
+    setFormTables(prev =>
+      prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
+    );
   }
 
   async function handleSave() {
@@ -74,10 +84,18 @@ export default function CategoriesPage() {
     setSaving(true);
     try {
       if (editing) {
-        await airtableUpdate('קטגוריות', editing.id, { 'שם': formName.trim(), 'סטטוס': formStatus });
+        await airtableUpdate('קטגוריות', editing.id, {
+          'שם': formName.trim(),
+          'סטטוס': formStatus,
+          'טבלה': formTables,
+        });
         toast.success('הקטגוריה עודכנה');
       } else {
-        await airtableCreate('קטגוריות', { 'שם': formName.trim(), 'סטטוס': formStatus });
+        await airtableCreate('קטגוריות', {
+          'שם': formName.trim(),
+          'סטטוס': formStatus,
+          'טבלה': formTables,
+        });
         toast.success('הקטגוריה נוספה');
       }
       setDialogOpen(false);
@@ -158,12 +176,17 @@ export default function CategoriesPage() {
           <div className="divide-y divide-border">
             {filtered.map(cat => (
               <div key={cat.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
-                {/* Name */}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-primary">{cat.name}</p>
+                  {cat.tables.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {cat.tables.map(t => (
+                        <span key={t} className="text-xs bg-primary/8 text-primary/70 rounded px-1.5 py-0.5">{t}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Status badge */}
                 <Badge className={cn(
                   'text-xs flex-shrink-0',
                   cat.status === 'פעיל'
@@ -173,22 +196,11 @@ export default function CategoriesPage() {
                   {cat.status}
                 </Badge>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 text-muted-foreground hover:text-primary"
-                    onClick={() => openEdit(cat)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary" onClick={() => openEdit(cat)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 text-muted-foreground hover:text-red-600"
-                    onClick={() => setDeleteTarget(cat)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-red-600" onClick={() => setDeleteTarget(cat)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -223,11 +235,33 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-1.5">
+              <Label>שייך לטבלאות</Label>
+              <div className="flex flex-wrap gap-2">
+                {TABLE_OPTIONS.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTable(t)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg border text-sm font-medium transition-all',
+                      formTables.includes(t)
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-muted-foreground border-border hover:border-primary'
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <Label>סטטוס</Label>
               <div className="flex gap-2">
                 {STATUS_OPTIONS.map(s => (
                   <button
                     key={s}
+                    type="button"
                     onClick={() => setFormStatus(s)}
                     className={cn(
                       'flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
@@ -273,11 +307,7 @@ export default function CategoriesPage() {
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
               ביטול
             </Button>
-            <Button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-600 text-white hover:bg-red-700 gap-2"
-            >
+            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 text-white hover:bg-red-700 gap-2">
               {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               מחק
             </Button>

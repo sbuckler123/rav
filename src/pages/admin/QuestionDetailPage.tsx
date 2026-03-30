@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  ArrowRight, CheckCircle2, XCircle, BookOpen,
+  ArrowRight, CheckCircle2, BookOpen,
   MessageCircle, HelpCircle, Loader2, Send, Eye, EyeOff,
   Pencil, Trash2, Check, X,
 } from 'lucide-react';
@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   getAllQuestions,
   approveQuestion,
-  rejectQuestion,
   markAnswered,
   submitReply,
   updateQuestion,
@@ -23,7 +22,7 @@ import {
 } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
 import { airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
-import { cn } from '@/lib/utils';
+import { cn, formatAdminDate } from '@/lib/utils';
 
 function writerIcon(type: string) {
   if (type === 'רב') return <BookOpen className="h-4 w-4 text-secondary" />;
@@ -128,9 +127,6 @@ export default function QuestionDetailPage() {
       if (action === 'approve') {
         await approveQuestion(id);
         toast.success('השאלה אושרה לפרסום');
-      } else if (action === 'reject') {
-        await rejectQuestion(id);
-        toast.success('השאלה נדחתה');
       } else if (action === 'toggleConsent') {
         await airtableUpdate('שאלות', id, {
           'הסכמה לפרסום': !question?.consentToPublish,
@@ -140,6 +136,20 @@ export default function QuestionDetailPage() {
       reload();
     } catch {
       toast.error('שגיאה בעדכון');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleStatusChange(newStatus: string) {
+    if (!id) return;
+    setActionLoading('status');
+    try {
+      await updateQuestion(id, { 'סטטוס': newStatus });
+      setQuestion(q => q ? { ...q, status: newStatus } : q);
+      toast.success('הסטטוס עודכן');
+    } catch {
+      toast.error('שגיאה בעדכון הסטטוס');
     } finally {
       setActionLoading(null);
     }
@@ -255,7 +265,7 @@ export default function QuestionDetailPage() {
                     {question.askerName ?? 'שואל אנונימי'}
                   </span>
                   {question.createdAt && (
-                    <span className="text-xs text-muted-foreground mt-0.5">{question.createdAt}</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">{formatAdminDate(question.createdAt)}</span>
                   )}
                   <div className="mr-auto flex items-center gap-1 flex-shrink-0">
                     {editingQuestion ? (
@@ -325,7 +335,7 @@ export default function QuestionDetailPage() {
                       <div className="flex items-start gap-2 mb-2 flex-wrap">
                         <span className="text-sm font-semibold text-primary">{answer.writerType}</span>
                         {answer.date && (
-                          <span className="text-xs text-muted-foreground mt-0.5">{answer.date}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">{formatAdminDate(answer.date)}</span>
                         )}
                         <div className="mr-auto flex items-center gap-1 flex-shrink-0">
                           {editingAnswerId === answer.id ? (
@@ -452,7 +462,7 @@ export default function QuestionDetailPage() {
               )}
               <div>
                 <dt className="text-xs text-muted-foreground">תאריך</dt>
-                <dd className="font-medium text-primary">{question.createdAt ?? '—'}</dd>
+                <dd className="font-medium text-primary">{formatAdminDate(question.createdAt)}</dd>
               </div>
               {categoryName && (
                 <div>
@@ -461,8 +471,35 @@ export default function QuestionDetailPage() {
                 </div>
               )}
               <div>
-                <dt className="text-xs text-muted-foreground">סטטוס</dt>
-                <dd className="mt-0.5">{statusBadge(question.status)}</dd>
+                <dt className="text-xs text-muted-foreground mb-2">סטטוס</dt>
+                <dd>
+                  <div className="flex flex-wrap gap-2">
+                    {(['ממתין', 'נענה', 'נדחה'] as const).map(s => {
+                      const active = (question.status ?? 'ממתין') === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={actionLoading === 'status'}
+                          onClick={() => !active && handleStatusChange(s)}
+                          className={cn(
+                            'px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all touch-manipulation min-h-[44px]',
+                            active
+                              ? s === 'נענה' ? 'bg-green-500 text-white border-green-500 shadow-sm'
+                              : s === 'נדחה' ? 'bg-red-500 text-white border-red-500 shadow-sm'
+                              :                'bg-amber-400 text-white border-amber-400 shadow-sm'
+                              : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary active:bg-muted',
+                            actionLoading === 'status' && 'opacity-50 cursor-not-allowed',
+                          )}
+                        >
+                          {actionLoading === 'status' && active
+                            ? <Loader2 className="h-3 w-3 animate-spin inline" />
+                            : s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">הסכמה לפרסום</dt>
@@ -508,19 +545,6 @@ export default function QuestionDetailPage() {
                   : question.consentToPublish ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />
                 }
                 {question.consentToPublish ? 'בטל הסכמה לפרסום' : 'סמן הסכמה לפרסום'}
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full min-h-[44px] gap-2 justify-start border-red-200 text-red-600 hover:bg-red-50"
-                disabled={question.status === 'נדחה' || !!actionLoading}
-                onClick={() => handleAction('reject')}
-              >
-                {actionLoading === 'reject'
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <XCircle className="h-4 w-4" />
-                }
-                {question.status === 'נדחה' ? 'נדחה' : 'דחה שאלה'}
               </Button>
 
               <div className="pt-2 border-t border-border">

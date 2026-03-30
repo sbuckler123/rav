@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2, Tag } from 'lucide-react';
+import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import { getAllQuestions, createQuestion, submitReply, type AdminQuestion } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
 import { airtableGetFieldChoices } from '@/api/airtable';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { cn, formatAdminDate } from '@/lib/utils';
 
 const STATUS_TABS = [
   { label: 'הכל',   value: 'all' },
@@ -19,13 +18,6 @@ const STATUS_TABS = [
   { label: 'נדחה',  value: 'נדחה' },
 ];
 
-function statusBadge(status?: string) {
-  switch (status) {
-    case 'נענה':  return <Badge className="bg-green-100 text-green-800 border-green-200">נענה</Badge>;
-    case 'נדחה':  return <Badge className="bg-red-100 text-red-800 border-red-200">נדחה</Badge>;
-    default:      return <Badge className="bg-amber-100 text-amber-800 border-amber-200">ממתין</Badge>;
-  }
-}
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) {
   return (
@@ -136,13 +128,6 @@ export default function QuestionsPage() {
           <MessageCircleQuestion className="h-5 w-5 text-primary" />
         </div>
         <h1 className="text-xl font-bold text-primary flex-1 min-w-0 truncate">שאלות ותשובות</h1>
-        <Link
-          to="/admin/categories"
-          className="inline-flex items-center gap-2 px-3 sm:px-4 h-11 rounded-md border border-input bg-white text-sm font-medium text-foreground hover:bg-muted transition-colors flex-shrink-0"
-        >
-          <Tag className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">קטגוריות</span>
-        </Link>
         <Button
           onClick={() => setShowDialog(true)}
           className="bg-secondary text-primary hover:bg-secondary/90 inline-flex items-center gap-2 h-11 flex-shrink-0"
@@ -219,10 +204,10 @@ export default function QuestionsPage() {
                   <p className="text-sm font-medium text-primary truncate">
                     {q.questionContent}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
                     {q.askerName && <span>{q.askerName}</span>}
                     {q.askerName && q.createdAt && <span className="mx-1.5">·</span>}
-                    {q.createdAt && <span>{q.createdAt}</span>}
+                    {q.createdAt && <span>{formatAdminDate(q.createdAt)}</span>}
                     {getCategoryName(q.category) && (
                       <>
                         <span className="mx-1.5">·</span>
@@ -231,14 +216,21 @@ export default function QuestionsPage() {
                     )}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  {statusBadge(q.status)}
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                  <span className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-medium border flex-shrink-0',
+                    q.status === 'נענה' ? 'bg-green-100 text-green-800 border-green-200' :
+                    q.status === 'נדחה' ? 'bg-red-100 text-red-800 border-red-200' :
+                                          'bg-amber-100 text-amber-800 border-amber-200',
+                  )}>
+                    {q.status ?? 'ממתין'}
+                  </span>
                   {q.answers.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:block">
                       {q.answers.length} תשובות
                     </span>
                   )}
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                 </div>
               </Link>
             ))}

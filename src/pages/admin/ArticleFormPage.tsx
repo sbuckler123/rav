@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
-import { ArrowRight, Loader2, Save, Eye, EyeOff, Plus, Check } from 'lucide-react';
+import { ArrowRight, Loader2, Save, Eye, EyeOff, Plus, Check, Pencil, X } from 'lucide-react';
 import { airtableFetch, airtableCreate, airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
+import { fetchCategories, createCategory, renameCategory, deleteCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,20 +15,20 @@ import { cn } from '@/lib/utils';
 interface FormState {
   title: string;
   yearNum: string;
-  categories: string;   // single-select
-  tags: string[];       // multi-select
+  categoryId: string;  // linked record ID
+  tags: string[];
   status: string;
   readTime: string;
   abstract: string;
   fullContent: string;
   pdfUrl: string;
-  keyPoints: string;    // one per line
+  keyPoints: string;
   sources: string;
 }
 
 const EMPTY_FORM: FormState = {
   title: '', yearNum: '',
-  categories: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
+  categoryId: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
 
@@ -52,17 +53,22 @@ export default function ArticleFormPage() {
   const [createdByName, setCreatedByName] = useState('');
   const [updatedByName, setUpdatedByName] = useState('');
   const [gregYearOptions, setGregYearOptions] = useState<string[]>([]);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
-  const [tagOptions, setTagOptions] = useState<string[]>([]);
+
+  const [categoryOptions, setCategoryOptions] = useState<Category[]>([]);
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryInput, setEditCategoryInput] = useState('');
+  const [savingCategory, setSavingCategory] = useState(false);
+
+  const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [addingTag, setAddingTag] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
 
   useEffect(() => {
     const tasks: Promise<any>[] = [
       airtableGetFieldChoices('מאמרים', 'שנה לועזית'),
-      airtableGetFieldChoices('מאמרים', 'קטגוריות'),
+      fetchCategories('מאמרים'),
       airtableGetFieldChoices('מאמרים', 'תגיות'),
     ];
     if (isEdit) {
@@ -71,9 +77,9 @@ export default function ArticleFormPage() {
     }
 
     Promise.all(tasks)
-      .then(([gregChoices, catChoices, tagChoices, articlesData, usersData]) => {
+      .then(([gregChoices, cats, tagChoices, articlesData, usersData]) => {
         setGregYearOptions(gregChoices);
-        setCategoryOptions(catChoices);
+        setCategoryOptions(cats);
         setTagOptions(tagChoices);
         if (!isEdit || !articlesData) return;
 
@@ -81,7 +87,6 @@ export default function ArticleFormPage() {
         if (!record) { toast.error('המאמר לא נמצא'); return; }
         const f = record.fields;
 
-        // Resolve linked user names
         const userRecords: any[] = usersData?.records ?? [];
         const getUserName = (ids: any) => {
           if (!Array.isArray(ids) || !ids.length) return '';
@@ -89,12 +94,13 @@ export default function ArticleFormPage() {
         };
         setCreatedByName(getUserName(f['נוצר על ידי']));
         setUpdatedByName(getUserName(f['עודכן על ידי']));
-
         setLinkId(extractField(f['מזהה קישור']));
+
+        const linkedCatIds: string[] = f['קטגוריה'] ?? [];
         setForm({
           title: extractField(f['כותרת']),
           yearNum: String(f['שנה לועזית'] ?? ''),
-          categories: Array.isArray(f['קטגוריות']) ? (f['קטגוריות'][0] ?? '') : extractField(f['קטגוריות']),
+          categoryId: linkedCatIds[0] ?? '',
           tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
           status: extractField(f['סטטוס']) || 'לא פעיל',
           readTime: extractField(f['זמן קריאה']),
@@ -113,26 +119,80 @@ export default function ArticleFormPage() {
     setForm(f => ({ ...f, [key]: val }));
   }
 
+  async function handleAddCategory() {
+    const name = newCategoryInput.trim();
+    if (!name) return;
+    setSavingCategory(true);
+    try {
+      const created = await createCategory(['מאמרים'], name);
+      setCategoryOptions(prev => [...prev, created]);
+      field('categoryId', created.id);
+      setNewCategoryInput('');
+      setAddingCategory(false);
+      toast.success('הקטגוריה נוספה');
+    } catch {
+      toast.error('שגיאה בהוספת קטגוריה');
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
+  async function handleRenameCategory(cat: Category) {
+    const newName = editCategoryInput.trim();
+    if (!newName || newName === cat.name) { setEditingCategoryId(null); return; }
+    setSavingCategory(true);
+    try {
+      await renameCategory(cat.id, newName);
+      setCategoryOptions(prev => prev.map(c => c.id === cat.id ? { ...c, name: newName } : c));
+      setEditingCategoryId(null);
+      toast.success('הקטגוריה עודכנה');
+    } catch {
+      toast.error('שגיאה בעדכון הקטגוריה');
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
+  async function handleDeleteCategory(cat: Category) {
+    setSavingCategory(true);
+    try {
+      await deleteCategory(cat.id);
+      setCategoryOptions(prev => prev.filter(c => c.id !== cat.id));
+      if (form.categoryId === cat.id) field('categoryId', '');
+      toast.success('הקטגוריה נמחקה');
+    } catch {
+      toast.error('שגיאה במחיקת הקטגוריה');
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
+  function handleAddTag() {
+    const t = newTagInput.trim();
+    if (t && !form.tags.includes(t)) {
+      if (!tagOptions.includes(t)) setTagOptions(prev => [...prev, t]);
+      field('tags', [...form.tags, t]);
+    }
+    setNewTagInput('');
+    setAddingTag(false);
+  }
+
   async function handleSave() {
     if (!form.title.trim()) { toast.error('כותרת היא שדה חובה'); return; }
     setSaving(true);
     try {
-      // תקציר and זמן קריאה are AI-generated by Airtable — never written via API
-      // Only include fields that have actual values — Airtable rejects empty strings
-      // for URL / select / number field types
       const fields: Record<string, unknown> = {
         'כותרת': form.title.trim(),
       };
 
-      if (form.fullContent.trim()) fields['תוכן מלא']    = form.fullContent.trim();
-      if (form.pdfUrl.trim())      fields['קישור PDF']   = form.pdfUrl.trim();
-      if (form.keyPoints.trim())   fields['נקודות מפתח'] = form.keyPoints.trim();
-      if (form.sources.trim())     fields['מקורות']       = form.sources.trim();
-      if (form.categories)         fields['קטגוריות']    = form.categories;
+      if (form.categoryId)       fields['קטגוריה']     = [form.categoryId];
+      if (form.fullContent.trim()) fields['תוכן מלא']   = form.fullContent.trim();
+      if (form.pdfUrl.trim())    fields['קישור PDF']    = form.pdfUrl.trim();
+      if (form.keyPoints.trim()) fields['נקודות מפתח'] = form.keyPoints.trim();
+      if (form.sources.trim())   fields['מקורות']       = form.sources.trim();
+      if (form.tags.length)      fields['תגיות']        = form.tags;
       fields['סטטוס'] = form.status;
-      if (form.tags.length)        fields['תגיות']        = form.tags;
       if (form.yearNum.trim()) {
-        // שנה לועזית is a select field → send as array; fall back to number if no choices
         fields['שנה לועזית'] = gregYearOptions.length
           ? [form.yearNum.trim()]
           : parseInt(form.yearNum);
@@ -186,7 +246,7 @@ export default function ArticleFormPage() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
 
-        {/* Metadata — left sidebar */}
+        {/* Metadata sidebar */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white rounded-xl border border-border p-5 space-y-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">פרטי מאמר</p>
@@ -252,23 +312,86 @@ export default function ArticleFormPage() {
               )}
             </div>
 
+            {/* Categories */}
             <div className="space-y-1.5">
-              <Label>קטגוריות</Label>
+              <Label>קטגוריה</Label>
               <div className="flex flex-wrap gap-2">
                 {categoryOptions.map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => field('categories', form.categories === cat ? '' : cat)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
-                      form.categories === cat
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-muted-foreground border-border hover:border-primary'
-                    )}
-                  >
-                    {cat}
-                  </button>
+                  editingCategoryId === cat.id ? (
+                    <div key={cat.id} className="flex items-center gap-1">
+                      <Input
+                        autoFocus
+                        value={editCategoryInput}
+                        onChange={e => setEditCategoryInput(e.target.value)}
+                        disabled={savingCategory}
+                        className="h-8 w-32 text-sm border border-secondary bg-white focus-visible:ring-1"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') { e.preventDefault(); handleRenameCategory(cat); }
+                          if (e.key === 'Escape') setEditingCategoryId(null);
+                        }}
+                      />
+                      <button type="button" disabled={savingCategory} onClick={() => handleRenameCategory(cat)}
+                        className="p-1.5 rounded-md text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
+                        {savingCategory ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      </button>
+                      <button type="button" disabled={savingCategory} onClick={() => setEditingCategoryId(null)}
+                        className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      key={cat.id}
+                      className={cn(
+                        'group inline-flex items-center rounded-full border text-sm font-medium transition-all overflow-hidden',
+                        form.categoryId === cat.id
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-muted-foreground border-border'
+                      )}
+                    >
+                      <button
+                        type="button"
+                        disabled={savingCategory}
+                        onClick={() => field('categoryId', form.categoryId === cat.id ? '' : cat.id)}
+                        className="px-3 py-1.5 hover:opacity-80 transition-opacity disabled:opacity-50"
+                      >
+                        {cat.name}
+                      </button>
+                      <div className={cn(
+                        'flex items-center gap-0.5 pr-1.5 transition-all',
+                        'opacity-100 max-w-[3rem] sm:opacity-0 sm:max-w-0 sm:group-hover:opacity-100 sm:group-hover:max-w-[3rem]',
+                      )}>
+                        <button
+                          type="button"
+                          disabled={savingCategory}
+                          title="שנה שם"
+                          onClick={() => { setEditingCategoryId(cat.id); setEditCategoryInput(cat.name); }}
+                          className={cn(
+                            'p-1 rounded transition-colors',
+                            form.categoryId === cat.id
+                              ? 'hover:bg-white/20 text-white/80 hover:text-white'
+                              : 'hover:bg-muted text-muted-foreground hover:text-primary'
+                          )}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingCategory}
+                          title="מחק קטגוריה"
+                          onClick={() => handleDeleteCategory(cat)}
+                          className={cn(
+                            'p-1 rounded transition-colors',
+                            form.categoryId === cat.id
+                              ? 'hover:bg-white/20 text-white/80 hover:text-white'
+                              : 'hover:bg-red-50 text-muted-foreground hover:text-red-500'
+                          )}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ))}
                 {!addingCategory && (
                   <button
@@ -288,68 +411,47 @@ export default function ArticleFormPage() {
                     value={newCategoryInput}
                     onChange={e => setNewCategoryInput(e.target.value)}
                     placeholder="שם הקטגוריה החדשה..."
+                    disabled={savingCategory}
                     className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
                     onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (newCategoryInput.trim()) {
-                          setCategoryOptions(prev => [...prev, newCategoryInput.trim()]);
-                          field('categories', newCategoryInput.trim());
-                          setAddingCategory(false);
-                        }
-                      }
+                      if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); }
+                      if (e.key === 'Escape') setAddingCategory(false);
                     }}
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (newCategoryInput.trim()) {
-                        setCategoryOptions(prev => [...prev, newCategoryInput.trim()]);
-                        field('categories', newCategoryInput.trim());
-                      }
-                      setAddingCategory(false);
-                    }}
-                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors"
-                  >
-                    <Check className="h-4 w-4" />
+                  <button type="button" onClick={handleAddCategory} disabled={savingCategory}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors disabled:opacity-50">
+                    {savingCategory ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setAddingCategory(false)}
-                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <button type="button" onClick={() => setAddingCategory(false)} disabled={savingCategory}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors">
                     ביטול
                   </button>
                 </div>
               )}
-              {addingCategory && (
-                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף אוטומטית לרשימה בעת השמירה</p>
-              )}
             </div>
 
+            {/* Tags */}
             <div className="space-y-1.5">
               <Label>תגיות</Label>
               <div className="flex flex-wrap gap-2">
-                {tagOptions.map(tag => {
-                  const selected = form.tags.includes(tag);
+                {tagOptions.map(tagName => {
+                  const selected = form.tags.includes(tagName);
                   return (
                     <button
-                      key={tag}
+                      key={tagName}
                       type="button"
-                      onClick={() =>
-                        field('tags', selected
-                          ? form.tags.filter(t => t !== tag)
-                          : [...form.tags, tag]
-                        )
-                      }
+                      onClick={() => field('tags', selected
+                        ? form.tags.filter(t => t !== tagName)
+                        : [...form.tags, tagName]
+                      )}
                       className={cn(
-                        'px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
+                        'inline-flex items-center px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
                         selected
                           ? 'bg-secondary text-primary border-secondary'
                           : 'bg-white text-muted-foreground border-border hover:border-secondary'
                       )}
                     >
-                      {tag}
+                      {tagName}
                     </button>
                   );
                 })}
@@ -373,36 +475,16 @@ export default function ArticleFormPage() {
                     placeholder="שם התגית החדשה..."
                     className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
                     onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const t = newTagInput.trim();
-                        if (t && !form.tags.includes(t)) {
-                          if (!tagOptions.includes(t)) setTagOptions(prev => [...prev, t]);
-                          field('tags', [...form.tags, t]);
-                        }
-                        setAddingTag(false);
-                      }
+                      if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }
+                      if (e.key === 'Escape') setAddingTag(false);
                     }}
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const t = newTagInput.trim();
-                      if (t && !form.tags.includes(t)) {
-                        if (!tagOptions.includes(t)) setTagOptions(prev => [...prev, t]);
-                        field('tags', [...form.tags, t]);
-                      }
-                      setAddingTag(false);
-                    }}
-                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors"
-                  >
+                  <button type="button" onClick={handleAddTag}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-secondary bg-white text-sm text-primary hover:bg-secondary/10 transition-colors">
                     <Check className="h-4 w-4" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setAddingTag(false)}
-                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <button type="button" onClick={() => setAddingTag(false)}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors">
                     ביטול
                   </button>
                 </div>
@@ -434,32 +516,21 @@ export default function ArticleFormPage() {
               <Textarea value={form.keyPoints} onChange={e => field('keyPoints', e.target.value)}
                 placeholder="נקודה אחת בכל שורה..." rows={4}
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none" />
-              <p className="text-xs text-muted-foreground">נקודה אחת בכל שורה</p>
             </div>
 
             <div className="space-y-1.5">
               <Label>מקורות</Label>
               <Textarea value={form.sources} onChange={e => field('sources', e.target.value)}
-                placeholder="מקורות ומראי מקום..." rows={3}
+                placeholder="מקורות ורפרנסים..." rows={3}
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none" />
             </div>
 
-            {isEdit && linkId && (
-              <div className="space-y-1.5">
-                <Label>מזהה קישור</Label>
-                <div className="px-3 py-2 rounded-md border border-border bg-muted text-sm text-muted-foreground font-mono" dir="ltr">
-                  {linkId}
-                </div>
-                <p className="text-xs text-muted-foreground">שדה זה נוצר אוטומטית</p>
-              </div>
-            )}
-
-            {isEdit && (createdByName || updatedByName) && (
+            {isEdit && (createdByName || updatedByName || linkId) && (
               <div className="pt-3 border-t border-border space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">מעקב שינויים</p>
                 {createdByName && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">נוצר על ידיי</span>
+                    <span className="text-muted-foreground">נוצר על ידי</span>
                     <span className="font-medium text-primary">{createdByName}</span>
                   </div>
                 )}
@@ -469,78 +540,48 @@ export default function ArticleFormPage() {
                     <span className="font-medium text-primary">{updatedByName}</span>
                   </div>
                 )}
+                {linkId && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">מזהה קישור</span>
+                    <span className="font-mono text-xs text-muted-foreground">{linkId}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Content editor — right */}
-        <div className="lg:col-span-3">
-          <div className="bg-white rounded-xl border border-border overflow-hidden">
-            {/* Editor toolbar */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-              <p className="text-sm font-semibold text-primary">תוכן מלא</p>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Markdown</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => setShowPreview(v => !v)}
-                >
-                  {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  {showPreview ? 'הסתר תצוגה מקדימה' : 'הצג תצוגה מקדימה'}
-                </Button>
-              </div>
+        {/* Content area */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="bg-white rounded-xl border border-border p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">תוכן</p>
+              <button
+                type="button"
+                onClick={() => setShowPreview(p => !p)}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {showPreview ? 'עריכה' : 'תצוגה מקדימה'}
+              </button>
             </div>
 
             {showPreview ? (
-              /* Split: editor + preview */
-              <div className="grid md:grid-cols-2 divide-x divide-x-reverse divide-border">
-                <div className="p-4">
-                  <Textarea
-                    value={form.fullContent}
-                    onChange={e => field('fullContent', e.target.value)}
-                    placeholder="כתוב תוכן בפורמט Markdown..."
-                    className="border-0 focus-visible:ring-0 resize-none font-mono text-sm min-h-[500px] p-0"
-                    dir="rtl"
-                  />
-                </div>
-                <div className="p-5 overflow-y-auto max-h-[600px]">
-                  <p className="text-xs text-muted-foreground mb-3 font-medium">תצוגה מקדימה</p>
-                  {form.fullContent ? (
-                    <div className="prose prose-sm !max-w-none prose-headings:font-serif prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:mb-3">
-                      <ReactMarkdown>
-                        {form.fullContent.replace(/\n(?!\n)/g, '\n\n')}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">התוכן יופיע כאן...</p>
-                  )}
-                </div>
+              <div className="prose prose-sm max-w-none min-h-[300px] text-right" dir="rtl">
+                {form.fullContent
+                  ? <ReactMarkdown>{form.fullContent}</ReactMarkdown>
+                  : <p className="text-muted-foreground italic">אין תוכן להצגה</p>
+                }
               </div>
             ) : (
-              /* Editor only */
-              <div className="p-4">
-                <Textarea
-                  value={form.fullContent}
-                  onChange={e => field('fullContent', e.target.value)}
-                  placeholder="כתוב תוכן בפורמט Markdown...&#10;&#10;## כותרת&#10;&#10;פסקה רגילה עם **טקסט מודגש** ו*נטוי*.&#10;&#10;- פריט ברשימה&#10;- פריט נוסף"
-                  className="border-0 focus-visible:ring-0 resize-none font-mono text-sm min-h-[500px] p-0"
-                  dir="rtl"
-                />
-              </div>
+              <Textarea
+                value={form.fullContent}
+                onChange={e => field('fullContent', e.target.value)}
+                placeholder="תוכן המאמר המלא (Markdown נתמך)..."
+                rows={20}
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none font-mono text-sm"
+              />
             )}
-
-            {/* Word count */}
-            <div className="px-5 py-2 border-t border-border bg-muted/30">
-              <p className="text-xs text-muted-foreground">
-                {form.fullContent.length > 0
-                  ? `${form.fullContent.split(/\s+/).filter(Boolean).length} מילים · ${form.fullContent.length} תווים`
-                  : 'לא הוזן תוכן עדיין'
-                }
-              </p>
-            </div>
           </div>
         </div>
       </div>

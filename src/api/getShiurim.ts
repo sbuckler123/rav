@@ -30,15 +30,18 @@ function formatDate(raw: string): string {
 }
 
 export async function getShiurim(): Promise<{ shiurim: ShiurEvent[] }> {
-  const data = await airtableFetch(
-    'שיעורים',
-    {},
-    [{ field: 'תאריך', direction: 'asc' }]
-  );
+  const [shiurimData, catsData] = await Promise.all([
+    airtableFetch('שיעורים', {}, [{ field: 'תאריך', direction: 'asc' }]),
+    airtableFetch('קטגוריות', {}),
+  ]);
 
-  const shiurim: ShiurEvent[] = data.records.map((r: any) => {
+  const catMap: Record<string, string> = {};
+  catsData.records.forEach((r: any) => { catMap[r.id] = r.fields['שם'] ?? ''; });
+
+  const shiurim: ShiurEvent[] = shiurimData.records.map((r: any) => {
     const f = r.fields;
     const dateRaw = f['תאריך'] ?? '';
+    const catIds: string[] = f['קטגוריה'] ?? [];
     return {
       id: r.id,
       linkId: extractField(f['מזהה קישור']) ?? r.id,
@@ -48,7 +51,7 @@ export async function getShiurim(): Promise<{ shiurim: ShiurEvent[] }> {
       time: extractField(f['שעה']) ?? extractField(f['זמן']) ?? '',
       location: extractField(f['מיקום']) ?? '',
       description: extractField(f['תיאור']) ?? '',
-      category: extractField(f['קטגוריה']) ?? extractField(f['סוג']) ?? '',
+      category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
     };
   });
 

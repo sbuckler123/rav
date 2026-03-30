@@ -25,14 +25,22 @@ function extractField(val: any): string | undefined {
 }
 
 export async function getArticles(): Promise<{ articles: Article[] }> {
-  const data = await airtableFetch(
-    'מאמרים',
-    { filterByFormula: `{סטטוס} = "פעיל"` },
-    [{ field: 'שנה לועזית', direction: 'desc' }]
-  );
+  const [articlesData, catsData] = await Promise.all([
+    airtableFetch(
+      'מאמרים',
+      { filterByFormula: `{סטטוס} = "פעיל"` },
+      [{ field: 'שנה לועזית', direction: 'desc' }]
+    ),
+    airtableFetch('קטגוריות', {}),
+  ]);
 
-  const articles: Article[] = data.records.map((r: any) => {
+  const catMap: Record<string, string> = {};
+  catsData.records.forEach((r: any) => { catMap[r.id] = r.fields['שם'] ?? ''; });
+
+  const articles: Article[] = articlesData.records.map((r: any) => {
     const f = r.fields;
+    const catIds: string[] = f['קטגוריה'] ?? [];
+    const categoryName = catIds.length ? (catMap[catIds[0]] ?? '') : '';
     return {
       id: r.id,
       linkId: extractField(f['מזהה קישור']) ?? r.id,
@@ -41,7 +49,7 @@ export async function getArticles(): Promise<{ articles: Article[] }> {
       yeshiva: f['מוסד'] ?? '',
       year: extractField(Array.isArray(f['שנה עברית']) ? f['שנה עברית'][0] : f['שנה עברית']) ?? '',
       yearNum: f['שנה לועזית'] ?? 0,
-      categories: Array.isArray(f['קטגוריות']) ? f['קטגוריות'] : (f['קטגוריות'] ? [f['קטגוריות']] : []),
+      categories: categoryName ? [categoryName] : [],
       tags: f['תגיות'] ?? [],
       readTime: extractField(f['זמן קריאה']),
       abstract: extractField(f['תקציר']),

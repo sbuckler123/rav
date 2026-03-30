@@ -10,6 +10,7 @@ import {
   BookOpen,
   Video,
   Users,
+  Tag,
   LogOut,
   Menu,
   X,
@@ -25,6 +26,7 @@ const navItems = [
   { label: 'שיעורי וידאו',   path: '/admin/videos',    icon: Video },
   { label: 'אירועים',         path: '/admin/events',    icon: Tv2 },
   { label: 'מאמרים',          path: '/admin/articles',  icon: BookOpen },
+  { label: 'קטגוריות',        path: '/admin/categories', icon: Tag },
   { label: 'משתמשים',         path: '/admin/users',     icon: Users },
 ];
 
@@ -126,7 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="absolute inset-0 bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="absolute right-0 top-0 h-full w-64 z-50 flex flex-col shadow-xl">
+          <aside className="absolute right-0 top-0 h-full w-60 sm:w-64 z-50 flex flex-col shadow-xl">
             {sidebar}
           </aside>
         </div>

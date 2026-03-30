@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete, airtableGetFieldChoices } from '@/api/airtable';
+import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
+import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,8 @@ interface AdminVideo {
   dateDisplay: string;
   duration: string;
   description: string;
-  category: string;
+  categoryId: string;
+  category: string;   // resolved name for display
   videoType: string;
   youtubeId: string;
   videoUrl: string;
@@ -38,7 +40,7 @@ interface FormState {
   date: string;
   duration: string;
   description: string;
-  category: string;
+  categoryId: string;
   youtubeId: string;
   views: string;
   isNew: boolean;
@@ -46,7 +48,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  title: '', date: '', duration: '', description: '', category: '',
+  title: '', date: '', duration: '', description: '', categoryId: '',
   youtubeId: '', views: '', isNew: false, status: 'פעיל',
 };
 
@@ -64,15 +66,16 @@ function formatDisplay(raw: string): string {
   return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
 }
 
-async function fetchVideos(userRecords: any[] = []): Promise<AdminVideo[]> {
-  const data = await airtableFetch('שיעורי וידאו', {}, [{ field: 'תאריך', direction: 'desc' }]);
+function buildVideos(records: any[], catMap: Record<string, string>, userRecords: any[]): AdminVideo[] {
   const getUserName = (ids: any) => {
     if (!Array.isArray(ids) || !ids.length) return '';
     return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
   };
-  return data.records.map((r: any) => {
+  return records.map((r: any) => {
     const f = r.fields;
     const dateRaw = f['תאריך'] ?? '';
+    const catIds: string[] = f['קטגוריה'] ?? [];
+    const categoryId = catIds[0] ?? '';
     return {
       id: r.id,
       title: f['כותרת'] ?? '',
@@ -80,7 +83,8 @@ async function fetchVideos(userRecords: any[] = []): Promise<AdminVideo[]> {
       dateDisplay: formatDisplay(dateRaw),
       duration: f['משך'] ?? '',
       description: extractField(f['תיאור']),
-      category: f['קטגוריה'] ?? '',
+      categoryId,
+      category: catMap[categoryId] ?? '',
       videoType: f['סוג סרטון'] ?? 'youtube',
       youtubeId: (f['מזהה יוטיוב'] ?? '').split('&')[0].split('?')[0].trim(),
       videoUrl: f['קישור סרטון'] ?? '',
@@ -104,6 +108,7 @@ function getThumb(v: AdminVideo): string {
 export default function AdminVideosPage() {
   const { user } = useAuth();
   const [videos, setVideos] = useState<AdminVideo[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -111,35 +116,39 @@ export default function AdminVideosPage() {
   const [editing, setEditing] = useState<AdminVideo | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const [deleteTarget, setDeleteTarget] = useState<AdminVideo | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [categoryChoices, setCategoryChoices] = useState<string[]>([]);
-  const [addingCategory, setAddingCategory] = useState(false);
-
   function load() {
     setLoading(true);
-    airtableFetch('משתמשים')
-      .then(usersData => fetchVideos(usersData.records ?? []))
-      .then(setVideos)
+    Promise.all([
+      airtableFetch('שיעורי וידאו', {}, [{ field: 'תאריך', direction: 'desc' }]),
+      airtableFetch('משתמשים'),
+      fetchCategories('שיעורי וידאו'),
+    ])
+      .then(([videosData, usersData, cats]) => {
+        setCategories(cats);
+        const catMap = Object.fromEntries(cats.map((c: Category) => [c.id, c.name]));
+        setVideos(buildVideos(videosData.records ?? [], catMap, usersData.records ?? []));
+      })
       .catch(() => toast.error('שגיאה בטעינת שיעורי וידאו'))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []);
 
-  function openDialog() {
-    setAddingCategory(false);
-    airtableGetFieldChoices('שיעורי וידאו', 'קטגוריה')
-      .then(setCategoryChoices)
-      .catch(() => {});
+  function field<K extends keyof FormState>(key: K, val: FormState[K]) {
+    setForm(f => ({ ...f, [key]: val }));
   }
 
   function openAdd() {
     setEditing(null);
     setForm(EMPTY_FORM);
-    openDialog();
+    setAddingCategory(false);
+    setNewCategoryName('');
     setDialogOpen(true);
   }
 
@@ -150,37 +159,42 @@ export default function AdminVideosPage() {
       date: v.dateRaw,
       duration: v.duration,
       description: v.description,
-      category: v.category,
+      categoryId: v.categoryId,
       youtubeId: v.youtubeId,
       views: v.views > 0 ? String(v.views) : '',
       isNew: v.isNew,
       status: v.status,
     });
-    openDialog();
+    setAddingCategory(false);
+    setNewCategoryName('');
     setDialogOpen(true);
-  }
-
-  function field<K extends keyof FormState>(key: K, val: FormState[K]) {
-    setForm(f => ({ ...f, [key]: val }));
   }
 
   async function handleSave() {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
+      let categoryId = form.categoryId;
+
+      if (addingCategory && newCategoryName.trim()) {
+        const created = await createCategory(['שיעורי וידאו'], newCategoryName.trim());
+        setCategories(prev => [...prev, created]);
+        categoryId = created.id;
+      }
+
       const fields: Record<string, unknown> = {
         'כותרת': form.title.trim(),
         'חדש': form.isNew,
+        'סוג סרטון': 'youtube',
       };
-      if (form.date)              fields['תאריך']            = form.date;
-      if (form.duration.trim())   fields['משך']              = form.duration.trim();
-      if (form.description.trim()) fields['תיאור']           = form.description.trim();
-      if (form.category.trim())   fields['קטגוריה']          = form.category.trim();
-      fields['סוג סרטון'] = 'youtube';
-      if (form.status) fields['סטטוס'] = form.status;
-      if (form.youtubeId.trim())  fields['מזהה יוטיוב'] = form.youtubeId.trim();
+      if (form.date)               fields['תאריך']       = form.date;
+      if (form.duration.trim())    fields['משך']         = form.duration.trim();
+      if (form.description.trim()) fields['תיאור']       = form.description.trim();
+      if (categoryId)              fields['קטגוריה']     = [categoryId];
+      if (form.status)             fields['סטטוס']       = form.status;
+      if (form.youtubeId.trim())   fields['מזהה יוטיוב'] = form.youtubeId.trim();
       const viewsParsed = parseInt(form.views);
-      if (!isNaN(viewsParsed))    fields['צפיות']            = viewsParsed;
+      if (!isNaN(viewsParsed))     fields['צפיות']       = viewsParsed;
 
       if (user?.id) fields['עודכן על ידי'] = [user.id];
 
@@ -231,10 +245,7 @@ export default function AdminVideosPage() {
           <h1 className="text-xl font-bold text-primary">שיעורי וידאו</h1>
           <p className="text-sm text-muted-foreground">{videos.length} שיעורים</p>
         </div>
-        <Button
-          onClick={openAdd}
-          className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0"
-        >
+        <Button onClick={openAdd} className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
           <Plus className="h-4 w-4 flex-shrink-0" />
           <span className="hidden sm:inline">שיעור חדש</span>
           <span className="sm:hidden">חדש</span>
@@ -244,12 +255,9 @@ export default function AdminVideosPage() {
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+        <Input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="חיפוש לפי כותרת או קטגוריה..."
-          className="pr-9 border border-input bg-white"
-        />
+          className="pr-9 border border-input bg-white" />
       </div>
 
       {/* List */}
@@ -272,15 +280,12 @@ export default function AdminVideosPage() {
               const thumb = getThumb(v);
               return (
                 <div key={v.id} className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
-                  {/* Thumbnail */}
                   <div className="w-16 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
                     {thumb
                       ? <img src={thumb} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center"><Video className="h-4 w-4 text-muted-foreground" /></div>
                     }
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-primary truncate text-sm">{v.title}</p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
@@ -288,26 +293,18 @@ export default function AdminVideosPage() {
                       {v.duration && <span className="text-xs text-muted-foreground hidden sm:inline">· {v.duration}</span>}
                     </div>
                   </div>
-
-                  {/* Badges */}
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {v.isNew && <Badge className="bg-red-100 text-red-700 border-red-200 text-xs hidden sm:inline-flex">חדש</Badge>}
                     {v.category && <Badge variant="secondary" className="text-xs hidden sm:inline-flex">{v.category}</Badge>}
                     <Youtube className="h-4 w-4 text-red-500 flex-shrink-0" />
                   </div>
-
-                  {/* Actions */}
                   <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <button
-                      onClick={() => openEdit(v)}
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-                    >
+                    <button onClick={() => openEdit(v)}
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors">
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button
-                      onClick={() => setDeleteTarget(v)}
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
-                    >
+                    <button onClick={() => setDeleteTarget(v)}
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -327,7 +324,7 @@ export default function AdminVideosPage() {
             <DialogDescription>{editing ? 'עדכן את פרטי השיעור' : 'הוסף שיעור וידאו חדש'}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 max-h-[65vh] overflow-y-auto pl-1">
+          <div className="space-y-4 max-h-[65vh] overflow-y-auto ps-1">
             <div className="space-y-1.5">
               <Label>כותרת *</Label>
               <Input value={form.title} onChange={e => field('title', e.target.value)}
@@ -354,18 +351,18 @@ export default function AdminVideosPage() {
               {!addingCategory ? (
                 <div className="flex gap-2">
                   <select
-                    value={form.category}
-                    onChange={e => field('category', e.target.value)}
+                    value={form.categoryId}
+                    onChange={e => field('categoryId', e.target.value)}
                     className="flex-1 h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
                   >
                     <option value="">ללא קטגוריה</option>
-                    {categoryChoices.map(c => (
-                      <option key={c} value={c}>{c}</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                   <button
                     type="button"
-                    onClick={() => { setAddingCategory(true); field('category', ''); }}
+                    onClick={() => { setAddingCategory(true); setNewCategoryName(''); }}
                     className="inline-flex items-center gap-1 px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary hover:border-secondary transition-colors whitespace-nowrap"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -376,14 +373,15 @@ export default function AdminVideosPage() {
                 <div className="flex gap-2">
                   <Input
                     autoFocus
-                    value={form.category}
-                    onChange={e => field('category', e.target.value)}
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
                     placeholder="שם הקטגוריה החדשה..."
                     className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
+                    onKeyDown={e => { if (e.key === 'Escape') setAddingCategory(false); }}
                   />
                   <button
                     type="button"
-                    onClick={() => { setAddingCategory(false); if (!form.category.trim()) field('category', categoryChoices[0] ?? ''); }}
+                    onClick={() => { setAddingCategory(false); setNewCategoryName(''); }}
                     className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     ביטול
@@ -391,7 +389,7 @@ export default function AdminVideosPage() {
                 </div>
               )}
               {addingCategory && (
-                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף אוטומטית לרשימה בעת השמירה</p>
+                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף לרשימה בעת השמירה</p>
               )}
             </div>
 
@@ -419,11 +417,8 @@ export default function AdminVideosPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>סטטוס</Label>
-                <select
-                  value={form.status}
-                  onChange={e => field('status', e.target.value)}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
-                >
+                <select value={form.status} onChange={e => field('status', e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary">
                   <option value="פעיל">פעיל</option>
                   <option value="לא פעיל">לא פעיל</option>
                 </select>
@@ -432,13 +427,8 @@ export default function AdminVideosPage() {
 
             <div className="space-y-1.5">
               <Label>סימון</Label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer h-10 px-3 rounded-md border border-input bg-white">
-                <input
-                  type="checkbox"
-                  checked={form.isNew}
-                  onChange={e => field('isNew', e.target.checked)}
-                  className="rounded"
-                />
+              <label className="flex items-center gap-2 text-sm cursor-pointer min-h-[44px] px-3 rounded-md border border-input bg-white">
+                <input type="checkbox" checked={form.isNew} onChange={e => field('isNew', e.target.checked)} className="rounded" />
                 סמן כ"שיעור חדש"
               </label>
             </div>

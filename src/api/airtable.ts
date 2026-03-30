@@ -20,7 +20,6 @@ export async function airtableFetch(
   const url = new URL(`${BASE_URL}/${encodeURIComponent(table)}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
-  // Airtable expects sort as: sort[0][field]=... &sort[0][direction]=...
   if (sort) {
     sort.forEach((s, i) => {
       url.searchParams.set(`sort[${i}][field]`, s.field);
