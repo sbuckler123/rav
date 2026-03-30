@@ -1,3 +1,13 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "functions": {
+    "api/og.ts": {
+      "includeFiles": "dist/index.html"
+    }
+  },
+  "rewrites": [
+    { "source": "/events/:path*",   "destination": "/api/og?p=/events/:path*" },
+    { "source": "/articles/:path*", "destination": "/api/og?p=/articles/:path*" },
+    { "source": "/videos/:path*",   "destination": "/api/og?p=/videos/:path*" },
+    { "source": "/(.*)",            "destination": "/" }
+  ]
 }
