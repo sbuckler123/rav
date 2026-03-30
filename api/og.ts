@@ -17,9 +17,6 @@ import path from 'path';
 
 const SITE_NAME = 'הרב קלמן מאיר בר';
 
-const DEFAULT_IMAGE =
-  'https://images.fillout.com/orgid-590181/flowpublicid-bjqtmvgzna/widgetid-default/fbWdZYpc2d4y4e6G4p1wmf/pasted-image-1770841682409.jpg';
-
 const DEFAULT_DESC =
   'האתר הרשמי של הרב קלמן מאיר בר, הרב הראשי לישראל. שאלות ותשובות, שיעורי תורה, פסקי הלכה ואירועים.';
 
@@ -65,14 +62,16 @@ function extractText(val: unknown): string {
 
 async function getOgData(
   section: string,
-  id: string
+  id: string,
+  baseUrl: string,
 ): Promise<{ title: string; description: string; image: string; imageWidth: number; imageHeight: number }> {
+  const defaultImage = `${baseUrl}/og-image.jpg`;
   const pat    = process.env.VITE_AIRTABLE_PAT;
   const baseId = process.env.VITE_AIRTABLE_BASE_ID;
   const table  = TABLE[section];
 
   if (!pat || !baseId || !table) {
-    return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
+    return { title: SITE_NAME, description: DEFAULT_DESC, image: defaultImage, imageWidth: 1200, imageHeight: 630 };
   }
 
   const url = new URL(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`);
@@ -83,17 +82,17 @@ async function getOgData(
     headers: { Authorization: `Bearer ${pat}` },
   });
 
-  if (!res.ok) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
+  if (!res.ok) return { title: SITE_NAME, description: DEFAULT_DESC, image: defaultImage, imageWidth: 1200, imageHeight: 630 };
 
   const data = (await res.json()) as {
     records?: { fields: Record<string, unknown> }[];
   };
   const f = data.records?.[0]?.fields;
-  if (!f) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
+  if (!f) return { title: SITE_NAME, description: DEFAULT_DESC, image: defaultImage, imageWidth: 1200, imageHeight: 630 };
 
   const title = extractText(f['כותרת']) || extractText(f['שם']) || SITE_NAME;
   let description = DEFAULT_DESC;
-  let image = DEFAULT_IMAGE;
+  let image = defaultImage;
   let imageWidth = 1200;
   let imageHeight = 630;
 
@@ -181,20 +180,21 @@ export default async function handler(
     return;
   }
 
+  const proto   = (req.headers['x-forwarded-proto'] as string | undefined) ?? 'https';
+  const host    = (req.headers['x-forwarded-host'] as string | undefined) ?? (req.headers.host as string) ?? '';
+  const baseUrl = `${proto}://${host}`;
+  const pageUrl = `${baseUrl}${pagePath}`;
+
   // Social bot — fetch Airtable and return OG HTML
-  let ogData = { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
+  let ogData = { title: SITE_NAME, description: DEFAULT_DESC, image: `${baseUrl}/og-image.jpg`, imageWidth: 1200, imageHeight: 630 };
 
   if (section && id) {
     try {
-      ogData = await getOgData(section, id);
+      ogData = await getOgData(section, id, baseUrl);
     } catch {
       // Airtable unreachable — defaults are used
     }
   }
-
-  const proto   = (req.headers['x-forwarded-proto'] as string | undefined) ?? 'https';
-  const host    = (req.headers['x-forwarded-host'] as string | undefined) ?? (req.headers.host as string) ?? '';
-  const pageUrl = `${proto}://${host}${pagePath}`;
 
   res.end(buildOgHtml(ogData.title, ogData.description, ogData.image, pageUrl, ogData.imageWidth, ogData.imageHeight));
 }

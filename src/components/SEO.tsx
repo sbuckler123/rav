@@ -1,8 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'הרב קלמן מאיר בר';
-const DEFAULT_IMAGE =
-  'https://images.fillout.com/orgid-590181/flowpublicid-bjqtmvgzna/widgetid-default/fbWdZYpc2d4y4e6G4p1wmf/pasted-image-1770841682409.jpg';
+const DEFAULT_IMAGE = `${window.location.origin}/og-image.jpg`;
 
 interface SEOProps {
   title: string;
