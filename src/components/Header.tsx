@@ -27,7 +27,7 @@ export default function Header() {
           <Link to="/" className="flex items-center gap-3 min-w-0" aria-label="דף הבית - הרב קלמן מאיר בר" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="bg-white rounded-full p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
               <img
-                src="https://images.fillout.com/orgid-590181/flowpublicid-faiasrbeba/widgetid-default/da4RdkwRZDxv5w1uPJeYYk/pasted-image-1771332416037.png"
+                src="/logo.png"
                 alt="לוגו הרבנות הראשית"
                 className="h-12 w-12 sm:h-14 sm:w-14 object-cover"
               />
