@@ -66,13 +66,13 @@ function extractText(val: unknown): string {
 async function getOgData(
   section: string,
   id: string
-): Promise<{ title: string; description: string; image: string }> {
+): Promise<{ title: string; description: string; image: string; imageWidth: number; imageHeight: number }> {
   const pat    = process.env.VITE_AIRTABLE_PAT;
   const baseId = process.env.VITE_AIRTABLE_BASE_ID;
   const table  = TABLE[section];
 
   if (!pat || !baseId || !table) {
-    return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+    return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
   }
 
   const url = new URL(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`);
@@ -83,17 +83,19 @@ async function getOgData(
     headers: { Authorization: `Bearer ${pat}` },
   });
 
-  if (!res.ok) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+  if (!res.ok) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
 
   const data = (await res.json()) as {
     records?: { fields: Record<string, unknown> }[];
   };
   const f = data.records?.[0]?.fields;
-  if (!f) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+  if (!f) return { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
 
   const title = extractText(f['כותרת']) || extractText(f['שם']) || SITE_NAME;
   let description = DEFAULT_DESC;
   let image = DEFAULT_IMAGE;
+  let imageWidth = 1200;
+  let imageHeight = 630;
 
   if (section === 'events') {
     description =
@@ -103,12 +105,16 @@ async function getOgData(
   } else if (section === 'videos') {
     description = extractText(f['תיאור']) || DEFAULT_DESC;
     const ytId = extractText(f['מזהה יוטיוב']).split('&')[0].split('?')[0].trim();
-    if (ytId) image = `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+    if (ytId) {
+      image = `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+      imageWidth = 1280;
+      imageHeight = 720;
+    }
   } else if (section === 'shiurim') {
     description = extractText(f['תיאור']) || DEFAULT_DESC;
   }
 
-  return { title, description, image };
+  return { title, description, image, imageWidth, imageHeight };
 }
 
 // ─── OG HTML builder ─────────────────────────────────────────────────────────
@@ -117,7 +123,9 @@ function buildOgHtml(
   title: string,
   description: string,
   image: string,
-  pageUrl: string
+  pageUrl: string,
+  imageWidth = 1200,
+  imageHeight = 630,
 ): string {
   const t = escapeHtml(`${title} | ${SITE_NAME}`);
   const d = escapeHtml(description.slice(0, 160));
@@ -134,6 +142,8 @@ function buildOgHtml(
 <meta property="og:title" content="${t}">
 <meta property="og:description" content="${d}">
 <meta property="og:image" content="${i}">
+<meta property="og:image:width" content="${imageWidth}">
+<meta property="og:image:height" content="${imageHeight}">
 <meta property="og:url" content="${u}">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="he_IL">
@@ -172,7 +182,7 @@ export default async function handler(
   }
 
   // Social bot — fetch Airtable and return OG HTML
-  let ogData = { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+  let ogData = { title: SITE_NAME, description: DEFAULT_DESC, image: DEFAULT_IMAGE, imageWidth: 1200, imageHeight: 630 };
 
   if (section && id) {
     try {
@@ -186,5 +196,5 @@ export default async function handler(
   const host    = (req.headers['x-forwarded-host'] as string | undefined) ?? (req.headers.host as string) ?? '';
   const pageUrl = `${proto}://${host}${pagePath}`;
 
-  res.end(buildOgHtml(ogData.title, ogData.description, ogData.image, pageUrl));
+  res.end(buildOgHtml(ogData.title, ogData.description, ogData.image, pageUrl, ogData.imageWidth, ogData.imageHeight));
 }
