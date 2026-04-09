@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.4",
+    "@clerk/localizations": "^4.4.0",
     "@tailwindcss/typography": "^0.5.19",
     "airtable": "^0.12.2",
     "class-variance-authority": "^0.7.1",

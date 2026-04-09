@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { heIL } from '@clerk/localizations';
 import { useEffect } from 'react';
 
 function ScrollToTop() {
@@ -50,7 +51,7 @@ export default function App() {
 
   return (
     <HelmetProvider>
-    <ClerkProvider publishableKey={clerkKey}>
+    <ClerkProvider publishableKey={clerkKey} localization={heIL}>
     <AuthProvider>
       <Router>
         <ScrollToTop />
