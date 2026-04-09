@@ -27,10 +27,9 @@ export default function LoginPage() {
             headerSubtitle:    'hidden',
             formButtonPrimary: 'bg-[#1B2A4A] hover:bg-[#1B2A4A]/90 !text-white !w-full min-h-[44px]',
             formFieldInput:    'border border-gray-300 focus:border-[#C5A55A] !w-full',
-            footerActionLink:  'text-[#C5A55A] hover:text-[#C5A55A]/80',
             main:              '!w-full',
             form:              '!w-full',
-            footer:            '!w-full',
+            footer:            'hidden',
           },
         }}
       />
