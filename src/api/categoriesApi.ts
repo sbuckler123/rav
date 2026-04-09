@@ -1,44 +1,36 @@
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from './airtable';
-
 export interface Category {
   id: string;
   name: string;
 }
 
-const TABLE = 'קטגוריות';
-
-/** Fetch all active categories that include the given content table in their טבלה field. */
 export async function fetchCategories(forTable: string): Promise<Category[]> {
-  const data = await airtableFetch(
-    TABLE,
-    { filterByFormula: `AND({סטטוס}='פעיל',FIND('${forTable}',ARRAYJOIN({טבלה})))` },
-    [{ field: 'שם', direction: 'asc' }]
-  );
-  return data.records.map((r: any) => ({
-    id: r.id,
-    name: r.fields['שם'] ?? '',
-  }));
+  const res = await fetch(`/api/categories?forTable=${encodeURIComponent(forTable)}`);
+  if (!res.ok) throw new Error(`Failed to fetch categories: ${res.status}`);
+  return res.json() as Promise<Category[]>;
 }
 
-/** Create a new category associated with one or more content tables. */
 export async function createCategory(tables: string[], name: string): Promise<Category> {
-  const record = await airtableCreate(TABLE, {
-    'שם': name.trim(),
-    'סטטוס': 'פעיל',
-    'טבלה': tables,
+  const res = await fetch('/api/categories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, tables }),
   });
-  return { id: record.id, name: name.trim() };
+  if (!res.ok) throw new Error(`Failed to create category: ${res.status}`);
+  return res.json() as Promise<Category>;
 }
 
-/**
- * Rename a category. Because content tables use linked records,
- * the new name is reflected everywhere automatically — no batch update needed.
- */
 export async function renameCategory(id: string, newName: string): Promise<void> {
-  await airtableUpdate(TABLE, id, { 'שם': newName.trim() });
+  const res = await fetch(`/api/categories?id=${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  });
+  if (!res.ok) throw new Error(`Failed to rename category: ${res.status}`);
 }
 
-/** Delete a category record. */
 export async function deleteCategory(id: string): Promise<void> {
-  await airtableDelete(TABLE, id);
+  const res = await fetch(`/api/categories?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(`Failed to delete category: ${res.status}`);
 }
