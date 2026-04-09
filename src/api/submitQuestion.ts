@@ -1,5 +1,3 @@
-import { airtableCreate } from './airtable';
-
 export async function submitQuestion(input: {
   name: string;
   email: string;
@@ -8,19 +6,17 @@ export async function submitQuestion(input: {
   question: string;
   allowPublic: boolean;
 }): Promise<{ success: boolean; id?: string; referenceId?: string }> {
-  const fields: Record<string, unknown> = {
-    'תוכן השאלה': input.question,
-    'שם השואל': input.name,
-    'אימייל השואל': input.email,
-    'הסכמה לפרסום': input.allowPublic,
-    'סטטוס': 'ממתין',
-    'תאריך': new Date().toISOString().split('T')[0],
-  };
-
-  if (input.categoryId) {
-    fields['קטגוריה'] = [input.categoryId];
-  }
-
-  const record = await airtableCreate('שאלות', fields);
-  return { success: true, id: record.id, referenceId: record.fields?.['מזהה שאלה'] ?? '' };
+  const res = await fetch('/api/questions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: input.name,
+      email: input.email,
+      categoryId: input.categoryId,
+      question: input.question,
+      allowPublic: input.allowPublic,
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to submit question: ${res.status}`);
+  return res.json();
 }
