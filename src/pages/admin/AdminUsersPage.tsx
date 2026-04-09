@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Users, Plus, Pencil, Trash2, Loader2, Search, ShieldAlert } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,15 +50,11 @@ function statusBadge(status: string) {
     : <Badge className="bg-muted text-muted-foreground border-border text-xs">לא פעיל</Badge>;
 }
 
-async function fetchUsers(): Promise<AdminUser[]> {
-  const data = await airtableFetch('משתמשים', {}, [{ field: 'שם', direction: 'asc' }]);
-  return data.records.map((r: any) => ({
-    id: r.id,
-    name: r.fields['שם'] ?? '',
-    email: r.fields['אימייל'] ?? '',
-    role: r.fields['תפקיד'] ?? 'צוות',
-    status: r.fields['סטטוס'] ?? 'פעיל',
-  }));
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
 }
 
 export default function AdminUsersPage() {
@@ -91,7 +86,7 @@ export default function AdminUsersPage() {
 
   function load() {
     setLoading(true);
-    fetchUsers()
+    apiFetch<AdminUser[]>('/api/users')
       .then(setUsers)
       .catch(() => toast.error('שגיאה בטעינת משתמשים'))
       .finally(() => setLoading(false));
@@ -123,26 +118,37 @@ export default function AdminUsersPage() {
     }
     setSaving(true);
     try {
-      const fields: Record<string, unknown> = {
-        'שם': form.name.trim(),
-        'אימייל': form.email.trim(),
-        'תפקיד': form.role,
-        'סטטוס': form.status,
-      };
-      // Only update password if a new one was entered
-      if (form.password.trim()) fields['סיסמא'] = form.password.trim();
-
       if (editing) {
-        await airtableUpdate('משתמשים', editing.id, fields);
+        await apiFetch(`/api/users?id=${editing.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            role: form.role,
+            status: form.status,
+            ...(form.password.trim() ? { password: form.password.trim() } : {}),
+          }),
+        });
         toast.success('המשתמש עודכן');
       } else {
-        await airtableCreate('משתמשים', fields);
-        toast.success('המשתמש נוסף');
+        await apiFetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            email: form.email.trim(),
+            password: form.password.trim(),
+            role: form.role,
+            status: form.status,
+          }),
+        });
+        toast.success('המשתמש נוסף בהצלחה');
       }
       setDialogOpen(false);
       load();
-    } catch {
-      toast.error('שגיאה בשמירה');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'שגיאה בשמירה';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -157,7 +163,7 @@ export default function AdminUsersPage() {
     }
     setDeleting(true);
     try {
-      await airtableDelete('משתמשים', deleteTarget.id);
+      await apiFetch(`/api/users?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המשתמש נמחק');
       setDeleteTarget(null);
       load();
@@ -272,7 +278,7 @@ export default function AdminUsersPage() {
           <DialogClose onClose={() => setDialogOpen(false)} />
           <DialogHeader>
             <DialogTitle>{editing ? 'עריכת משתמש' : 'משתמש חדש'}</DialogTitle>
-            <DialogDescription>{editing ? 'עדכן את פרטי המשתמש' : 'הוסף משתמש חדש למערכת'}</DialogDescription>
+            <DialogDescription>{editing ? 'עדכן את פרטי המשתמש' : 'הוסף משתמש חדש — הוא יוכל להתחבר עם האימייל והסיסמה שתגדיר'}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -283,17 +289,19 @@ export default function AdminUsersPage() {
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>אימייל *</Label>
-              <Input value={form.email} onChange={e => field('email', e.target.value)}
-                placeholder="user@example.com" type="email" dir="ltr"
-                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
-            </div>
+            {!editing && (
+              <div className="space-y-1.5">
+                <Label>אימייל *</Label>
+                <Input value={form.email} onChange={e => field('email', e.target.value)}
+                  placeholder="user@example.com" type="email" dir="ltr"
+                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>{editing ? 'סיסמה חדשה (השאר ריק לאי שינוי)' : 'סיסמה *'}</Label>
               <Input value={form.password} onChange={e => field('password', e.target.value)}
-                placeholder={editing ? '••••••••' : 'בחר סיסמה'} type="password" dir="ltr"
+                placeholder={editing ? '••••••••' : 'בחר סיסמה חזקה'} type="password" dir="ltr"
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary min-h-[44px]" />
             </div>
 
@@ -335,7 +343,7 @@ export default function AdminUsersPage() {
           <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving} className="min-h-[44px] w-full sm:w-auto">ביטול</Button>
             <Button onClick={handleSave}
-              disabled={!form.name.trim() || !form.email.trim() || saving}
+              disabled={!form.name.trim() || (!editing && !form.email.trim()) || saving}
               className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px] w-full sm:w-auto">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {editing ? 'שמור שינויים' : 'הוסף משתמש'}
@@ -351,7 +359,7 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>מחיקת משתמש</DialogTitle>
             <DialogDescription>
-              האם למחוק את המשתמש <strong>"{deleteTarget?.name}"</strong>? פעולה זו אינה ניתנת לביטול.
+              האם למחוק את המשתמש <strong>"{deleteTarget?.name}"</strong>? המשתמש יוסר גם מ-Clerk וגם ממסד הנתונים. פעולה זו אינה ניתנת לביטול.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
