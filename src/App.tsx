@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 
 function ScrollToTop() {
@@ -45,8 +46,11 @@ import CookiePolicyPage from '@/pages/CookiePolicyPage';
 import TermsPage from '@/pages/TermsPage';
 
 export default function App() {
+  const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+
   return (
     <HelmetProvider>
+    <ClerkProvider publishableKey={clerkKey}>
     <AuthProvider>
       <Router>
         <ScrollToTop />
@@ -113,6 +117,7 @@ export default function App() {
         <Toaster />
       </Router>
     </AuthProvider>
+    </ClerkProvider>
     </HelmetProvider>
   );
 }

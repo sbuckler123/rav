@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { AdminUser } from '@/api/authApi';
+import { useUser, useClerk } from '@clerk/clerk-react';
 
-const STORAGE_KEY = 'rav_admin_user';
-const SESSION_HOURS = 8;
-const SESSION_MS = SESSION_HOURS * 60 * 60 * 1000;
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'מנהל' | 'רב' | 'צוות';
+}
 
 interface AuthContextValue {
   user: AdminUser | null;
-  login: (user: AdminUser) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -15,34 +17,35 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AdminUser | null>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return null;
-      const { user, expiresAt } = JSON.parse(stored);
-      if (Date.now() > expiresAt) {
-        localStorage.removeItem(STORAGE_KEY);
-        return null;
-      }
-      return user;
-    } catch {
-      return null;
-    }
-  });
+  const { user: clerkUser, isSignedIn, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const [airtableUser, setAirtableUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, expiresAt: Date.now() + SESSION_MS }));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [user]);
+    if (!isLoaded) return;
 
-  const login = (user: AdminUser) => setUser(user);
-  const logout = () => setUser(null);
+    if (!isSignedIn || !clerkUser) {
+      setAirtableUser(null);
+      return;
+    }
+
+    const email = clerkUser.primaryEmailAddress?.emailAddress ?? '';
+    if (!email) return;
+
+    fetch(`/api/auth-user?email=${encodeURIComponent(email)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setAirtableUser(data ?? null))
+      .catch(() => setAirtableUser(null));
+  }, [isLoaded, isSignedIn, clerkUser]);
+
+  const logout = () => signOut();
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{
+      user: airtableUser,
+      logout,
+      isAuthenticated: !!isSignedIn,
+    }}>
       {children}
     </AuthContext.Provider>
   );

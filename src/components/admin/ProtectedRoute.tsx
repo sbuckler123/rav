@@ -1,11 +1,14 @@
+import { useUser } from '@clerk/clerk-react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/auth/AuthContext';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isSignedIn, isLoaded } = useUser();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  // Wait for Clerk to finish loading session
+  if (!isLoaded) return null;
+
+  if (!isSignedIn) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
