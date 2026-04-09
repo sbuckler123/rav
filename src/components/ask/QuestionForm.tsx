@@ -22,11 +22,20 @@ export default function QuestionForm({ categories }: Props) {
   const [allowPublic, setAllowPublic] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+
+  const RATE_LIMIT_MS = 60_000; // 1 minute between submissions
+  const MAX_NAME_LEN = 100;
+  const MAX_QUESTION_LEN = 2000;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !question) {
       toast.error('אנא מלא את כל השדות הנדרשים');
+      return;
+    }
+    if (Date.now() - lastSubmitTime < RATE_LIMIT_MS) {
+      toast.error('נא המתן דקה בין שליחת שאלות');
       return;
     }
     setSubmitting(true);
@@ -54,6 +63,7 @@ export default function QuestionForm({ categories }: Props) {
           allowPublic,
         }),
       }).catch(() => {});
+      setLastSubmitTime(Date.now());
       setSubmitted(true);
       toast.success('שאלתך נשלחה בהצלחה!');
     } catch {
@@ -102,8 +112,9 @@ export default function QuestionForm({ categories }: Props) {
               <Input
                 id="name"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={e => setName(e.target.value.slice(0, MAX_NAME_LEN))}
                 placeholder="שמך המלא"
+                maxLength={MAX_NAME_LEN}
                 className="min-h-[44px] border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary"
                 required
               />
@@ -147,9 +158,10 @@ export default function QuestionForm({ categories }: Props) {
             <Textarea
               id="question"
               value={question}
-              onChange={e => setQuestion(e.target.value)}
+              onChange={e => setQuestion(e.target.value.slice(0, MAX_QUESTION_LEN))}
               placeholder="פרט את שאלתך כאן..."
               rows={5}
+              maxLength={MAX_QUESTION_LEN}
               className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none"
               required
             />

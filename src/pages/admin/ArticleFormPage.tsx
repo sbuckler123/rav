@@ -569,7 +569,7 @@ export default function ArticleFormPage() {
             {showPreview ? (
               <div className="prose prose-sm max-w-none min-h-[300px] text-right" dir="rtl">
                 {form.fullContent
-                  ? <ReactMarkdown>{form.fullContent}</ReactMarkdown>
+                  ? <ReactMarkdown disallowedElements={['script', 'iframe', 'object', 'embed']} unwrapDisallowed>{form.fullContent}</ReactMarkdown>
                   : <p className="text-muted-foreground italic">אין תוכן להצגה</p>
                 }
               </div>

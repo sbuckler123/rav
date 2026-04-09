@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { AdminUser } from '@/api/authApi';
 
 const STORAGE_KEY = 'rav_admin_user';
+const SESSION_HOURS = 8;
+const SESSION_MS = SESSION_HOURS * 60 * 60 * 1000;
 
 interface AuthContextValue {
   user: AdminUser | null;
@@ -16,7 +18,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const { user, expiresAt } = JSON.parse(stored);
+      if (Date.now() > expiresAt) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return user;
     } catch {
       return null;
     }
@@ -24,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, expiresAt: Date.now() + SESSION_MS }));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }

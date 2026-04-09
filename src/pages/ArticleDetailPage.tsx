@@ -142,7 +142,7 @@ export default function ArticleDetailPage() {
                       prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
                       prose-p:mb-3 prose-li:mb-1
                       prose-strong:font-bold prose-em:italic">
-                    <ReactMarkdown>
+                    <ReactMarkdown disallowedElements={['script', 'iframe', 'object', 'embed']} unwrapDisallowed>
                       {article.fullContent.replace(/\n(?!\n)/g, '\n\n')}
                     </ReactMarkdown>
                   </div>
