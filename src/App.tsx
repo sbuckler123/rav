@@ -51,7 +51,7 @@ export default function App() {
 
   return (
     <HelmetProvider>
-    <ClerkProvider publishableKey={clerkKey} localization={heIL}>
+    <ClerkProvider publishableKey={clerkKey} localization={{ ...heIL, signIn: { ...heIL.signIn, start: { ...heIL.signIn?.start, subtitle: '' } } }}>
     <AuthProvider>
       <Router>
         <ScrollToTop />
