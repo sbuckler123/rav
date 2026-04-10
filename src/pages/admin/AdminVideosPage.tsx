@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ interface AdminVideo {
   duration: string;
   description: string;
   categoryId: string;
-  category: string;   // resolved name for display
+  category: string;
   videoType: string;
   youtubeId: string;
   videoUrl: string;
@@ -52,51 +51,11 @@ const EMPTY_FORM: FormState = {
   youtubeId: '', views: '', isNew: false, status: 'פעיל',
 };
 
-function extractField(val: any): string {
-  if (!val) return '';
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object' && val.value != null) return String(val.value).trim();
-  return '';
-}
-
-function formatDisplay(raw: string): string {
-  if (!raw) return '';
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return raw;
-  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-}
-
-function buildVideos(records: any[], catMap: Record<string, string>, userRecords: any[]): AdminVideo[] {
-  const getUserName = (ids: any) => {
-    if (!Array.isArray(ids) || !ids.length) return '';
-    return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
-  };
-  return records.map((r: any) => {
-    const f = r.fields;
-    const dateRaw = f['תאריך'] ?? '';
-    const catIds: string[] = f['קטגוריה'] ?? [];
-    const categoryId = catIds[0] ?? '';
-    return {
-      id: r.id,
-      title: f['כותרת'] ?? '',
-      dateRaw: dateRaw ? dateRaw.split('T')[0] : '',
-      dateDisplay: formatDisplay(dateRaw),
-      duration: f['משך'] ?? '',
-      description: extractField(f['תיאור']),
-      categoryId,
-      category: catMap[categoryId] ?? '',
-      videoType: f['סוג סרטון'] ?? 'youtube',
-      youtubeId: (f['מזהה יוטיוב'] ?? '').split('&')[0].split('?')[0].trim(),
-      videoUrl: f['קישור סרטון'] ?? '',
-      thumbnail: f['תמונה ממוזערת'] ?? '',
-      views: f['צפיות'] ?? 0,
-      isNew: f['חדש'] ?? false,
-      status: f['סטטוס'] ?? '',
-      linkId: extractField(f['מזהה קישור']),
-      createdByName: getUserName(f['נוצר על ידי']),
-      updatedByName: getUserName(f['עודכן על ידי']),
-    };
-  });
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res  = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
 }
 
 function getThumb(v: AdminVideo): string {
@@ -125,15 +84,10 @@ export default function AdminVideosPage() {
   function load() {
     setLoading(true);
     Promise.all([
-      airtableFetch('שיעורי וידאו', {}, [{ field: 'תאריך', direction: 'desc' }]),
-      airtableFetch('משתמשים'),
+      apiFetch<AdminVideo[]>('/api/admin-videos'),
       fetchCategories('שיעורי וידאו'),
     ])
-      .then(([videosData, usersData, cats]) => {
-        setCategories(cats);
-        const catMap = Object.fromEntries(cats.map((c: Category) => [c.id, c.name]));
-        setVideos(buildVideos(videosData.records ?? [], catMap, usersData.records ?? []));
-      })
+      .then(([vids, cats]) => { setVideos(vids); setCategories(cats); })
       .catch(() => toast.error('שגיאה בטעינת שיעורי וידאו'))
       .finally(() => setLoading(false));
   }
@@ -182,28 +136,32 @@ export default function AdminVideosPage() {
         categoryId = created.id;
       }
 
-      const fields: Record<string, unknown> = {
-        'כותרת': form.title.trim(),
-        'חדש': form.isNew,
-        'סוג סרטון': 'youtube',
+      const body = {
+        title: form.title.trim(),
+        date: form.date,
+        duration: form.duration,
+        description: form.description,
+        categoryId,
+        youtubeId: form.youtubeId,
+        views: form.views,
+        isNew: form.isNew,
+        status: form.status,
+        userId: user?.id,
       };
-      if (form.date)               fields['תאריך']       = form.date;
-      if (form.duration.trim())    fields['משך']         = form.duration.trim();
-      if (form.description.trim()) fields['תיאור']       = form.description.trim();
-      if (categoryId)              fields['קטגוריה']     = [categoryId];
-      if (form.status)             fields['סטטוס']       = form.status;
-      if (form.youtubeId.trim())   fields['מזהה יוטיוב'] = form.youtubeId.trim();
-      const viewsParsed = parseInt(form.views);
-      if (!isNaN(viewsParsed))     fields['צפיות']       = viewsParsed;
-
-      if (user?.id) fields['עודכן על ידי'] = [user.id];
 
       if (editing) {
-        await airtableUpdate('שיעורי וידאו', editing.id, fields);
+        await apiFetch(`/api/admin-videos?id=${editing.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         toast.success('השיעור עודכן');
       } else {
-        if (user?.id) fields['נוצר על ידי'] = [user.id];
-        await airtableCreate('שיעורי וידאו', fields);
+        await apiFetch('/api/admin-videos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
         toast.success('השיעור נוסף');
       }
       setDialogOpen(false);
@@ -219,7 +177,7 @@ export default function AdminVideosPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await airtableDelete('שיעורי וידאו', deleteTarget.id);
+      await apiFetch(`/api/admin-videos?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
       setDeleteTarget(null);
       load();
@@ -350,47 +308,29 @@ export default function AdminVideosPage() {
               <Label>קטגוריה</Label>
               {!addingCategory ? (
                 <div className="flex gap-2">
-                  <select
-                    value={form.categoryId}
-                    onChange={e => field('categoryId', e.target.value)}
-                    className="flex-1 h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary"
-                  >
+                  <select value={form.categoryId} onChange={e => field('categoryId', e.target.value)}
+                    className="flex-1 h-10 px-3 rounded-md border border-input bg-white text-sm focus:outline-none focus:ring-1 focus:ring-secondary">
                     <option value="">ללא קטגוריה</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
-                  <button
-                    type="button"
-                    onClick={() => { setAddingCategory(true); setNewCategoryName(''); }}
-                    className="inline-flex items-center gap-1 px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary hover:border-secondary transition-colors whitespace-nowrap"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    חדשה
+                  <button type="button" onClick={() => { setAddingCategory(true); setNewCategoryName(''); }}
+                    className="inline-flex items-center gap-1 px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary hover:border-secondary transition-colors whitespace-nowrap">
+                    <Plus className="h-3.5 w-3.5" />חדשה
                   </button>
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <Input
-                    autoFocus
-                    value={newCategoryName}
-                    onChange={e => setNewCategoryName(e.target.value)}
+                  <Input autoFocus value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)}
                     placeholder="שם הקטגוריה החדשה..."
                     className="flex-1 border border-secondary bg-white focus-visible:ring-1 focus-visible:border-secondary"
-                    onKeyDown={e => { if (e.key === 'Escape') setAddingCategory(false); }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { setAddingCategory(false); setNewCategoryName(''); }}
-                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                    onKeyDown={e => { if (e.key === 'Escape') setAddingCategory(false); }} />
+                  <button type="button" onClick={() => { setAddingCategory(false); setNewCategoryName(''); }}
+                    className="inline-flex items-center px-3 h-10 rounded-md border border-input bg-white text-sm text-muted-foreground hover:text-primary transition-colors">
                     ביטול
                   </button>
                 </div>
               )}
-              {addingCategory && (
-                <p className="text-xs text-muted-foreground">הקטגוריה תיווסף לרשימה בעת השמירה</p>
-              )}
+              {addingCategory && <p className="text-xs text-muted-foreground">הקטגוריה תיווסף לרשימה בעת השמירה</p>}
             </div>
 
             <div className="space-y-1.5">

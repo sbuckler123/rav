@@ -4,7 +4,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitReply } from '@/api/submitReply';
-import { airtableUpdate } from '@/api/airtable';
 import type { getPublishedQuestions } from '@/api/getPublishedQuestions';
 
 type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
@@ -207,7 +206,11 @@ function QuestionCard({ question, categories }: { question: Question; categories
     setSubmitting(true);
     try {
       await submitReply({ questionId: question.id, content: replyText, writerType: 'השואל' });
-      await airtableUpdate('שאלות', question.id, { 'סטטוס': 'ממתין' });
+      await fetch(`/api/admin-questions?id=${question.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { 'סטטוס': 'ממתין' } }),
+      });
       setSent(true);
       setReplyText('');
       setReplyOpen(false);

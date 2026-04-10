@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
-import { airtableFetch, airtableDelete } from '@/api/airtable';
-import { fetchCategories } from '@/api/categoriesApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,36 +22,11 @@ interface AdminArticle {
   status: string;
 }
 
-function extractField(val: any): string {
-  if (!val) return '';
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object' && val.value != null) return String(val.value).trim();
-  return '';
-}
-
-async function fetchArticles(): Promise<AdminArticle[]> {
-  const [data, cats] = await Promise.all([
-    airtableFetch('מאמרים', {}, [{ field: 'שנה לועזית', direction: 'desc' }]),
-    fetchCategories('מאמרים'),
-  ]);
-  const catMap: Record<string, string> = {};
-  cats.forEach(c => { catMap[c.id] = c.name; });
-
-  return data.records.map((r: any) => {
-    const f = r.fields;
-    const catIds: string[] = f['קטגוריה'] ?? [];
-    return {
-      id: r.id,
-      title: extractField(f['כותרת']),
-      journal: extractField(f['כתב עת']),
-      yeshiva: extractField(f['מוסד']),
-      yearNum: f['שנה לועזית'] ?? 0,
-      category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
-      abstract: extractField(f['תקציר']),
-      linkId: extractField(f['מזהה קישור']),
-      status: extractField(f['סטטוס']) || 'לא פעיל',
-    };
-  });
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res  = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
 }
 
 export default function AdminArticlesPage() {
@@ -65,7 +38,7 @@ export default function AdminArticlesPage() {
 
   function load() {
     setLoading(true);
-    fetchArticles()
+    apiFetch<AdminArticle[]>('/api/admin-articles')
       .then(setArticles)
       .catch(() => toast.error('שגיאה בטעינת מאמרים'))
       .finally(() => setLoading(false));
@@ -77,7 +50,7 @@ export default function AdminArticlesPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await airtableDelete('מאמרים', deleteTarget.id);
+      await apiFetch(`/api/admin-articles?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המאמר נמחק');
       setDeleteTarget(null);
       load();

@@ -1,17 +1,15 @@
-import { airtableCreate } from './airtable';
+// Submit a reply to a question — proxied through /api/admin-questions
 
 export async function submitReply(input: {
   questionId: string;
   content: string;
   writerType?: string;
 }): Promise<{ success: boolean; id?: string }> {
-  const fields: Record<string, unknown> = {
-    'שאלה': [input.questionId],
-    'תוכן התשובה': input.content,
-    'סוג כותב': input.writerType ?? 'רב',
-    'תאריך': new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
-  };
-
-  const record = await airtableCreate('תשובות', fields);
-  return { success: true, id: record.id };
+  const res = await fetch('/api/admin-questions?type=reply', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(`Reply submission failed: ${res.status}`);
+  return res.json() as Promise<{ success: boolean; id?: string }>;
 }

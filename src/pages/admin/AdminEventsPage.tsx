@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tv2, Plus, Pencil, Trash2, Loader2, Search, MapPin, CalendarDays, Images, Check, X } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete, airtableGetFieldChoices } from '@/api/airtable';
 import { useAuth } from '@/auth/AuthContext';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { Button } from '@/components/ui/button';
@@ -51,35 +50,11 @@ const EMPTY_FORM: FormState = {
 
 const EMPTY_GALLERY_FORM = { url: '', caption: '', order: '' };
 
-function extractField(val: any): string {
-  if (!val) return '';
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object' && val.value != null) return String(val.value).trim();
-  return '';
-}
-
-async function fetchEvents(userRecords: any[] = []): Promise<AdminEvent[]> {
-  const data = await airtableFetch('אירועים', {}, [{ field: 'תאריך לועזי', direction: 'desc' }]);
-  const getUserName = (ids: any) => {
-    if (!Array.isArray(ids) || !ids.length) return '';
-    return userRecords.find((r: any) => r.id === ids[0])?.fields['שם'] ?? '';
-  };
-  return data.records.map((r: any) => {
-    const f = r.fields;
-    return {
-      id: r.id,
-      title: extractField(f['כותרת']),
-      eventType: extractField(f['סוג אירוע']),
-      dateHebrew: extractField(f['תאריך עברי']),
-      dateLocale: extractField(f['תאריך לועזי']),
-      location: extractField(f['מיקום']),
-      excerpt: extractField(f['תקציר קצר']),
-      linkId: extractField(f['מזהה קישור']) || extractField(f['מזהה URL']),
-      galleryIds: Array.isArray(f['גלריה']) ? f['גלריה'] : [],
-      createdByName: getUserName(f['נוצר על ידי']),
-      updatedByName: getUserName(f['עודכן על ידי']),
-    };
-  });
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res  = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
 }
 
 export default function AdminEventsPage() {
@@ -103,7 +78,7 @@ export default function AdminEventsPage() {
   const [savingGallery, setSavingGallery] = useState(false);
   const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
   const [galleryEditForm, setGalleryEditForm] = useState(EMPTY_GALLERY_FORM);
-  // Pending images for new event (not yet saved to Airtable)
+  // Pending images for new event (not yet saved)
   const [pendingImages, setPendingImages] = useState<typeof EMPTY_GALLERY_FORM[]>([]);
 
   const [eventTypeChoices, setEventTypeChoices] = useState<string[]>([]);
@@ -111,8 +86,7 @@ export default function AdminEventsPage() {
 
   function load() {
     setLoading(true);
-    airtableFetch('משתמשים')
-      .then(usersData => fetchEvents(usersData.records ?? []))
+    apiFetch<AdminEvent[]>('/api/admin-events')
       .then(setEvents)
       .catch(() => toast.error('שגיאה בטעינת אירועים'))
       .finally(() => setLoading(false));
@@ -124,20 +98,8 @@ export default function AdminEventsPage() {
     if (!ids.length) { setGallery([]); return; }
     setGalleryLoading(true);
     try {
-      const formula = ids.length === 1
-        ? `RECORD_ID()='${ids[0]}'`
-        : `OR(${ids.map(id => `RECORD_ID()='${id}'`).join(',')})`;
-      const data = await airtableFetch('גלריה', { filterByFormula: formula });
-      setGallery(
-        data.records
-          .map((r: any) => ({
-            id: r.id,
-            url: r.fields['URL תמונה'] ?? '',
-            caption: r.fields['כיתוב'] ?? '',
-            order: r.fields['סדר'] ?? 0,
-          }))
-          .sort((a: GalleryItem, b: GalleryItem) => a.order - b.order)
-      );
+      const items = await apiFetch<GalleryItem[]>(`/api/admin-events?type=gallery&ids=${ids.join(',')}`);
+      setGallery(items);
     } catch {
       toast.error('שגיאה בטעינת גלריה');
     } finally {
@@ -147,7 +109,7 @@ export default function AdminEventsPage() {
 
   function openDialog() {
     setAddingEventType(false);
-    airtableGetFieldChoices('אירועים', 'סוג אירוע')
+    apiFetch<string[]>('/api/admin-events?type=fieldChoices')
       .then(setEventTypeChoices)
       .catch(() => {});
   }
@@ -188,36 +150,23 @@ export default function AdminEventsPage() {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
-      const fields: Record<string, unknown> = {
-        'כותרת': form.title.trim(),
-      };
-      if (form.eventType.trim())   fields['סוג אירוע']    = form.eventType.trim();
-      if (form.dateHebrew.trim())  fields['תאריך עברי']   = form.dateHebrew.trim();
-      if (form.dateLocale.trim())  fields['תאריך לועזי']  = form.dateLocale.trim();
-      if (form.location.trim())    fields['מיקום']         = form.location.trim();
-      if (form.excerpt.trim())     fields['תקציר קצר']    = form.excerpt.trim();
-
-      if (user?.id) fields['עודכן על ידי'] = [user.id];
-
       if (editing) {
-        await airtableUpdate('אירועים', editing.id, fields);
+        await apiFetch(`/api/admin-events?id=${editing.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...form, userId: user?.id }),
+        });
         toast.success('האירוע עודכן');
       } else {
-        if (user?.id) fields['נוצר על ידי'] = [user.id];
-        const newEvent = await airtableCreate('אירועים', fields);
-        // Create pending gallery records and link to new event
-        if (pendingImages.length > 0) {
-          const galleryIds: string[] = [];
-          for (const img of pendingImages) {
-            const gFields: Record<string, unknown> = { 'URL תמונה': img.url };
-            if (img.caption.trim()) gFields['כיתוב'] = img.caption.trim();
-            const orderNum = parseInt(img.order);
-            if (!isNaN(orderNum)) gFields['סדר'] = orderNum;
-            const gRecord = await airtableCreate('גלריה', gFields);
-            galleryIds.push(gRecord.id);
-          }
-          await airtableUpdate('אירועים', newEvent.id, { 'גלריה': galleryIds });
-        }
+        await apiFetch('/api/admin-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...form,
+            userId: user?.id,
+            pendingImages: pendingImages.length > 0 ? pendingImages : undefined,
+          }),
+        });
         toast.success('האירוע נוסף');
       }
       setDialogOpen(false);
@@ -233,20 +182,22 @@ export default function AdminEventsPage() {
     if (!newGallery.url.trim() || !editing) return;
     setSavingGallery(true);
     try {
-      const fields: Record<string, unknown> = { 'URL תמונה': newGallery.url.trim() };
-      if (newGallery.caption.trim()) fields['כיתוב'] = newGallery.caption.trim();
-      const orderNum = parseInt(newGallery.order);
-      if (!isNaN(orderNum)) fields['סדר'] = orderNum;
-
-      const record = await airtableCreate('גלריה', fields);
-      const newIds = [...editing.galleryIds, record.id];
-      await airtableUpdate('אירועים', editing.id, { 'גלריה': newIds });
-
-      const updated = { ...editing, galleryIds: newIds };
+      const result = await apiFetch<{ id: string; galleryIds: string[] }>('/api/admin-events?type=gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: editing.id,
+          url: newGallery.url,
+          caption: newGallery.caption,
+          order: newGallery.order,
+          userId: user?.id,
+        }),
+      });
+      const updated = { ...editing, galleryIds: result.galleryIds };
       setEditing(updated);
       setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
       setNewGallery(EMPTY_GALLERY_FORM);
-      loadGallery(newIds);
+      loadGallery(result.galleryIds);
       toast.success('התמונה נוספה');
     } catch {
       toast.error('שגיאה בהוספת תמונה');
@@ -259,12 +210,15 @@ export default function AdminEventsPage() {
     if (!galleryEditForm.url.trim()) return;
     setSavingGallery(true);
     try {
-      const fields: Record<string, unknown> = { 'URL תמונה': galleryEditForm.url.trim() };
-      if (galleryEditForm.caption.trim()) fields['כיתוב'] = galleryEditForm.caption.trim();
-      const orderNum = parseInt(galleryEditForm.order);
-      if (!isNaN(orderNum)) fields['סדר'] = orderNum;
-
-      await airtableUpdate('גלריה', itemId, fields);
+      await apiFetch(`/api/admin-events?type=gallery&id=${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: galleryEditForm.url,
+          caption: galleryEditForm.caption,
+          order: galleryEditForm.order,
+        }),
+      });
       setEditingGalleryId(null);
       loadGallery(editing?.galleryIds ?? []);
       toast.success('התמונה עודכנה');
@@ -279,10 +233,11 @@ export default function AdminEventsPage() {
     if (!editing) return;
     setSavingGallery(true);
     try {
-      await airtableDelete('גלריה', itemId);
-      const newIds = editing.galleryIds.filter(id => id !== itemId);
-      await airtableUpdate('אירועים', editing.id, { 'גלריה': newIds });
-
+      const result = await apiFetch<{ galleryIds: string[] }>(
+        `/api/admin-events?type=gallery&id=${itemId}&eventId=${editing.id}`,
+        { method: 'DELETE' },
+      );
+      const newIds = result.galleryIds ?? editing.galleryIds.filter(id => id !== itemId);
       const updated = { ...editing, galleryIds: newIds };
       setEditing(updated);
       setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
@@ -299,7 +254,7 @@ export default function AdminEventsPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await airtableDelete('אירועים', deleteTarget.id);
+      await apiFetch(`/api/admin-events?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('האירוע נמחק');
       setDeleteTarget(null);
       load();
@@ -511,7 +466,6 @@ export default function AdminEventsPage() {
                 placeholder="תיאור קצר של האירוע..." rows={3}
                 className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none" />
             </div>
-
 
             {editing && editing.linkId && (
               <div className="space-y-1.5">

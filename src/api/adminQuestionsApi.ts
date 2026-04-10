@@ -1,5 +1,4 @@
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from './airtable';
-import { submitReply } from './submitReply';
+// All Airtable access is now server-side via /api/admin-questions
 
 export interface AdminAnswer {
   id: string;
@@ -22,55 +21,40 @@ export interface AdminQuestion {
   answers: AdminAnswer[];
 }
 
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res  = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
+}
+
 export async function getAllQuestions(): Promise<{ questions: AdminQuestion[] }> {
-  const [questionsData, answersData] = await Promise.all([
-    airtableFetch('שאלות', {}, [{ field: 'תאריך', direction: 'desc' }]),
-    airtableFetch('תשובות', { filterByFormula: 'NOT({שאלה}="")' }).catch(() => ({ records: [] })),
-  ]);
-
-  const questions: AdminQuestion[] = questionsData.records.map((r: any) => {
-    const f = r.fields;
-    const linkedAnswerIds: string[] = f['תשובות'] ?? [];
-    const answers: AdminAnswer[] = answersData.records
-      .filter((a: any) => linkedAnswerIds.includes(a.id))
-      .map((a: any) => ({
-        id: a.id,
-        content: a.fields['תוכן התשובה'] ?? '',
-        writerType: a.fields['סוג כותב'] ?? 'רב',
-        date: a.fields['תאריך'],
-      }))
-      .sort((a: AdminAnswer, b: AdminAnswer) =>
-        (a.date ?? '').localeCompare(b.date ?? '')
-      );
-
-    return {
-      id: r.id,
-      referenceId: f['מזהה שאלה'],
-      questionContent: f['תוכן השאלה'] ?? '',
-      askerName: f['שם השואל'],
-      askerEmail: f['אימייל השואל'],
-      category: Array.isArray(f['קטגוריה']) ? f['קטגוריה'][0] : undefined,
-      createdAt: f['תאריך'],
-      status: f['סטטוס'] ?? 'ממתין',
-      approvedForPublish: f['מאושר לפרסום'] === true,
-      consentToPublish: f['הסכמה לפרסום'] === true,
-      answers,
-    };
-  });
-
+  const questions = await apiFetch<AdminQuestion[]>('/api/admin-questions');
   return { questions };
 }
 
 export async function approveQuestion(questionId: string) {
-  return airtableUpdate('שאלות', questionId, { 'מאושר לפרסום': true });
+  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { 'מאושר לפרסום': true } }),
+  });
 }
 
 export async function rejectQuestion(questionId: string) {
-  return airtableUpdate('שאלות', questionId, { 'סטטוס': 'נדחה' });
+  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { 'סטטוס': 'נדחה' } }),
+  });
 }
 
 export async function markAnswered(questionId: string) {
-  return airtableUpdate('שאלות', questionId, { 'סטטוס': 'נענה' });
+  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { 'סטטוס': 'נענה' } }),
+  });
 }
 
 export async function createQuestion(input: {
@@ -81,33 +65,39 @@ export async function createQuestion(input: {
   consentToPublish?: boolean;
   approvedForPublish?: boolean;
 }): Promise<{ id: string }> {
-  const fields: Record<string, unknown> = {
-    'תוכן השאלה': input.content,
-    'סטטוס': input.status ?? 'ממתין',
-    'הסכמה לפרסום': input.consentToPublish ?? false,
-    'מאושר לפרסום': input.approvedForPublish ?? false,
-    'תאריך': new Date().toISOString().split('T')[0],
-  };
-  if (input.askerName?.trim()) fields['שם השואל'] = input.askerName.trim();
-  if (input.category) fields['קטגוריה'] = [input.category];
-  const record = await airtableCreate('שאלות', fields);
-  return { id: record.id };
+  return apiFetch<{ id: string }>('/api/admin-questions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
 }
 
 export async function updateQuestion(questionId: string, fields: Record<string, unknown>) {
-  return airtableUpdate('שאלות', questionId, fields);
+  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
 }
 
 export async function deleteQuestion(questionId: string) {
-  return airtableDelete('שאלות', questionId);
+  return apiFetch(`/api/admin-questions?id=${questionId}`, { method: 'DELETE' });
 }
 
 export async function updateAnswer(answerId: string, content: string) {
-  return airtableUpdate('תשובות', answerId, { 'תוכן התשובה': content });
+  return apiFetch(`/api/admin-questions?type=answer&id=${answerId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  });
 }
 
 export async function deleteAnswer(answerId: string) {
-  return airtableDelete('תשובות', answerId);
+  return apiFetch(`/api/admin-questions?type=answer&id=${answerId}`, { method: 'DELETE' });
 }
 
-export { submitReply };
+export async function getWriterTypeChoices(): Promise<string[]> {
+  return apiFetch<string[]>('/api/admin-questions?type=fieldChoices');
+}
+
+export { submitReply } from './submitReply';

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tag, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
-import { airtableFetch, airtableCreate, airtableUpdate, airtableDelete } from '@/api/airtable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,16 +19,13 @@ interface Category {
 }
 
 const STATUS_OPTIONS = ['פעיל', 'לא פעיל'];
-const TABLE_OPTIONS = ['מאמרים', 'שיעורים', 'שיעורי וידאו', 'אירועים', 'שאלות'];
+const TABLE_OPTIONS  = ['מאמרים', 'שיעורים', 'שיעורי וידאו', 'אירועים', 'שאלות'];
 
-async function fetchAllCategories(): Promise<Category[]> {
-  const data = await airtableFetch('קטגוריות', {}, [{ field: 'שם', direction: 'asc' }]);
-  return data.records.map((r: any) => ({
-    id: r.id,
-    name: r.fields['שם'] ?? '',
-    status: r.fields['סטטוס'] ?? 'פעיל',
-    tables: r.fields['טבלה'] ?? [],
-  }));
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res  = await fetch(path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
+  return data as T;
 }
 
 export default function CategoriesPage() {
@@ -49,7 +45,7 @@ export default function CategoriesPage() {
 
   function load() {
     setLoading(true);
-    fetchAllCategories()
+    apiFetch<Category[]>('/api/categories?admin=true')
       .then(setCategories)
       .catch(() => toast.error('שגיאה בטעינת קטגוריות'))
       .finally(() => setLoading(false));
@@ -84,17 +80,17 @@ export default function CategoriesPage() {
     setSaving(true);
     try {
       if (editing) {
-        await airtableUpdate('קטגוריות', editing.id, {
-          'שם': formName.trim(),
-          'סטטוס': formStatus,
-          'טבלה': formTables,
+        await apiFetch(`/api/categories?id=${editing.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: formName.trim(), status: formStatus, tables: formTables }),
         });
         toast.success('הקטגוריה עודכנה');
       } else {
-        await airtableCreate('קטגוריות', {
-          'שם': formName.trim(),
-          'סטטוס': formStatus,
-          'טבלה': formTables,
+        await apiFetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: formName.trim(), tables: formTables, status: formStatus }),
         });
         toast.success('הקטגוריה נוספה');
       }
@@ -111,7 +107,7 @@ export default function CategoriesPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await airtableDelete('קטגוריות', deleteTarget.id);
+      await apiFetch(`/api/categories?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('הקטגוריה נמחקה');
       setDeleteTarget(null);
       load();

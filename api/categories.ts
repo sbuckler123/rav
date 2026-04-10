@@ -92,8 +92,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method === 'PATCH' && id) {
-      const { name } = JSON.parse(await readBody(req));
-      await airtableUpdate(id, { 'שם': String(name).trim() });
+      const body = JSON.parse(await readBody(req)) as { name?: string; status?: string; tables?: string[] };
+      const fields: Record<string, unknown> = {};
+      if (body.name != null)   fields['שם']     = String(body.name).trim();
+      if (body.status != null) fields['סטטוס'] = body.status;
+      if (body.tables != null) fields['טבלה']   = body.tables;
+      if (Object.keys(fields).length) await airtableUpdate(id, fields);
       res.statusCode = 200;
       res.end(JSON.stringify({ success: true }));
       return;
@@ -112,6 +116,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     // GET
+    const admin = reqUrl.searchParams.get('admin');
+    if (admin === 'true') {
+      // Admin view: all categories with full fields (no cache)
+      const data = await airtableGet({}, [{ field: 'שם', direction: 'asc' }]);
+      const categories = data.records.map((r) => ({
+        id:     r.id,
+        name:   (r.fields['שם']     as string)   ?? '',
+        status: (r.fields['סטטוס'] as string)   ?? 'פעיל',
+        tables: (r.fields['טבלה']   as string[]) ?? [],
+      }));
+      res.statusCode = 200;
+      res.end(JSON.stringify(categories));
+      return;
+    }
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     const filter = forTable
       ? `AND({סטטוס}='פעיל',FIND('${forTable}',ARRAYJOIN({טבלה})))`

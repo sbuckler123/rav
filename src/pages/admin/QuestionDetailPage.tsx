@@ -18,10 +18,10 @@ import {
   updateAnswer,
   deleteAnswer,
   deleteQuestion,
+  getWriterTypeChoices,
   type AdminQuestion,
 } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
-import { airtableUpdate, airtableGetFieldChoices } from '@/api/airtable';
 import { cn, formatAdminDate } from '@/lib/utils';
 
 function writerIcon(type: string) {
@@ -76,7 +76,7 @@ export default function QuestionDetailPage() {
   useEffect(() => { reload(); }, [id]);
 
   useEffect(() => {
-    airtableGetFieldChoices('תשובות', 'סוג כותב')
+    getWriterTypeChoices()
       .then(choices => {
         setWriterTypeOptions(choices);
         if (choices.length > 0) setReplyWriterType(choices[0]);
@@ -128,9 +128,7 @@ export default function QuestionDetailPage() {
         await approveQuestion(id);
         toast.success('השאלה אושרה לפרסום');
       } else if (action === 'toggleConsent') {
-        await airtableUpdate('שאלות', id, {
-          'הסכמה לפרסום': !question?.consentToPublish,
-        });
+        await updateQuestion(id, { 'הסכמה לפרסום': !question?.consentToPublish });
         toast.success('עודכן');
       }
       reload();

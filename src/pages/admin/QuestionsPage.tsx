@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2 } from 'lucide-react';
-import { getAllQuestions, createQuestion, submitReply, type AdminQuestion } from '@/api/adminQuestionsApi';
+import { getAllQuestions, createQuestion, submitReply, getWriterTypeChoices, type AdminQuestion } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
-import { airtableGetFieldChoices } from '@/api/airtable';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,7 +70,7 @@ export default function QuestionsPage() {
   useEffect(() => { loadData(); }, []);
 
   useEffect(() => {
-    airtableGetFieldChoices('תשובות', 'סוג כותב')
+    getWriterTypeChoices()
       .then(choices => {
         setWriterTypeOptions(choices);
         if (choices.length > 0) setForm(f => ({ ...f, answerWriterType: choices[0] }));
