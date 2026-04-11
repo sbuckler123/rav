@@ -18,11 +18,16 @@ interface Props {
   categories: { id: string; name: string }[];
 }
 
-function formatDate(raw: any): string {
+function formatDate(raw: string | undefined): string {
   if (!raw) return '';
   const d = new Date(raw);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('he-IL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Jerusalem',
+  });
 }
 
 function ExpandableText({ text, className }: { text: string; className?: string }) {
