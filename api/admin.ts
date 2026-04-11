@@ -28,27 +28,35 @@ import { handle as handleUsers }     from './_users';
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
 
-  const url     = new URL(req.url ?? '/', 'https://placeholder');
-  const section = url.searchParams.get('section');
-  const type    = url.searchParams.get('type');
+  try {
+    const url     = new URL(req.url ?? '/', 'https://placeholder');
+    const section = url.searchParams.get('section');
+    const type    = url.searchParams.get('type');
 
-  // The public follow-up reply bypasses auth (submitted by question askers)
-  const isPublicReply =
-    section === 'questions' && type === 'reply' && req.method === 'POST';
+    // The public follow-up reply bypasses auth (submitted by question askers)
+    const isPublicReply =
+      section === 'questions' && type === 'reply' && req.method === 'POST';
 
-  if (!isPublicReply) {
-    if (!(await requireAuth(req, res))) return;
-  }
+    if (!isPublicReply) {
+      if (!(await requireAuth(req, res))) return;
+    }
 
-  switch (section) {
-    case 'questions': return handleQuestions(req, res);
-    case 'articles':  return handleArticles(req, res);
-    case 'events':    return handleEvents(req, res);
-    case 'shiurim':   return handleShiurim(req, res);
-    case 'videos':    return handleVideos(req, res);
-    case 'users':     return handleUsers(req, res);
-    default:
-      res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Unknown section' }));
+    switch (section) {
+      case 'questions': return await handleQuestions(req, res);
+      case 'articles':  return await handleArticles(req, res);
+      case 'events':    return await handleEvents(req, res);
+      case 'shiurim':   return await handleShiurim(req, res);
+      case 'videos':    return await handleVideos(req, res);
+      case 'users':     return await handleUsers(req, res);
+      default:
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Unknown section' }));
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: msg }));
+    }
   }
 }
