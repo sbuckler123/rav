@@ -154,7 +154,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'סטטוס':             body.status ?? 'ממתין',
         'הסכמה לפרסום':     body.consentToPublish ?? false,
         'מאושר לפרסום':     body.approvedForPublish ?? false,
-        'תאריך':             new Date().toISOString().split('T')[0],
+        'תאריך':             new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
       };
       if (body.askerName?.trim()) fields['שם השואל'] = body.askerName.trim();
       if (body.category)          fields['קטגוריה']   = [body.category];
