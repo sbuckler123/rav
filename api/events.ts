@@ -8,6 +8,11 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
+/** Escapes a value for safe use inside a double-quoted Airtable formula string. */
+function escapeAirtable(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
@@ -168,7 +173,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const [eventsData, galleryData] = await Promise.all([
       airtableFetch(
         'אירועים',
-        linkId ? { filterByFormula: `{מזהה קישור}="${linkId}"`, maxRecords: '1' } : {},
+        linkId ? { filterByFormula: `{מזהה קישור}="${escapeAirtable(linkId)}"`, maxRecords: '1' } : {},
         linkId ? undefined : [{ field: 'תאריך לועזי', direction: 'desc' }],
       ),
       airtableFetch('גלריה', {}),

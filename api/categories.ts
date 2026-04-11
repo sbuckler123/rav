@@ -11,6 +11,11 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { requireAuth } from './_verifyAuth';
 
+/** Escapes a value for safe use inside a double-quoted Airtable formula string. */
+function escapeAirtable(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 const TABLE   = 'קטגוריות';
@@ -137,8 +142,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     const filter = forTable
-      ? `AND({סטטוס}='פעיל',FIND('${forTable}',ARRAYJOIN({טבלה})))`
-      : `{סטטוס}='פעיל'`;
+      ? `AND({סטטוס}="פעיל",FIND("${escapeAirtable(forTable)}",ARRAYJOIN({טבלה})))`
+      : `{סטטוס}="פעיל"`;
     const data = await airtableGet(
       { filterByFormula: filter },
       [{ field: 'שם', direction: 'asc' }],

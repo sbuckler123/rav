@@ -7,9 +7,15 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { requireAuth } from './_verifyAuth';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+/** Escapes a value for safe use inside a double-quoted Airtable formula string. */
+function escapeAirtable(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
@@ -19,6 +25,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify({ error: 'Missing server configuration' }));
     return;
   }
+
+  if (!(await requireAuth(req, res))) return;
 
   const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
   const email  = reqUrl.searchParams.get('email');
@@ -33,7 +41,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const url = new URL(
       `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('משתמשים')}`,
     );
-    url.searchParams.set('filterByFormula', `AND({אימייל}='${email}',{סטטוס}='פעיל')`);
+    url.searchParams.set(
+      'filterByFormula',
+      `AND({אימייל}="${escapeAirtable(email)}",{סטטוס}="פעיל")`,
+    );
     url.searchParams.set('maxRecords', '1');
 
     const airtableRes = await fetch(url.toString(), {

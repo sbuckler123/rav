@@ -8,6 +8,11 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
+/** Escapes a value for safe use inside a double-quoted Airtable formula string. */
+function escapeAirtable(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
@@ -116,7 +121,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     if (linkId) {
       const data = await airtableFetch('מאמרים', {
-        filterByFormula: `{מזהה קישור}="${linkId}"`,
+        filterByFormula: `{מזהה קישור}="${escapeAirtable(linkId)}"`,
         maxRecords: '1',
       });
       const record = data.records[0] ?? null;

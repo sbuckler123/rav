@@ -66,8 +66,8 @@ async function getOgData(
   baseUrl: string,
 ): Promise<{ title: string; description: string; image: string; imageWidth: number; imageHeight: number }> {
   const defaultImage = `${baseUrl}/og-image.jpg`;
-  const pat    = process.env.VITE_AIRTABLE_PAT;
-  const baseId = process.env.VITE_AIRTABLE_BASE_ID;
+  const pat    = process.env.AIRTABLE_PAT;
+  const baseId = process.env.AIRTABLE_BASE_ID;
   const table  = TABLE[section];
 
   if (!pat || !baseId || !table) {
@@ -75,7 +75,8 @@ async function getOgData(
   }
 
   const url = new URL(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`);
-  url.searchParams.set('filterByFormula', `{מזהה קישור}="${id}"`);
+  const safeId = id.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  url.searchParams.set('filterByFormula', `{מזהה קישור}="${safeId}"`);
   url.searchParams.set('maxRecords', '1');
 
   const res = await fetch(url.toString(), {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
-import { registerTokenGetter } from '@/api/tokenStore';
+import { registerTokenGetter, getBearerToken } from '@/api/tokenStore';
 
 export interface AdminUser {
   id: string;
@@ -38,7 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const email = clerkUser.primaryEmailAddress?.emailAddress ?? '';
     if (!email) return;
 
-    fetch(`/api/auth-user?email=${encodeURIComponent(email)}`)
+    getBearerToken()
+      .then((token) => fetch(`/api/auth-user?email=${encodeURIComponent(email)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }))
       .then((r) => r.ok ? r.json() : null)
       .then((data) => setAirtableUser(data ?? null))
       .catch(() => setAirtableUser(null));

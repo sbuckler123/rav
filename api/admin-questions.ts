@@ -17,10 +17,15 @@ import { requireAuth } from './_verifyAuth';
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
-function readBody(req: IncomingMessage): Promise<string> {
+function readBody(req: IncomingMessage, maxBytes = 50_000): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', (c) => { data += c; });
+    let size = 0;
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
+      data += chunk;
+    });
     req.on('end', () => resolve(data));
     req.on('error', reject);
   });

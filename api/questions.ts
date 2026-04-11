@@ -45,10 +45,15 @@ async function airtableCreate(table: string, fields: Record<string, unknown>) {
   return res.json() as Promise<{ id: string; fields: Record<string, unknown> }>;
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+function readBody(req: IncomingMessage, maxBytes = 10_000): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', (chunk) => { data += chunk; });
+    let size = 0;
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
+      data += chunk;
+    });
     req.on('end', () => resolve(data));
     req.on('error', reject);
   });
