@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { apiFetch } from '@/api/apiFetch';
 import ReactMarkdown from 'react-markdown';
 import { ArrowRight, Loader2, Save, Eye, EyeOff, Plus, Check, Pencil, X } from 'lucide-react';
 import { fetchCategories, createCategory, renameCategory, deleteCategory, type Category } from '@/api/categoriesApi';
@@ -30,13 +31,6 @@ const EMPTY_FORM: FormState = {
   categoryId: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res  = await fetch(path, options);
-  const data = await res.json();
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-  return data as T;
-}
 
 export default function ArticleFormPage() {
   const { id } = useParams<{ id: string }>();

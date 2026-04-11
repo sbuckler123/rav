@@ -12,6 +12,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { requireAuth } from './_verifyAuth';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -104,7 +105,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       }
     }
 
-    // ── Submit reply ─────────────────────────────────────────────────────────
+    // ── Submit reply (public — no auth required) ─────────────────────────────
     if (type === 'reply' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req)) as {
         questionId: string; content: string; writerType?: string;
@@ -116,8 +117,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'תאריך':         new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
       };
       const record = await atCreate('תשובות', fields);
+      // Also set question status back to ממתין so admin sees the new reply
+      await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
       res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
     }
+
+    // ── Auth required for all remaining operations ────────────────────────────
+    if (!(await requireAuth(req, res))) return;
 
     // ── DELETE question ──────────────────────────────────────────────────────
     if (req.method === 'DELETE' && id) {

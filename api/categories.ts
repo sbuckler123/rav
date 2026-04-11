@@ -9,6 +9,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { requireAuth } from './_verifyAuth';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -82,6 +83,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
   const id        = reqUrl.searchParams.get('id');
   const forTable  = reqUrl.searchParams.get('forTable');
+
+  // Public: GET without ?admin=true (used by the public site for category dropdowns)
+  const isPublicRead = req.method === 'GET' && reqUrl.searchParams.get('admin') !== 'true';
+  if (!isPublicRead && !(await requireAuth(req, res))) return;
 
   try {
     if (req.method === 'DELETE' && id) {

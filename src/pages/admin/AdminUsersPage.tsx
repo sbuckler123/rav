@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/api/apiFetch';
 import { Users, Plus, Pencil, Trash2, Loader2, Search, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -48,13 +49,6 @@ function statusBadge(status: string) {
   return status === 'פעיל'
     ? <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">פעיל</Badge>
     : <Badge className="bg-muted text-muted-foreground border-border text-xs">לא פעיל</Badge>;
-}
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(path, options);
-  const data = await res.json();
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-  return data as T;
 }
 
 export default function AdminUsersPage() {

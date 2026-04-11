@@ -1,4 +1,5 @@
 // All Airtable access is now server-side via /api/admin-questions
+import { apiFetch } from './apiFetch';
 
 export interface AdminAnswer {
   id: string;
@@ -19,13 +20,6 @@ export interface AdminQuestion {
   approvedForPublish: boolean;
   consentToPublish: boolean;
   answers: AdminAnswer[];
-}
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res  = await fetch(path, options);
-  const data = await res.json();
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-  return data as T;
 }
 
 export async function getAllQuestions(): Promise<{ questions: AdminQuestion[] }> {

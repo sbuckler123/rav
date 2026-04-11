@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/api/apiFetch';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
@@ -50,13 +51,6 @@ const EMPTY_FORM: FormState = {
   title: '', date: '', duration: '', description: '', categoryId: '',
   youtubeId: '', views: '', isNew: false, status: 'פעיל',
 };
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res  = await fetch(path, options);
-  const data = await res.json();
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-  return data as T;
-}
 
 function getThumb(v: AdminVideo): string {
   if (v.thumbnail) return v.thumbnail;

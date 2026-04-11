@@ -9,6 +9,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { requireAuth } from './_verifyAuth';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -85,6 +86,7 @@ function formatDisplay(raw: string): string {
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
   if (!PAT || !BASE_ID) { res.statusCode = 500; res.end(JSON.stringify({ error: 'Missing config' })); return; }
+  if (!(await requireAuth(req, res))) return;
 
   const url = new URL(req.url ?? '/', 'https://placeholder');
   const id  = url.searchParams.get('id');
