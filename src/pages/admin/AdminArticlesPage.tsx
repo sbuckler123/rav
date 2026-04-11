@@ -32,7 +32,7 @@ export default function AdminArticlesPage() {
 
   function load() {
     setLoading(true);
-    apiFetch<AdminArticle[]>('/api/admin-articles')
+    apiFetch<AdminArticle[]>('/api/admin?section=articles')
       .then(setArticles)
       .catch(() => toast.error('שגיאה בטעינת מאמרים'))
       .finally(() => setLoading(false));
@@ -44,7 +44,7 @@ export default function AdminArticlesPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin-articles?id=${deleteTarget.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin?section=articles&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המאמר נמחק');
       setDeleteTarget(null);
       load();

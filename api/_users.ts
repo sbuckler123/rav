@@ -9,7 +9,6 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { requireAuth } from './_verifyAuth';
 
 const PAT          = process.env.AIRTABLE_PAT;
 const BASE_ID      = process.env.AIRTABLE_BASE_ID;
@@ -141,7 +140,7 @@ async function clerkDeleteUser(clerkUserId: string) {
 
 // ─── handler ─────────────────────────────────────────────────────────────────
 
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
+export async function handle(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
 
   if (!PAT || !BASE_ID) {
@@ -154,7 +153,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify({ error: 'Missing Clerk configuration' }));
     return;
   }
-  if (!(await requireAuth(req, res))) return;
 
   const reqUrl = new URL(req.url ?? '/', 'https://placeholder');
   const id = reqUrl.searchParams.get('id');

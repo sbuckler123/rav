@@ -80,7 +80,7 @@ export default function AdminUsersPage() {
 
   function load() {
     setLoading(true);
-    apiFetch<AdminUser[]>('/api/users')
+    apiFetch<AdminUser[]>('/api/admin?section=users')
       .then(setUsers)
       .catch(() => toast.error('שגיאה בטעינת משתמשים'))
       .finally(() => setLoading(false));
@@ -113,7 +113,7 @@ export default function AdminUsersPage() {
     setSaving(true);
     try {
       if (editing) {
-        await apiFetch(`/api/users?id=${editing.id}`, {
+        await apiFetch(`/api/admin?section=users&id=${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
         });
         toast.success('המשתמש עודכן');
       } else {
-        await apiFetch('/api/users', {
+        await apiFetch('/api/admin?section=users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -157,7 +157,7 @@ export default function AdminUsersPage() {
     }
     setDeleting(true);
     try {
-      await apiFetch(`/api/users?id=${deleteTarget.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin?section=users&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המשתמש נמחק');
       setDeleteTarget(null);
       load();

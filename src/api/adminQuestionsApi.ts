@@ -1,4 +1,4 @@
-// All Airtable access is now server-side via /api/admin-questions
+// All Airtable access is now server-side via /api/admin?section=questions
 import { apiFetch } from './apiFetch';
 
 export interface AdminAnswer {
@@ -23,12 +23,12 @@ export interface AdminQuestion {
 }
 
 export async function getAllQuestions(): Promise<{ questions: AdminQuestion[] }> {
-  const questions = await apiFetch<AdminQuestion[]>('/api/admin-questions');
+  const questions = await apiFetch<AdminQuestion[]>('/api/admin?section=questions');
   return { questions };
 }
 
 export async function approveQuestion(questionId: string) {
-  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+  return apiFetch(`/api/admin?section=questions&id=${questionId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: { 'מאושר לפרסום': true } }),
@@ -36,7 +36,7 @@ export async function approveQuestion(questionId: string) {
 }
 
 export async function rejectQuestion(questionId: string) {
-  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+  return apiFetch(`/api/admin?section=questions&id=${questionId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: { 'סטטוס': 'נדחה' } }),
@@ -44,7 +44,7 @@ export async function rejectQuestion(questionId: string) {
 }
 
 export async function markAnswered(questionId: string) {
-  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+  return apiFetch(`/api/admin?section=questions&id=${questionId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: { 'סטטוס': 'נענה' } }),
@@ -59,7 +59,7 @@ export async function createQuestion(input: {
   consentToPublish?: boolean;
   approvedForPublish?: boolean;
 }): Promise<{ id: string }> {
-  return apiFetch<{ id: string }>('/api/admin-questions', {
+  return apiFetch<{ id: string }>('/api/admin?section=questions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -67,7 +67,7 @@ export async function createQuestion(input: {
 }
 
 export async function updateQuestion(questionId: string, fields: Record<string, unknown>) {
-  return apiFetch(`/api/admin-questions?id=${questionId}`, {
+  return apiFetch(`/api/admin?section=questions&id=${questionId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
@@ -75,11 +75,11 @@ export async function updateQuestion(questionId: string, fields: Record<string, 
 }
 
 export async function deleteQuestion(questionId: string) {
-  return apiFetch(`/api/admin-questions?id=${questionId}`, { method: 'DELETE' });
+  return apiFetch(`/api/admin?section=questions&id=${questionId}`, { method: 'DELETE' });
 }
 
 export async function updateAnswer(answerId: string, content: string) {
-  return apiFetch(`/api/admin-questions?type=answer&id=${answerId}`, {
+  return apiFetch(`/api/admin?section=questions&type=answer&id=${answerId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
@@ -87,11 +87,11 @@ export async function updateAnswer(answerId: string, content: string) {
 }
 
 export async function deleteAnswer(answerId: string) {
-  return apiFetch(`/api/admin-questions?type=answer&id=${answerId}`, { method: 'DELETE' });
+  return apiFetch(`/api/admin?section=questions&type=answer&id=${answerId}`, { method: 'DELETE' });
 }
 
 export async function getWriterTypeChoices(): Promise<string[]> {
-  return apiFetch<string[]>('/api/admin-questions?type=fieldChoices');
+  return apiFetch<string[]>('/api/admin?section=questions&type=fieldChoices');
 }
 
 export { submitReply } from './submitReply';

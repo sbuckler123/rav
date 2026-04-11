@@ -60,12 +60,12 @@ export default function ArticleFormPage() {
 
   useEffect(() => {
     const tasks: Promise<unknown>[] = [
-      apiFetch<string[]>('/api/admin-articles?type=fieldChoices&field=%D7%A9%D7%A0%D7%94%20%D7%9C%D7%95%D7%A2%D7%96%D7%99%D7%AA'),
+      apiFetch<string[]>('/api/admin?section=articles&type=fieldChoices&field=%D7%A9%D7%A0%D7%94%20%D7%9C%D7%95%D7%A2%D7%96%D7%99%D7%AA'),
       fetchCategories('מאמרים'),
-      apiFetch<string[]>('/api/admin-articles?type=fieldChoices&field=%D7%AA%D7%92%D7%99%D7%95%D7%AA'),
+      apiFetch<string[]>('/api/admin?section=articles&type=fieldChoices&field=%D7%AA%D7%92%D7%99%D7%95%D7%AA'),
     ];
     if (isEdit) {
-      tasks.push(apiFetch(`/api/admin-articles?id=${id}`));
+      tasks.push(apiFetch(`/api/admin?section=articles&id=${id}`));
     }
 
     Promise.all(tasks)
@@ -183,14 +183,14 @@ export default function ArticleFormPage() {
       };
 
       if (isEdit) {
-        await apiFetch(`/api/admin-articles?id=${id}`, {
+        await apiFetch(`/api/admin?section=articles&id=${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         toast.success('המאמר עודכן');
       } else {
-        await apiFetch('/api/admin-articles', {
+        await apiFetch('/api/admin?section=articles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

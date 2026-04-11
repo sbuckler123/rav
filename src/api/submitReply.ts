@@ -1,11 +1,11 @@
-// Submit a reply to a question — proxied through /api/admin-questions
+// Submit a reply to a question — proxied through /api/admin?section=questions
 
 export async function submitReply(input: {
   questionId: string;
   content: string;
   writerType?: string;
 }): Promise<{ success: boolean; id?: string }> {
-  const res = await fetch('/api/admin-questions?type=reply', {
+  const res = await fetch('/api/admin?section=questions&type=reply', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),

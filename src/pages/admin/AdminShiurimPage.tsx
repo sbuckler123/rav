@@ -62,7 +62,7 @@ export default function AdminShiurimPage() {
   function load() {
     setLoading(true);
     Promise.all([
-      apiFetch<Shiur[]>('/api/admin-shiurim'),
+      apiFetch<Shiur[]>('/api/admin?section=shiurim'),
       fetchCategories('שיעורים'),
     ])
       .then(([data, cats]) => { setShiurim(data); setCategories(cats); })
@@ -123,14 +123,14 @@ export default function AdminShiurimPage() {
       };
 
       if (editing) {
-        await apiFetch(`/api/admin-shiurim?id=${editing.id}`, {
+        await apiFetch(`/api/admin?section=shiurim&id=${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         toast.success('השיעור עודכן');
       } else {
-        await apiFetch('/api/admin-shiurim', {
+        await apiFetch('/api/admin?section=shiurim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -150,7 +150,7 @@ export default function AdminShiurimPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin-shiurim?id=${deleteTarget.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin?section=shiurim&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
       setDeleteTarget(null);
       load();

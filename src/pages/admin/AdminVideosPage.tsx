@@ -78,7 +78,7 @@ export default function AdminVideosPage() {
   function load() {
     setLoading(true);
     Promise.all([
-      apiFetch<AdminVideo[]>('/api/admin-videos'),
+      apiFetch<AdminVideo[]>('/api/admin?section=videos'),
       fetchCategories('שיעורי וידאו'),
     ])
       .then(([vids, cats]) => { setVideos(vids); setCategories(cats); })
@@ -144,14 +144,14 @@ export default function AdminVideosPage() {
       };
 
       if (editing) {
-        await apiFetch(`/api/admin-videos?id=${editing.id}`, {
+        await apiFetch(`/api/admin?section=videos&id=${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
         toast.success('השיעור עודכן');
       } else {
-        await apiFetch('/api/admin-videos', {
+        await apiFetch('/api/admin?section=videos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -171,7 +171,7 @@ export default function AdminVideosPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin-videos?id=${deleteTarget.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin?section=videos&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
       setDeleteTarget(null);
       load();

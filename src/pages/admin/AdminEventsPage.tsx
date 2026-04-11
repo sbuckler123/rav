@@ -80,7 +80,7 @@ export default function AdminEventsPage() {
 
   function load() {
     setLoading(true);
-    apiFetch<AdminEvent[]>('/api/admin-events')
+    apiFetch<AdminEvent[]>('/api/admin?section=events')
       .then(setEvents)
       .catch(() => toast.error('שגיאה בטעינת אירועים'))
       .finally(() => setLoading(false));
@@ -92,7 +92,7 @@ export default function AdminEventsPage() {
     if (!ids.length) { setGallery([]); return; }
     setGalleryLoading(true);
     try {
-      const items = await apiFetch<GalleryItem[]>(`/api/admin-events?type=gallery&ids=${ids.join(',')}`);
+      const items = await apiFetch<GalleryItem[]>(`/api/admin?section=events&type=gallery&ids=${ids.join(',')}`);
       setGallery(items);
     } catch {
       toast.error('שגיאה בטעינת גלריה');
@@ -103,7 +103,7 @@ export default function AdminEventsPage() {
 
   function openDialog() {
     setAddingEventType(false);
-    apiFetch<string[]>('/api/admin-events?type=fieldChoices')
+    apiFetch<string[]>('/api/admin?section=events&type=fieldChoices')
       .then(setEventTypeChoices)
       .catch(() => {});
   }
@@ -145,14 +145,14 @@ export default function AdminEventsPage() {
     setSaving(true);
     try {
       if (editing) {
-        await apiFetch(`/api/admin-events?id=${editing.id}`, {
+        await apiFetch(`/api/admin?section=events&id=${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...form, userId: user?.id }),
         });
         toast.success('האירוע עודכן');
       } else {
-        await apiFetch('/api/admin-events', {
+        await apiFetch('/api/admin?section=events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -176,7 +176,7 @@ export default function AdminEventsPage() {
     if (!newGallery.url.trim() || !editing) return;
     setSavingGallery(true);
     try {
-      const result = await apiFetch<{ id: string; galleryIds: string[] }>('/api/admin-events?type=gallery', {
+      const result = await apiFetch<{ id: string; galleryIds: string[] }>('/api/admin?section=events&type=gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -204,7 +204,7 @@ export default function AdminEventsPage() {
     if (!galleryEditForm.url.trim()) return;
     setSavingGallery(true);
     try {
-      await apiFetch(`/api/admin-events?type=gallery&id=${itemId}`, {
+      await apiFetch(`/api/admin?section=events&type=gallery&id=${itemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -228,7 +228,7 @@ export default function AdminEventsPage() {
     setSavingGallery(true);
     try {
       const result = await apiFetch<{ galleryIds: string[] }>(
-        `/api/admin-events?type=gallery&id=${itemId}&eventId=${editing.id}`,
+        `/api/admin?section=events&type=gallery&id=${itemId}&eventId=${editing.id}`,
         { method: 'DELETE' },
       );
       const newIds = result.galleryIds ?? editing.galleryIds.filter(id => id !== itemId);
@@ -248,7 +248,7 @@ export default function AdminEventsPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin-events?id=${deleteTarget.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin?section=events&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('האירוע נמחק');
       setDeleteTarget(null);
       load();

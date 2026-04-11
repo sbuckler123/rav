@@ -12,7 +12,6 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { requireAuth } from './_verifyAuth';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -82,7 +81,7 @@ async function getFieldChoices(tableName: string, fieldName: string): Promise<st
   return field?.options?.choices?.map((c) => c.name) ?? [];
 }
 
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
+export async function handle(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
   if (!PAT || !BASE_ID) { res.statusCode = 500; res.end(JSON.stringify({ error: 'Missing config' })); return; }
 
@@ -126,9 +125,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
       res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
     }
-
-    // ── Auth required for all remaining operations ────────────────────────────
-    if (!(await requireAuth(req, res))) return;
 
     // ── DELETE question ──────────────────────────────────────────────────────
     if (req.method === 'DELETE' && id) {
