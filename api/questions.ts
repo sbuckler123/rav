@@ -88,7 +88,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'אימייל השואל': String(email).slice(0, 200),
         'הסכמה לפרסום': !!allowPublic,
         'סטטוס': 'ממתין',
-        'תאריך': new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
+        'תאריך': new Date().toISOString(),
       };
       if (categoryId) fields['קטגוריה'] = [categoryId];
 

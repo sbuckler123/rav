@@ -119,7 +119,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'שאלה':          [body.questionId],
         'תוכן התשובה':   body.content,
         'סוג כותב':      body.writerType ?? 'רב',
-        'תאריך':         new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
+        'תאריך':         new Date().toISOString(),
       };
       const record = await atCreate('תשובות', fields);
       // Also set question status back to ממתין so admin sees the new reply
@@ -154,7 +154,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'סטטוס':             body.status ?? 'ממתין',
         'הסכמה לפרסום':     body.consentToPublish ?? false,
         'מאושר לפרסום':     body.approvedForPublish ?? false,
-        'תאריך':             new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' }).replace(' ', 'T'),
+        'תאריך':             new Date().toISOString(),
       };
       if (body.askerName?.trim()) fields['שם השואל'] = body.askerName.trim();
       if (body.category)          fields['קטגוריה']   = [body.category];
