@@ -9,9 +9,11 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { webcrypto } from 'crypto';
 
-const { subtle } = webcrypto;
+// Node.js 18+ exposes crypto as a global — no import needed, avoids esbuild bundling issues.
+// Accessed lazily inside functions so module init never throws.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getSubtle = (): SubtleCrypto => (globalThis as any).crypto.subtle as SubtleCrypto;
 
 // ─── JWKS cache (refreshed every 5 minutes) ──────────────────────────────────
 
@@ -73,6 +75,7 @@ async function verifyClerkJWT(token: string): Promise<void> {
       ? { name: 'ECDSA', hash: 'SHA-256' }
       : 'RSASSA-PKCS1-v1_5';
 
+  const subtle = getSubtle();
   const cryptoKey = await subtle.importKey('jwk', jwk, importAlg, false, ['verify']);
   const valid = await subtle.verify(
     verifyAlg,
