@@ -95,7 +95,7 @@ export default function EventDetailPage() {
           ]}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 mt-8">
           {/* תוכן ראשי */}
           <div className="space-y-8">
             {/* כותרת + מטא-דאטה */}

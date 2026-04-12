@@ -84,7 +84,7 @@ export default function VideoDetailPage() {
           { label: video.title }
         ]} />
 
-        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 mt-6">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
 
