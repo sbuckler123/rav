@@ -32,9 +32,10 @@ export async function requireAuth(req: IncomingMessage, res: ServerResponse): Pr
   try {
     await verifyToken(token, { secretKey });
     return true;
-  } catch {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     res.statusCode = 401;
-    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    res.end(JSON.stringify({ error: 'Unauthorized', detail }));
     return false;
   }
 }
