@@ -1,14 +1,16 @@
 /**
  * Server-side auth helper — verifies a Clerk session JWT from the Authorization header.
  *
- * Uses Node.js traditional crypto (createVerify / createPublicKey) via dynamic import
- * to avoid both @clerk/backend esbuild issues and Web Crypto availability problems.
+ * Uses Node.js built-in crypto (createVerify / createPublicKey).
+ * The "node:" prefix on the import explicitly tells esbuild to treat this as a
+ * Node.js built-in — never polyfill, never bundle, always external.
  *
  * Usage in a handler:
  *   if (!(await requireAuth(req, res))) return;
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { createVerify, createPublicKey } from 'node:crypto';
 
 // ─── JWKS cache (refreshed every 5 minutes) ──────────────────────────────────
 
@@ -48,26 +50,18 @@ async function verifyClerkJWT(token: string): Promise<void> {
   const header  = JSON.parse(Buffer.from(hB64, 'base64url').toString());
   const payload = JSON.parse(Buffer.from(pB64, 'base64url').toString());
 
-  // Check expiration
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp && payload.exp < now)      throw new Error('Token expired');
   if (payload.nbf && payload.nbf > now + 10) throw new Error('Token not yet valid');
 
-  // Find the matching JWK
   const { keys } = await getJwks();
   const jwk = keys.find((k) => k.kid === header.kid);
   if (!jwk) throw new Error('No matching key in JWKS');
 
-  // Use Node.js built-in crypto via dynamic import — avoids any module-level
-  // bundling/resolution issues with esbuild.
-  const { createVerify, createPublicKey } = await import('node:crypto');
-
-  // createPublicKey with format:'jwk' is supported in Node.js 15+
+  // createPublicKey with format:'jwk' requires Node 15+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const publicKey = createPublicKey({ key: jwk as any, format: 'jwk' });
-
-  // Verify RS256 (Clerk's default signing algorithm)
-  const verifier = createVerify('RSA-SHA256');
+  const verifier  = createVerify('RSA-SHA256');
   verifier.update(`${hB64}.${pB64}`);
   const valid = verifier.verify(publicKey, b64urlDecode(sigB64));
   if (!valid) throw new Error('Invalid JWT signature');
@@ -75,10 +69,6 @@ async function verifyClerkJWT(token: string): Promise<void> {
 
 // ─── requireAuth ──────────────────────────────────────────────────────────────
 
-/**
- * Reads `Authorization: Bearer <token>` from the request, verifies it with Clerk's JWKS,
- * and returns true. If missing or invalid, writes a 401 response and returns false.
- */
 export async function requireAuth(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
   const authHeader = (req.headers['authorization'] as string | undefined) ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
