@@ -105,7 +105,7 @@ export default function HeroSection() {
                 <span className="font-semibold text-white">הרב קלמן מאיר בר</span>
                 <span className="mx-2 text-secondary/60" aria-hidden="true">·</span>
                 <span className="text-secondary">הרב הראשי לישראל</span>
-                <span className="text-secondary">ונשיא מועצת הרבנות הראשית לישראל</span>
+                <span className="text-secondary"> ונשיא מועצת הרבנות הראשית לישראל </span>
               </p>
             </div>
           </div>
