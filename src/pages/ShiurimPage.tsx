@@ -106,10 +106,10 @@ export default function ShiurimPage() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="לוח שיעורים"
-        description="לוח השיעורים העדכני של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה."
+        title="לוח אירועים"
+        description="לוח האירועים העדכני של הרב קלמן מאיר בר — שיעורים, הרצאות ומפגשים."
       />
-      <PageHeader title="לוח שיעורים" subtitle="כל השיעורים וההרצאות הקרובים" />
+      <PageHeader title="לוח אירועים" subtitle="כל השיעורים וההרצאות הקרובים" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 

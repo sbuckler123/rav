@@ -70,7 +70,7 @@ export default function ArticleDetailPage() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },
-          { label: 'מאמרים ופרסומים', href: '/articles' },
+          { label: 'הגות ופסיקה', href: '/articles' },
           { label: article.categories[0] ?? '', href: `/articles?category=${article.categories[0]}` },
           { label: article.title }
         ]} />

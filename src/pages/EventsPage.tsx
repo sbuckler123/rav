@@ -74,7 +74,7 @@ export default function EventsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader title="אירועים" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
+        <PageHeader title="יומן פעילות" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-muted-foreground">טוען אירועים...</div>
       </div>
     );
@@ -83,7 +83,7 @@ export default function EventsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader title="אירועים" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
+        <PageHeader title="יומן פעילות" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-destructive">{error}</div>
       </div>
     );
@@ -92,13 +92,13 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="אירועים"
-        description="אירועים ופגישות רשמיות של הרב קלמן מאיר בר, הרב הראשי לישראל."
+        title="יומן פעילות"
+        description="יומן הפעילות של הרב קלמן מאיר בר, הרב הראשי לישראל — פגישות, ביקורים ואירועים רשמיים."
       />
 
       {/* Page header — title + subtitle only, no search bar inside */}
       <PageHeader
-        title="אירועים"
+        title="יומן פעילות"
         subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי"
       />
 

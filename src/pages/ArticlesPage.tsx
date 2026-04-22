@@ -57,11 +57,11 @@ export default function ArticlesPage() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="מאמרים ופסקי הלכה"
-        description="מאמרים תורניים ופסקי הלכה מאת הרב קלמן מאיר בר, הרב הראשי לישראל."
+        title="הגות ופסיקה"
+        description="הגות ופסיקה — מאמרים תורניים ופסקי הלכה מאת הרב קלמן מאיר בר, הרב הראשי לישראל."
       />
       <PageHeader
-        title="מאמרים ופסקי הלכה"
+        title="הגות ופסיקה"
         subtitle="פסקי הלכה, מאמרים תורניים וחידושים מעט הרב הראשי"
       />
 

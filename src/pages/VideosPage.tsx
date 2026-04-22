@@ -72,14 +72,14 @@ export default function VideosPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="שיעורי וידאו" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-muted-foreground">טוען שיעורים...</div>
     </div>
   );
 
   if (error) return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="שיעורי וידאו" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-destructive">{error}</div>
     </div>
   );
@@ -87,10 +87,10 @@ export default function VideosPage() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="שיעורי וידאו"
-        description="צפו בשיעורי הוידאו של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
+        title="שיעורי תורה"
+        description="צפו בשיעורי התורה של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
       />
-      <PageHeader title="שיעורי וידאו" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

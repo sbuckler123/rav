@@ -17,6 +17,7 @@ import VideosPage from '@/pages/VideosPage';
 import EventsPage from '@/pages/EventsPage';
 import ShiurimPage from '@/pages/ShiurimPage';
 import AskPage from '@/pages/AskPage';
+import QAPage from '@/pages/QAPage';
 import ArticlesPage from '@/pages/ArticlesPage';
 import VideoDetailPage from '@/pages/VideoDetailPage';
 import ShiurDetailPage from '@/pages/ShiurDetailPage';
@@ -100,6 +101,7 @@ export default function App() {
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/events/:id" element={<EventDetailPage />} />
                     <Route path="/ask" element={<AskPage />} />
+                    <Route path="/qa" element={<QAPage />} />
                     <Route path="/articles" element={<ArticlesPage />} />
                     <Route path="/articles/:id" element={<ArticleDetailPage />} />
                     <Route path="/accessibility" element={<AccessibilityStatementPage />} />

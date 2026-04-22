@@ -60,7 +60,7 @@ export default function ShiurDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl font-bold mb-4">השיעור לא נמצא</p>
-          <Button asChild><Link to="/shiurim">חזרה ללוח שיעורים</Link></Button>
+          <Button asChild><Link to="/shiurim">חזרה ללוח אירועים</Link></Button>
         </div>
       </div>
     );
@@ -175,7 +175,7 @@ export default function ShiurDetailPage() {
           <Breadcrumbs
             items={[
               { label: 'דף הבית', href: '/' },
-              { label: 'לוח שיעורים', href: '/shiurim' },
+              { label: 'לוח אירועים', href: '/shiurim' },
               { label: shiur.title }
             ]}
           />
@@ -313,7 +313,7 @@ export default function ShiurDetailPage() {
                 שתף שיעור
               </Button>
               <Button variant="outline" className="min-h-[44px] w-full sm:w-auto" asChild>
-                <Link to="/shiurim">חזרה ללוח שיעורים</Link>
+                <Link to="/shiurim">חזרה ללוח אירועים</Link>
               </Button>
             </div>
 

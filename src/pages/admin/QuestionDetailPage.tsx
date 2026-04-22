@@ -106,7 +106,7 @@ export default function QuestionDetailPage() {
           askerEmail: question?.askerEmail ?? '',
           questionContent: question?.questionContent ?? '',
           answerContent: replyText.trim(),
-          questionUrl: `${window.location.origin}/ask#q-${id}`,
+          questionUrl: `${window.location.origin}/qa#q-${id}`,
         }),
       }).catch(() => {});
 

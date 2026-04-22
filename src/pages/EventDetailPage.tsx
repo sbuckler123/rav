@@ -72,7 +72,7 @@ export default function EventDetailPage() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 text-center">
         <p className="text-muted-foreground">הרשומה לא נמצאה.</p>
         <Link to="/events">
-          <Button variant="outline" className="mt-4">חזרה לאירועים</Button>
+          <Button variant="outline" className="mt-4">חזרה ליומן פעילות</Button>
         </Link>
       </div>
     );
@@ -90,7 +90,7 @@ export default function EventDetailPage() {
         <Breadcrumbs
           items={[
             { label: 'דף הבית', href: '/' },
-            { label: 'אירועים', href: '/events' },
+            { label: 'יומן פעילות', href: '/events' },
             { label: entry.title },
           ]}
         />
@@ -252,7 +252,7 @@ export default function EventDetailPage() {
                 )}
               </div>
               <Link to="/events" className="text-primary font-medium hover:text-secondary text-sm shrink-0">
-                חזרה לאירועים
+                חזרה ליומן פעילות
               </Link>
               <div className="flex-1 min-w-0 text-right">
                 {nextEvent ? (
@@ -312,7 +312,7 @@ export default function EventDetailPage() {
               <p className="font-serif font-bold mb-3">כל האירועים</p>
               <Button asChild size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 w-full">
                 <Link to="/events" className="flex items-center justify-center gap-2">
-                  חזרה לאירועים
+                  חזרה ליומן פעילות
                   <ChevronLeft className="h-4 w-4" />
                 </Link>
               </Button>

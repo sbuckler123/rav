@@ -7,10 +7,11 @@ import { getVideos } from '@/api/getVideos';
 
 const navLinks = [
   { href: '/ask', label: 'שאל את הרב' },
-  { href: '/videos', label: 'שיעורי וידאו' },
-  { href: '/shiurim', label: 'לוח שיעורים' },
-  { href: '/events', label: 'אירועים' },
-  { href: '/articles', label: 'מאמרים ופסקי הלכה' },
+  { href: '/qa', label: 'שו"ת' },
+  { href: '/videos', label: 'שיעורי תורה' },
+  { href: '/shiurim', label: 'לוח אירועים' },
+  { href: '/events', label: 'יומן פעילות' },
+  { href: '/articles', label: 'הגות ופסיקה' },
   { href: '/about', label: 'אודות' },
 ];
 
@@ -113,7 +114,7 @@ export default function Header() {
 
           {/* Row 2: Desktop nav — under the logo, larger text, right-aligned */}
           <nav
-            className="hidden lg:flex items-center gap-6 xl:gap-8 border-t border-white/10 py-3"
+            className="hidden lg:flex items-center gap-4 xl:gap-7 border-t border-white/10 py-3"
             aria-label="ניווט ראשי"
             dir="rtl"
           >

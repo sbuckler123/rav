@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import { getCategories } from '@/api/getCategories';
-import { getPublishedQuestions } from '@/api/getPublishedQuestions';
 import QuestionForm from '@/components/ask/QuestionForm';
-import PublishedQA from '@/components/ask/PublishedQA';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { Info, Clock, AlertCircle } from 'lucide-react';
-
-type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
 
 const guidelines = [
   {
@@ -31,24 +26,9 @@ const guidelines = [
 
 export default function AskPage() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [questions, setQuestions] = useState<GetPublishedQuestionsOutputType['questions']>([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
 
   useEffect(() => {
     getCategories().then(r => setCategories(r.categories)).catch(() => {});
-    getPublishedQuestions({})
-      .then(r => setQuestions(r.questions))
-      .catch(() => {})
-      .finally(() => {
-        setLoadingQuestions(false);
-        // Scroll to a specific question if hash is present (e.g. /ask#q-recXXX)
-        if (window.location.hash) {
-          setTimeout(() => {
-            const el = document.querySelector(window.location.hash);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 300);
-        }
-      });
   }, []);
 
   return (
@@ -66,29 +46,13 @@ export default function AskPage() {
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-10">
 
-        {/* Form + Guidelines */}
-        <section className="grid lg:grid-cols-5 gap-6 lg:gap-8 mb-8 sm:mb-12" aria-label="שליחת שאלה">
+        <section className="grid lg:grid-cols-5 gap-6 lg:gap-8" aria-label="שליחת שאלה">
           <div className="lg:col-span-3 order-2 lg:order-1">
             <QuestionForm categories={categories} />
           </div>
           <div className="lg:col-span-2 order-1 lg:order-2">
             <GuidelinesCard />
           </div>
-        </section>
-
-        {/* Published Q&A */}
-        <section id="qa-section" aria-label="שאלות ותשובות מפורסמות">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 bg-secondary rounded-full" />
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שאלות ותשובות מפורסמות</h2>
-          </div>
-          {loadingQuestions ? (
-            <div className="space-y-4" aria-busy="true" aria-label="טוען שאלות">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
-            </div>
-          ) : (
-            <PublishedQA questions={questions} categories={categories} />
-          )}
         </section>
       </main>
     </div>
