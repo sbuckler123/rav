@@ -44,9 +44,10 @@ export default function PrivacyPolicyPage() {
 
             <p className="font-semibold text-primary mb-1">מידע שאתם מוסרים מרצונכם:</p>
             <BulletList items={[
-              'שם פרטי — בעת שליחת שאלה לרב',
-              'כתובת דוא"ל — לצורך משלוח תשובה לשאלתכם',
+              'שם פרטי — בעת שליחת שאלה לרב או הרשמה לניוזלטר',
+              'כתובת דוא"ל — לצורך משלוח תשובה לשאלתכם או קבלת עדכוני הניוזלטר',
               'תוכן השאלה שנשלחת דרך טופס "שאל את הרב"',
+              'אישור הסכמה לקבלת דיוור — בעת הרשמה לניוזלטר (כולל חותמת זמן)',
             ]} />
 
             <p className="font-semibold text-primary mb-1 mt-4">מידע הנאסף באופן אוטומטי:</p>
@@ -67,6 +68,7 @@ export default function PrivacyPolicyPage() {
           <Section title="3. כיצד נאסף המידע">
             <BulletList items={[
               'טופס "שאל את הרב" — בו תמלאו את פרטיכם מרצונכם',
+              'טופס הרשמה לניוזלטר — שם, כתובת דוא"ל ואישור הסכמה מפורשת לדיוור',
               'קבצי Cookie ו-localStorage — לשמירת הגדרות נגישות שבחרתם (מאוחסנות רק במכשירכם)',
               'נתוני גלישה — הנאספים אוטומטית על ידי שרת האתר ושירותי ניתוח',
             ]} />
@@ -78,13 +80,14 @@ export default function PrivacyPolicyPage() {
           <Section title="4. מטרות השימוש במידע">
             <BulletList items={[
               'מתן מענה לשאלות שנשלחו דרך הטופס',
+              'משלוח עדכוני ניוזלטר — למי שנרשם ונתן הסכמה מפורשת בלבד',
               'שיפור תכני האתר ושיפור חוויית המשתמש',
               'ניתוח סטטיסטי מצטבר ואנונימי של תנועה באתר',
               'אבטחת האתר ומניעת שימוש לרעה',
             ]} />
             <p className="mt-3 text-sm text-muted-foreground">
-              אנו <span className="font-medium">לא</span> משתמשים במידע לצרכי שיווק,
-              ולא מוכרים אותו לצדדים שלישיים.
+              אנו <span className="font-medium">לא</span> מוכרים מידע אישי לצדדים שלישיים,
+              ולא משתמשים בו לצרכי פרסום מסחרי.
             </p>
           </Section>
 
@@ -170,6 +173,58 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
+          {/* ── 7. ניוזלטר ודיוור ── */}
+          <Section title="7. ניוזלטר ודיוור אלקטרוני">
+            <p className="mb-3">
+              האתר מציע הרשמה לניוזלטר לקבלת עדכונים על שיעורי תורה, פסקי הלכה ומאמרים
+              חדשים. הדיוור מתבצע בהתאם להוראות{' '}
+              <span className="font-medium">חוק התקשורת (בזק ושידורים), תשמ"ב–1982, תיקון מס׳ 40 (2008)</span>.
+            </p>
+
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="font-semibold text-primary text-sm mb-2">הסכמה מפורשת מראש</p>
+                <p className="text-sm text-foreground">
+                  לא נשלח דיוור כלשהו ללא הסכמה מפורשת, מדעת ומראש. בעת ההרשמה נדרש
+                  לסמן תיבת הסכמה ייעודית. ההרשמה אינה מותנית בקבלת כל שירות אחר.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="font-semibold text-primary text-sm mb-2">מידע הנאסף בהרשמה</p>
+                <BulletList items={[
+                  'שם — לצורך פנייה אישית בהודעות הדיוור',
+                  'כתובת דוא"ל — לצורך משלוח העדכונים',
+                  'חותמת זמן של ההסכמה — לצורך תיעוד ועמידה בדרישות החוק',
+                ]} />
+              </div>
+
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="font-semibold text-primary text-sm mb-2">ביטול הסכמה והסרה מרשימת התפוצה</p>
+                <p className="text-sm text-foreground">
+                  בכל הודעת דיוור יופיע קישור הסרה בולט. ניתן לבטל את ההסכמה בכל עת
+                  דרך קישור זה או בפנייה ישירה אלינו. ההסרה תבוצע ללא דיחוי ובלא תנאי.
+                  לאחר הסרה לא יישמר המידע לצרכי דיוור.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-3">
+              למידע על זכויותיכם בנוגע להסרה מרשימת תפוצה, ראו גם{' '}
+              <a
+                href="https://www.gov.il/he/departments/the_privacy_protection_authority"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary underline underline-offset-2 hover:text-secondary/80 transition-colors"
+              >
+                רשות הגנת הפרטיות
+              </a>
+              .
+            </p>
+          </Section>
+
+          <Divider />
+
           {/* ── 8. צדדים שלישיים ── */}
           <Section title="8. שיתוף מידע עם צדדים שלישיים">
             <p className="mb-3">
@@ -178,6 +233,7 @@ export default function PrivacyPolicyPage() {
             <BulletList items={[
               'Airtable — לאחסון ועיבוד שאלות שנשלחו דרך הטופס (ספק אמריקאי, עם הסכם עיבוד נתונים)',
               'Make.com (Celonis SE) — לצורך אוטומציה של תהליך קבלת השאלות ועיבודן. בעת שליחת שאלה, פרטי הפנייה (שם, דוא"ל, תוכן השאלה) מועברים לשירות זה לצורך ניתוב ועיבוד. ספק אירופאי (גרמניה), עומד בדרישות GDPR',
+              'ספק שירות דיוור אלקטרוני — לצורך משלוח הניוזלטר למנויים שנרשמו ונתנו הסכמה. הספק אינו רשאי לעשות שימוש בנתוני המנויים לכל מטרה אחרת',
               'שירותי אחסון ענן — לצורך אחסון תמונות ותכנים (Cloudinary)',
               'Umami Analytics — לניתוח אנונימי של תנועת הגולשים (ראו סעיף 6)',
             ]} />
@@ -285,7 +341,7 @@ export default function PrivacyPolicyPage() {
           {/* ── תאריך ── */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 text-secondary flex-shrink-0" />
-            <span>מדיניות זו עודכנה לאחרונה: מרץ 2026</span>
+            <span>מדיניות זו עודכנה לאחרונה: אפריל 2026</span>
           </div>
 
         </article>
