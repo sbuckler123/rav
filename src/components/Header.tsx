@@ -71,34 +71,30 @@ export default function Header() {
 
             {/* Desktop CTAs (left side) */}
             <div className="hidden lg:flex items-center gap-2">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
                 onClick={() => setNewsletterOpen(true)}
-                className="text-primary-foreground hover:bg-white/10 hover:text-secondary gap-2 min-h-[44px] px-3"
+                className="inline-flex items-center gap-2 rounded-md px-3 min-h-[44px] text-sm font-medium whitespace-nowrap text-primary-foreground hover:bg-white/10 hover:text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-secondary"
               >
                 <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>הצטרפות לניוזלטר</span>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="text-primary-foreground hover:bg-white/10 hover:text-secondary gap-2 min-h-[44px] px-3"
+                <span className="leading-none">הצטרפות לניוזלטר</span>
+              </button>
+              <Link
+                to={latestShiurHref}
+                onClick={scrollTop}
+                className="inline-flex items-center gap-2 rounded-md px-3 min-h-[44px] text-sm font-medium whitespace-nowrap text-primary-foreground hover:bg-white/10 hover:text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-secondary"
               >
-                <Link to="/ask" onClick={scrollTop}>
-                  <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>שאל את הרב</span>
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px] px-4"
+                <Play className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="leading-none">השיעור האחרון</span>
+              </Link>
+              <Link
+                to="/ask"
+                onClick={scrollTop}
+                className="inline-flex items-center gap-2 rounded-md px-4 min-h-[44px] text-sm font-semibold whitespace-nowrap bg-secondary text-primary hover:bg-secondary/90 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
               >
-                <Link to={latestShiurHref} onClick={scrollTop}>
-                  <Play className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>השיעור האחרון</span>
-                </Link>
-              </Button>
+                <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="leading-none">שאל את הרב</span>
+              </Link>
             </div>
 
             {/* Mobile hamburger */}
@@ -164,30 +160,30 @@ export default function Header() {
 
               {/* Mobile CTAs */}
               <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
+                <Link
+                  to="/ask"
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 py-3 px-3 rounded-lg bg-secondary text-primary hover:bg-secondary/90 transition-colors text-base font-semibold min-h-[48px]"
+                >
+                  <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <span className="leading-none">שאל את הרב</span>
+                </Link>
+                <Link
+                  to={latestShiurHref}
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px]"
+                >
+                  <Play className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <span className="leading-none">השיעור האחרון</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => { setNewsletterOpen(true); setIsMenuOpen(false); }}
                   className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px] text-right"
                 >
                   <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  הצטרפות לניוזלטר
+                  <span className="leading-none">הצטרפות לניוזלטר</span>
                 </button>
-                <Link
-                  to="/ask"
-                  onClick={closeMobileMenu}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px]"
-                >
-                  <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  שאל את הרב
-                </Link>
-                <Link
-                  to={latestShiurHref}
-                  onClick={closeMobileMenu}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg bg-secondary text-primary hover:bg-secondary/90 transition-colors text-base font-semibold min-h-[48px]"
-                >
-                  <Play className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  השיעור האחרון
-                </Link>
               </div>
             </div>
           )}
