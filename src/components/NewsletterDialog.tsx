@@ -38,6 +38,11 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+      setErrorMsg('נא להזין שם');
+      setStatus('error');
+      return;
+    }
     if (!EMAIL_RE.test(email)) {
       setErrorMsg('נא להזין כתובת דוא"ל תקינה');
       setStatus('error');
@@ -82,13 +87,14 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label htmlFor="newsletter-name" className="block text-sm font-medium text-primary mb-1.5">
-                  שם (אופציונלי)
+                  שם <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="newsletter-name"
                   type="text"
+                  required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); if (status === 'error') setStatus('idle'); }}
                   placeholder="השם שלך"
                   className="min-h-[44px]"
                   autoComplete="name"
@@ -148,7 +154,7 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
                 <Button
                   type="submit"
                   className="min-h-[44px] bg-secondary text-primary hover:bg-secondary/90 disabled:opacity-50"
-                  disabled={status === 'submitting' || !email || !consent}
+                  disabled={status === 'submitting' || !name.trim() || !email || !consent}
                 >
                   {status === 'submitting' ? 'שולח...' : 'הרשמה'}
                 </Button>
