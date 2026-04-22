@@ -120,23 +120,6 @@ export default function HeroSection() {
               />
             </div>
 
-            {/* Identity signature under the tiles */}
-            <div className="hidden lg:block text-right space-y-1.5">
-              {/* Gold divider */}
-              <div className="h-px w-full bg-gradient-to-l from-transparent via-secondary/50 to-transparent" aria-hidden="true" />
-
-              <p className="text-lg sm:text-xl lg:text-2xl font-serif font-bold text-white leading-tight">
-                הרב קלמן מאיר בר
-              </p>
-              <div className="font-serif space-y-0.5">
-                <p className="text-sm sm:text-base text-secondary leading-snug">
-                  הרב הראשי לישראל
-                </p>
-                <p className="text-sm sm:text-base text-secondary/75 leading-snug">
-                  נשיא מועצת הרבנות הראשית
-                </p>
-              </div>
-            </div>
           </div>
 
         </div>
