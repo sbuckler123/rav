@@ -67,7 +67,7 @@ export default function AdminArticlesPage() {
           <BookOpen className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-primary">מאמרים</h1>
+          <h1 className="text-xl font-bold text-primary">הגות ופסיקה</h1>
           <p className="text-sm text-muted-foreground">{articles.length} מאמרים</p>
         </div>
         <Link

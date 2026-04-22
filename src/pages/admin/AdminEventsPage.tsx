@@ -271,7 +271,7 @@ export default function AdminEventsPage() {
           <Tv2 className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-primary">אירועים</h1>
+          <h1 className="text-xl font-bold text-primary">יומן פעילות</h1>
           <p className="text-sm text-muted-foreground">{events.length} אירועים</p>
         </div>
         <Button

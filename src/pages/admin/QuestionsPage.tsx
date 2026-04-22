@@ -126,7 +126,7 @@ export default function QuestionsPage() {
         <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
           <MessageCircleQuestion className="h-5 w-5 text-primary" />
         </div>
-        <h1 className="text-xl font-bold text-primary flex-1 min-w-0 truncate">שאלות ותשובות</h1>
+        <h1 className="text-xl font-bold text-primary flex-1 min-w-0 truncate">שו"ת</h1>
         <Button
           onClick={() => setShowDialog(true)}
           className="bg-secondary text-primary hover:bg-secondary/90 inline-flex items-center gap-2 h-11 flex-shrink-0"

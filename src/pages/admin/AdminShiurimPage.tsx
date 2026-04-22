@@ -174,7 +174,7 @@ export default function AdminShiurimPage() {
             <CalendarDays className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-primary">שיעורים</h1>
+            <h1 className="text-xl font-bold text-primary">לוח אירועים</h1>
             <p className="text-sm text-muted-foreground">{shiurim.length} שיעורים</p>
           </div>
         </div>

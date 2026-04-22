@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       ) : stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard
-            label="שאלות"
+            label='שו"ת'
             value={stats.totalQuestions}
             sub={`${stats.pendingQuestions} ממתינות לתשובה`}
             icon={MessageCircleQuestion}
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
             to="/admin/questions"
           />
           <StatCard
-            label="שיעורים"
+            label="לוח אירועים"
             value={stats.totalShiurim}
             sub={`${stats.upcomingShiurim} שיעורים קרובים`}
             icon={CalendarDays}
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
             to="/admin/shiurim"
           />
           <StatCard
-            label="מאמרים"
+            label="הגות ופסיקה"
             value={stats.totalArticles}
             icon={BookOpen}
             iconBg="bg-blue-50"
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
             to="/admin/articles"
           />
           <StatCard
-            label="אירועים"
+            label="יומן פעילות"
             value={stats.totalEvents}
             icon={Tv2}
             iconBg="bg-purple-50"

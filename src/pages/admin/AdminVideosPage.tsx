@@ -194,7 +194,7 @@ export default function AdminVideosPage() {
           <Video className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-primary">שיעורי וידאו</h1>
+          <h1 className="text-xl font-bold text-primary">שיעורי תורה</h1>
           <p className="text-sm text-muted-foreground">{videos.length} שיעורים</p>
         </div>
         <Button onClick={openAdd} className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">

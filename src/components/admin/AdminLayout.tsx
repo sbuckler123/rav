@@ -21,11 +21,11 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'ראשי',             path: '/admin',           icon: LayoutDashboard },
-  { label: 'שאלות ותשובות',   path: '/admin/questions', icon: MessageCircleQuestion },
-  { label: 'שיעורים',         path: '/admin/shiurim',   icon: CalendarDays },
-  { label: 'שיעורי וידאו',   path: '/admin/videos',    icon: Video },
-  { label: 'אירועים',         path: '/admin/events',    icon: Tv2 },
-  { label: 'מאמרים',          path: '/admin/articles',  icon: BookOpen },
+  { label: 'שו"ת',             path: '/admin/questions', icon: MessageCircleQuestion },
+  { label: 'לוח אירועים',     path: '/admin/shiurim',   icon: CalendarDays },
+  { label: 'שיעורי תורה',    path: '/admin/videos',    icon: Video },
+  { label: 'יומן פעילות',    path: '/admin/events',    icon: Tv2 },
+  { label: 'הגות ופסיקה',    path: '/admin/articles',  icon: BookOpen },
   { label: 'קטגוריות',        path: '/admin/categories', icon: Tag },
   { label: 'משתמשים',         path: '/admin/users',     icon: Users },
 ];
