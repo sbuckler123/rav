@@ -9,7 +9,7 @@ export default function MobileAskFAB() {
 
   return (
     <div
-      className="lg:hidden fixed bottom-5 left-4 z-40 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-90 motion-safe:duration-300"
+      className="lg:hidden fixed bottom-5 right-4 z-40 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-90 motion-safe:duration-300"
       aria-label="שאל את הרב — כפתור פעולה מהיר"
     >
       <Link
