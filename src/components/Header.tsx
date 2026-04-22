@@ -83,18 +83,28 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Mobile hamburger */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden text-primary-foreground hover:bg-white/10 min-h-[44px] min-w-[44px]"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'סגור תפריט' : 'פתח תפריט'}
-              aria-expanded={isMenuOpen}
-              aria-controls="mobile-menu"
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
+            {/* Mobile: ask CTA pill + hamburger */}
+            <div className="lg:hidden flex items-center gap-1.5 relative z-10">
+              <Link
+                to="/ask"
+                onClick={scrollTop}
+                className="inline-flex items-center gap-1.5 bg-secondary text-primary rounded-full px-3 h-9 text-xs font-bold whitespace-nowrap shadow-sm hover:bg-secondary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+              >
+                <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="leading-none">שאל את הרב</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary-foreground hover:bg-white/10 min-h-[44px] min-w-[44px]"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={isMenuOpen ? 'סגור תפריט' : 'פתח תפריט'}
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
           </div>
 
           {/* Row 2: Desktop nav */}
