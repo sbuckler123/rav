@@ -1,56 +1,111 @@
+import { useEffect, useState } from 'react';
+import { Play, FileText, Send, Calendar } from 'lucide-react';
+import HeroTile from './HeroTile';
+import { getVideos, type ShiurItem } from '@/api/getVideos';
+import { getArticles, type Article } from '@/api/getArticles';
+import { getEvents, type EventItem } from '@/api/getEvents';
+
+function pickLatestVideo(videos: ShiurItem[]): ShiurItem | null {
+  if (!videos.length) return null;
+  return videos.find((v) => v.isNew) ?? videos[0];
+}
+
+function pickNextEvent(events: EventItem[]): EventItem | null {
+  if (!events.length) return null;
+  const now = new Date();
+  const upcoming = events
+    .filter((e) => {
+      if (!e.dateLocale) return false;
+      const d = new Date(e.dateLocale);
+      return !isNaN(d.getTime()) && d >= now;
+    })
+    .sort((a, b) => new Date(a.dateLocale).getTime() - new Date(b.dateLocale).getTime());
+  return upcoming[0] ?? events[0];
+}
+
 export default function HeroSection() {
+  const [video, setVideo] = useState<ShiurItem | null>(null);
+  const [article, setArticle] = useState<Article | null>(null);
+  const [event, setEvent] = useState<EventItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([getVideos(), getArticles(), getEvents()]).then((results) => {
+      if (cancelled) return;
+      if (results[0].status === 'fulfilled') setVideo(pickLatestVideo(results[0].value.shiurim));
+      if (results[1].status === 'fulfilled') setArticle(results[1].value.articles[0] ?? null);
+      if (results[2].status === 'fulfilled') setEvent(pickNextEvent(results[2].value.events));
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const videoHref = video?.linkId ? `/videos/${video.linkId}` : '/videos';
+  const articleHref = article?.linkId ? `/articles/${article.linkId}` : '/articles';
+  const eventHref = event?.linkId ? `/events/${event.linkId}` : '/events';
+
   return (
     <section className="relative bg-gradient-to-br from-primary via-primary to-[#0f1e38] overflow-hidden">
 
-      {/* Subtle radial glow behind image side */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_20%_50%,rgba(197,165,90,0.07),transparent)] pointer-events-none" aria-hidden="true" />
+      {/* Subtle radial glow behind image side (now on the right) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_80%_50%,rgba(197,165,90,0.07),transparent)] pointer-events-none" aria-hidden="true" />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-10 lg:py-14">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
 
-          {/* Right column — text content */}
-          <div className="text-white order-2 lg:order-1 space-y-4 sm:space-y-5 text-center lg:text-right" dir="rtl">
-
-            {/* Main name */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight tracking-wide">
-              הרב קלמן מאיר בר
-            </h1>
-
-            {/* Position title */}
-            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif font-semibold text-secondary leading-snug">
-              הרב הראשי לישראל נשיא מועצת הרבנות הראשית
-            </h2>
-
-            {/* Gold ornament */}
-            <div className="flex items-center gap-3 py-1 w-48 sm:w-64 mx-auto lg:mx-0" aria-hidden="true">
-              <div className="h-px flex-1 bg-gradient-to-l from-secondary/50 to-transparent" />
-              <div className="flex items-center gap-1">
-                <div className="w-1 h-1 rounded-full bg-secondary/40" />
-                <div className="w-1.5 h-1.5 rounded-full bg-secondary/65" />
-                <div className="w-2.5 h-2.5 rounded-full bg-secondary" />
-                <div className="w-1.5 h-1.5 rounded-full bg-secondary/65" />
-                <div className="w-1 h-1 rounded-full bg-secondary/40" />
-              </div>
-              <div className="h-px flex-1 bg-gradient-to-r from-secondary/50 to-transparent" />
-            </div>
-
-            {/* Description */}
-            <p className="text-sm sm:text-base md:text-lg text-white/80 leading-relaxed max-w-lg mx-auto lg:mx-0">
-              שאלות ותשובות, שיעורים, פסקי הלכה ואירועים
-            </p>
-          </div>
-
-          {/* Left column — image */}
-          <div className="order-1 lg:order-2 relative mx-auto w-full max-w-xs sm:max-w-sm lg:max-w-none">
-            {/* Gold corner accent frame — inset on mobile to avoid container clipping */}
+          {/* Right column — image (first source child; RTL puts it on the right) */}
+          <div className="relative mx-auto w-full max-w-[220px] sm:max-w-xs lg:max-w-none">
             <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-10 h-10 sm:w-12 sm:h-12 border-t-2 border-r-2 border-secondary/60 rounded-tr-xl pointer-events-none" aria-hidden="true" />
             <div className="absolute -bottom-1.5 -left-1.5 sm:-bottom-2 sm:-left-2 w-10 h-10 sm:w-12 sm:h-12 border-b-2 border-l-2 border-secondary/60 rounded-bl-xl pointer-events-none" aria-hidden="true" />
             <div className="relative rounded-xl overflow-hidden ring-1 ring-secondary/20 shadow-2xl">
               <img
                 src="/og-image.jpg"
                 alt="הרב קלמן מאיר בר"
-                className="w-full object-cover object-top max-h-[260px] sm:max-h-[340px] lg:max-h-[460px]"
+                className="w-full object-cover object-top max-h-[200px] sm:max-h-[280px] lg:max-h-[440px]"
               />
+            </div>
+          </div>
+
+          {/* Left column — 2x2 tile grid + small name */}
+          <div className="flex flex-col gap-4 sm:gap-5" dir="rtl">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <HeroTile
+                label="שיעור אחרון"
+                title={video?.title}
+                to={videoHref}
+                icon={Play}
+                loading={loading}
+              />
+              <HeroTile
+                label="מאמר אחרון"
+                title={article?.title}
+                to={articleHref}
+                icon={FileText}
+                loading={loading}
+              />
+              <HeroTile
+                label="שאל את הרב"
+                title="שלחו שאלה בהלכה, אמונה ומחשבה"
+                to="/ask"
+                icon={Send}
+              />
+              <HeroTile
+                label="אירוע אחרון"
+                title={event?.title}
+                to={eventHref}
+                icon={Calendar}
+                loading={loading}
+              />
+            </div>
+
+            {/* Small identity line under the tiles */}
+            <div className="text-center lg:text-right pt-1">
+              <p className="text-white/80 text-sm sm:text-base font-serif">
+                <span className="font-semibold text-white">הרב קלמן מאיר בר</span>
+                <span className="mx-2 text-secondary/60" aria-hidden="true">·</span>
+                <span className="text-secondary">הרב הראשי לישראל</span>
+              </p>
             </div>
           </div>
 

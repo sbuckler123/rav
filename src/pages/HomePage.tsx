@@ -1,6 +1,7 @@
 import SEO from '@/components/SEO';
 import HeroSection from '@/components/home/HeroSection';
-import Dashboard from '@/components/home/Dashboard';
+import StatsBar from '@/components/home/StatsBar';
+import FeaturedQuote from '@/components/home/FeaturedQuote';
 import VideosSection from '@/components/home/VideosSection';
 import AskRabbiSection from '@/components/home/AskRabbiSection';
 import ArticlesSection from '@/components/home/ArticlesSection';
@@ -16,7 +17,10 @@ export default function HomePage() {
         description="האתר הרשמי של הרב קלמן מאיר בר, הרב הראשי לישראל. שאלות ותשובות, שיעורי תורה, פסקי הלכה ואירועים."
       />
       <HeroSection />
-      <Dashboard />
+      {/* <StatsBar /> */}
+      {/* <FadeIn>
+        <FeaturedQuote />
+      </FadeIn> */}
       <FadeIn>
         <VideosSection />
       </FadeIn>
