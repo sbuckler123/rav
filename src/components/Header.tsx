@@ -50,6 +50,7 @@ export default function Header() {
               <div className="text-secondary text-lg sm:text-xl md:text-2xl font-serif hidden sm:block">
                 <div className="font-bold leading-tight">הרב קלמן מאיר בר</div>
                 <div className="text-xs sm:text-sm font-normal opacity-90">הרב הראשי לישראל</div>
+                <div className="text-xs sm:text-sm font-normal opacity-75">נשיא מועצת הרבנות הראשית</div>
               </div>
             </Link>
 
