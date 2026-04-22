@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Play, FileText, MessageCircle, Calendar } from 'lucide-react';
+import { Play, FileText, MessageCircle, Calendar, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import HeroTile from './HeroTile';
 import { getVideos, type ShiurItem } from '@/api/getVideos';
 import { getArticles, type Article } from '@/api/getArticles';
@@ -119,6 +120,15 @@ export default function HeroSection() {
                 loading={loading}
               />
             </div>
+
+            <Link
+              to="/ask"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex items-center justify-center gap-2.5 w-full bg-secondary text-primary rounded-xl px-6 py-4 text-base sm:text-lg font-bold shadow-lg hover:bg-secondary/90 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            >
+              <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>שאל את הרב</span>
+            </Link>
 
           </div>
 

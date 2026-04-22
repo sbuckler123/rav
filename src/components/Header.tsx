@@ -29,13 +29,13 @@ export default function Header() {
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg" role="banner">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
 
-          {/* Row 1: Logo (right) + CTAs/hamburger (left) */}
-          <div className="flex items-center justify-between h-14 sm:h-20">
+          {/* Row 1: Logo (right) + CTAs (left, desktop) / hamburger (mobile) */}
+          <div className="relative flex items-center justify-between h-16 sm:h-20">
 
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-3 min-w-0"
+              className="flex items-center gap-3 min-w-0 relative z-10"
               aria-label="דף הבית - הרב קלמן מאיר בר"
               onClick={scrollTop}
             >
@@ -43,16 +43,25 @@ export default function Header() {
                 <img
                   src="/logo.png"
                   alt="לוגו הרבנות הראשית"
-                  className="h-10 w-10 sm:h-14 sm:w-14 object-cover"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-cover"
                 />
               </div>
-              {/* Desktop only */}
+              {/* Desktop only — shown when full nav is active */}
               <div className="text-secondary text-lg xl:text-2xl font-serif hidden lg:block">
                 <div className="font-bold leading-tight">הרב קלמן מאיר בר</div>
                 <div className="text-xs xl:text-sm font-normal opacity-90">הרב הראשי לישראל</div>
                 <div className="text-xs xl:text-sm font-normal opacity-75">נשיא מועצת הרבנות הראשית</div>
               </div>
             </Link>
+
+            {/* Mobile/tablet centered title — shown when hamburger is active */}
+            <div className="lg:hidden absolute inset-x-0 flex justify-center pointer-events-none" aria-hidden="true">
+              <div className="text-center font-serif pointer-events-auto">
+                <div className="text-xs sm:text-sm font-bold text-secondary leading-tight">הרב קלמן מאיר בר</div>
+                <div className="text-[10px] sm:text-xs text-secondary/90 leading-snug">הרב הראשי לישראל</div>
+                <div className="text-[10px] sm:text-xs text-secondary/75 leading-snug">נשיא מועצת הרבנות הראשית</div>
+              </div>
+            </div>
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-2">
@@ -74,37 +83,18 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Mobile: ask pill + hamburger */}
-            <div className="lg:hidden flex items-center gap-1.5">
-              <Link
-                to="/ask"
-                onClick={scrollTop}
-                className="inline-flex items-center gap-1.5 bg-secondary text-primary rounded-full px-3 h-9 text-xs font-bold whitespace-nowrap shadow-sm hover:bg-secondary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
-              >
-                <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="leading-none">שאל את הרב</span>
-              </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-primary-foreground hover:bg-white/10 min-h-[44px] min-w-[44px]"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? 'סגור תפריט' : 'פתח תפריט'}
-                aria-expanded={isMenuOpen}
-                aria-controls="mobile-menu"
-              >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Row 2 (mobile only): centered identity title */}
-          <div className="lg:hidden flex justify-center py-2 border-t border-white/10">
-            <div className="text-center font-serif">
-              <div className="text-xs sm:text-sm font-bold text-secondary leading-tight">הרב קלמן מאיר בר</div>
-              <div className="text-[10px] sm:text-xs text-secondary/90 leading-snug">הרב הראשי לישראל</div>
-              <div className="text-[10px] sm:text-xs text-secondary/75 leading-snug">נשיא מועצת הרבנות הראשית</div>
-            </div>
+            {/* Mobile hamburger */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-primary-foreground hover:bg-white/10 min-h-[44px] min-w-[44px]"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'סגור תפריט' : 'פתח תפריט'}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
           </div>
 
           {/* Row 2: Desktop nav */}
