@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays, ChevronRight, ChevronLeft } from 'lucide-react';
+import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays, ChevronRight, ChevronLeft, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitReply } from '@/api/submitReply';
 import type { getPublishedQuestions } from '@/api/getPublishedQuestions';
@@ -103,6 +103,7 @@ function AnswerBlock({ answer }: { answer: Answer }) {
 export default function PublishedQA({ questions, categories }: Props) {
   const [page, setPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   const activeCategories = categories.filter(c =>
     questions.some(q => q.category === c.id)
@@ -114,9 +115,15 @@ export default function PublishedQA({ questions, categories }: Props) {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const filtered = selectedCategory === 'all'
-    ? sorted
-    : sorted.filter(q => q.category === selectedCategory);
+  const term = search.trim().toLowerCase();
+
+  const filtered = sorted.filter(q => {
+    const matchesCategory = selectedCategory === 'all' || q.category === selectedCategory;
+    const matchesSearch = !term ||
+      q.questionContent.toLowerCase().includes(term) ||
+      q.answers.some(a => a.content.toLowerCase().includes(term));
+    return matchesCategory && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -140,6 +147,16 @@ export default function PublishedQA({ questions, categories }: Props) {
     setPage(1);
   };
 
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const clearSearch = () => {
+    setSearch('');
+    setPage(1);
+  };
+
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setPage(newPage);
@@ -159,6 +176,29 @@ export default function PublishedQA({ questions, categories }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+        <input
+          type="search"
+          value={search}
+          onChange={e => handleSearch(e.target.value)}
+          placeholder="חיפוש בשאלות ותשובות..."
+          className="w-full rounded-xl border border-input bg-white pr-10 pl-10 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors min-h-[48px]"
+          aria-label="חיפוש שאלות"
+          dir="rtl"
+        />
+        {search && (
+          <button
+            onClick={clearSearch}
+            aria-label="נקה חיפוש"
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* Category filter pills */}
       {activeCategories.length > 0 && (
         <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
@@ -198,15 +238,28 @@ export default function PublishedQA({ questions, categories }: Props) {
       )}
 
       {/* Questions */}
-      {visible.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-25" />
-          <p className="text-sm">אין שאלות בקטגוריה זו.</p>
-        </div>
-      ) : (
-        visible.map(q => (
-          <QuestionCard key={q.id} question={q} categories={categories} />
-        ))
+      {visible.length >= 0 && (
+        <>
+          {filtered.length === 0 && (search || selectedCategory !== 'all') && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-25" />
+              <p className="text-sm">
+                {search ? `לא נמצאו תוצאות עבור "${search}"` : 'אין שאלות בקטגוריה זו.'}
+              </p>
+              {(search || selectedCategory !== 'all') && (
+                <button
+                  onClick={() => { clearSearch(); setSelectedCategory('all'); }}
+                  className="mt-3 text-xs text-secondary hover:text-secondary/80 underline underline-offset-2"
+                >
+                  נקה סינון
+                </button>
+              )}
+            </div>
+          )}
+          {visible.map(q => (
+            <QuestionCard key={q.id} question={q} categories={categories} />
+          ))}
+        </>
       )}
 
       {/* Pagination */}
