@@ -5,7 +5,6 @@ import { useState } from 'react';
 import NewsletterDialog from '@/components/NewsletterDialog';
 
 const navLinks = [
-  { href: '/ask', label: 'שאל את הרב' },
   { href: '/qa', label: 'שו"ת' },
   { href: '/videos', label: 'שיעורי תורה' },
   { href: '/shiurim', label: 'לוח אירועים' },
