@@ -18,15 +18,7 @@ export default function QAPage() {
     getPublishedQuestions({})
       .then(r => setQuestions(r.questions))
       .catch(() => {})
-      .finally(() => {
-        setLoading(false);
-        if (window.location.hash) {
-          setTimeout(() => {
-            const el = document.querySelector(window.location.hash);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 300);
-        }
-      });
+      .finally(() => setLoading(false));
   }, []);
 
   return (

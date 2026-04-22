@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays } from 'lucide-react';
+import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, CalendarDays, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitReply } from '@/api/submitReply';
 import type { getPublishedQuestions } from '@/api/getPublishedQuestions';
@@ -30,6 +30,19 @@ function formatDate(raw: string | undefined): string {
   });
 }
 
+function getPageRange(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | 'ellipsis')[] = [];
+  pages.push(1);
+  if (current > 3) pages.push('ellipsis');
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) {
+    pages.push(p);
+  }
+  if (current < total - 2) pages.push('ellipsis');
+  pages.push(total);
+  return pages;
+}
+
 function ExpandableText({ text, className }: { text: string; className?: string }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = text.length > CHAR_LIMIT;
@@ -53,12 +66,11 @@ function ExpandableText({ text, className }: { text: string; className?: string 
   );
 }
 
-function AnswerBlock({ answer, index }: { answer: Answer; index: number }) {
+function AnswerBlock({ answer }: { answer: Answer }) {
   const isRabbi = answer.writerType === 'רב';
 
   return (
     <div className="flex gap-2 sm:gap-3">
-      {/* Icon column */}
       <div className="flex flex-col items-center flex-shrink-0">
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isRabbi ? 'bg-primary' : 'bg-muted'}`}>
           {isRabbi
@@ -66,11 +78,8 @@ function AnswerBlock({ answer, index }: { answer: Answer; index: number }) {
             : <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
           }
         </div>
-        {/* Connector line — hidden on last item via parent */}
         <div className="w-px flex-1 bg-border mt-1" />
       </div>
-
-      {/* Content */}
       <div className="flex-1 min-w-0 pb-4">
         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
           <span className={`text-xs font-semibold ${isRabbi ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -92,10 +101,9 @@ function AnswerBlock({ answer, index }: { answer: Answer; index: number }) {
 }
 
 export default function PublishedQA({ questions, categories }: Props) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Only show categories that actually appear in questions
   const activeCategories = categories.filter(c =>
     questions.some(q => q.category === c.id)
   );
@@ -110,12 +118,32 @@ export default function PublishedQA({ questions, categories }: Props) {
     ? sorted
     : sorted.filter(q => q.category === selectedCategory);
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Navigate to the correct page when deep-linking via hash (#q-<id>)
+  useEffect(() => {
+    if (questions.length === 0 || !window.location.hash) return;
+    const targetId = window.location.hash.replace('#q-', '');
+    const idx = sorted.findIndex(q => q.id === targetId);
+    if (idx === -1) return;
+    const targetPage = Math.floor(idx / PAGE_SIZE) + 1;
+    setPage(targetPage);
+    setTimeout(() => {
+      const el = document.getElementById(`q-${targetId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }, [questions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCategoryChange = (cat: string) => {
     setSelectedCategory(cat);
-    setVisibleCount(PAGE_SIZE);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    document.getElementById('qa-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (questions.length === 0) {
@@ -126,6 +154,8 @@ export default function PublishedQA({ questions, categories }: Props) {
       </div>
     );
   }
+
+  const pageRange = getPageRange(page, totalPages);
 
   return (
     <div className="space-y-4">
@@ -179,13 +209,70 @@ export default function PublishedQA({ questions, categories }: Props) {
         ))
       )}
 
-      {hasMore && (
-        <button
-          onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-          className="w-full py-3 rounded-xl border border-dashed border-secondary/40 text-sm text-secondary hover:bg-secondary/5 transition-colors min-h-[48px] font-medium"
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav
+          className="flex items-center justify-center gap-1.5 pt-4"
+          aria-label="דפדוף שאלות"
+          dir="rtl"
         >
-          טען עוד שאלות ({filtered.length - visibleCount} נותרו)
-        </button>
+          {/* Prev */}
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            aria-label="עמוד קודם"
+            className="flex items-center justify-center w-10 h-10 rounded-lg border border-input bg-white text-muted-foreground hover:bg-muted/40 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Page numbers — desktop */}
+          <div className="hidden sm:flex items-center gap-1">
+            {pageRange.map((p, i) =>
+              p === 'ellipsis' ? (
+                <span key={`ellipsis-${i}`} className="w-10 h-10 flex items-center justify-center text-muted-foreground text-sm select-none">
+                  ···
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => handlePageChange(p)}
+                  aria-label={`עמוד ${p}`}
+                  aria-current={p === page ? 'page' : undefined}
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    p === page
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'border border-input bg-white text-muted-foreground hover:bg-muted/40 hover:text-primary'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+          </div>
+
+          {/* Mobile: current / total */}
+          <span className="sm:hidden text-sm font-medium text-primary px-3 min-w-[72px] text-center">
+            {page} / {totalPages}
+          </span>
+
+          {/* Next */}
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            aria-label="עמוד הבא"
+            className="flex items-center justify-center w-10 h-10 rounded-lg border border-input bg-white text-muted-foreground hover:bg-muted/40 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </nav>
+      )}
+
+      {/* Result count */}
+      {totalPages > 1 && (
+        <p className="text-center text-xs text-muted-foreground pb-2">
+          מציג {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} מתוך {filtered.length} שאלות
+        </p>
       )}
     </div>
   );
@@ -229,11 +316,9 @@ function QuestionCard({ question, categories }: { question: Question; categories
       data-question-ref={question.referenceId}
       data-question-id={question.id}
     >
-      {/* Top accent bar */}
       <div className="h-1 bg-gradient-to-l from-secondary/60 via-secondary to-secondary/60" />
 
       <div className="p-5 sm:p-6">
-        {/* Header row: category + answer count + date */}
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
             {categoryName && (
@@ -253,7 +338,6 @@ function QuestionCard({ question, categories }: { question: Question; categories
           )}
         </div>
 
-        {/* Question block */}
         <div className="flex gap-2 sm:gap-3 mb-5">
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -269,12 +353,11 @@ function QuestionCard({ question, categories }: { question: Question; categories
           </div>
         </div>
 
-        {/* Answers thread */}
         {sortedAnswers.length > 0 ? (
           <div>
             {sortedAnswers.map((answer, i) => (
               <div key={answer.id} className={i === sortedAnswers.length - 1 ? '[&>div>div:first-child>div:last-child]:hidden' : ''}>
-                <AnswerBlock answer={answer} index={i} />
+                <AnswerBlock answer={answer} />
               </div>
             ))}
           </div>
@@ -282,7 +365,6 @@ function QuestionCard({ question, categories }: { question: Question; categories
           <p className="text-xs text-muted-foreground italic">התשובה בהכנה...</p>
         )}
 
-        {/* Reply */}
         <div className="mt-2 pt-3 border-t border-dashed">
           {sent ? (
             <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
