@@ -21,6 +21,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialogProps) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -29,6 +30,7 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
     setTimeout(() => {
       setEmail('');
       setName('');
+      setConsent(false);
       setStatus('idle');
       setErrorMsg('');
     }, 200);
@@ -115,6 +117,24 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
                 )}
               </div>
 
+              {/* Consent checkbox — required by Israeli Communications Law (Amendment 40, 2008) */}
+              <div className="flex items-start gap-3 rounded-lg bg-muted/40 border border-border p-3">
+                <input
+                  id="newsletter-consent"
+                  type="checkbox"
+                  checked={consent}
+                  onChange={e => setConsent(e.target.checked)}
+                  required
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary cursor-pointer"
+                />
+                <label htmlFor="newsletter-consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  אני מסכים/ה לקבל עדכונים ודיוור מלשכת הרב הראשי לישראל בדוא"ל, בהתאם לחוק התקשורת (בזק ושידורים) תשמ"ב-1982 ותיקון מס׳ 40. ניתן לבטל את ההסכמה בכל עת באמצעות לחיצה על קישור הסרה בכל הודעה.{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary transition-colors">
+                    מדיניות פרטיות
+                  </a>
+                </label>
+              </div>
+
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-2">
                 <Button
                   type="button"
@@ -127,8 +147,8 @@ export default function NewsletterDialog({ open, onOpenChange }: NewsletterDialo
                 </Button>
                 <Button
                   type="submit"
-                  className="min-h-[44px] bg-secondary text-primary hover:bg-secondary/90"
-                  disabled={status === 'submitting' || !email}
+                  className="min-h-[44px] bg-secondary text-primary hover:bg-secondary/90 disabled:opacity-50"
+                  disabled={status === 'submitting' || !email || !consent}
                 >
                   {status === 'submitting' ? 'שולח...' : 'הרשמה'}
                 </Button>
