@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Play, FileText, Send, Calendar } from 'lucide-react';
+import { Play, FileText, MessageCircle, Calendar } from 'lucide-react';
 import HeroTile from './HeroTile';
 import { getVideos, type ShiurItem } from '@/api/getVideos';
 import { getArticles, type Article } from '@/api/getArticles';
 import { getEvents, type EventItem } from '@/api/getEvents';
+import { getPublishedQuestions } from '@/api/getPublishedQuestions';
+
+type Question = Awaited<ReturnType<typeof getPublishedQuestions>>['questions'][number];
 
 function pickLatestVideo(videos: ShiurItem[]): ShiurItem | null {
   if (!videos.length) return null;
@@ -23,19 +26,36 @@ function pickNextEvent(events: EventItem[]): EventItem | null {
   return upcoming[0] ?? events[0];
 }
 
+function pickLatestAnswered(questions: Question[]): Question | null {
+  const answered = questions.filter((q) => q.answers.length > 0);
+  if (!answered.length) return null;
+  return answered.sort((a, b) => {
+    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bDate - aDate;
+  })[0];
+}
+
 export default function HeroSection() {
   const [video, setVideo] = useState<ShiurItem | null>(null);
   const [article, setArticle] = useState<Article | null>(null);
   const [event, setEvent] = useState<EventItem | null>(null);
+  const [latestQA, setLatestQA] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.allSettled([getVideos(), getArticles(), getEvents()]).then((results) => {
+    Promise.allSettled([
+      getVideos(),
+      getArticles(),
+      getEvents(),
+      getPublishedQuestions({}),
+    ]).then((results) => {
       if (cancelled) return;
       if (results[0].status === 'fulfilled') setVideo(pickLatestVideo(results[0].value.shiurim));
       if (results[1].status === 'fulfilled') setArticle(results[1].value.articles[0] ?? null);
       if (results[2].status === 'fulfilled') setEvent(pickNextEvent(results[2].value.events));
+      if (results[3].status === 'fulfilled') setLatestQA(pickLatestAnswered(results[3].value.questions));
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -44,11 +64,11 @@ export default function HeroSection() {
   const videoHref = video?.linkId ? `/videos/${video.linkId}` : '/videos';
   const articleHref = article?.linkId ? `/articles/${article.linkId}` : '/articles';
   const eventHref = event?.linkId ? `/events/${event.linkId}` : '/events';
+  const qaHref = latestQA?.id ? `/qa#q-${latestQA.id}` : '/qa';
 
   return (
     <section className="relative bg-gradient-to-br from-primary via-primary to-[#0f1e38] overflow-hidden">
 
-      {/* Subtle radial glow behind image side (now on the right) */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_80%_50%,rgba(197,165,90,0.07),transparent)] pointer-events-none" aria-hidden="true" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-10 lg:py-14">
@@ -67,7 +87,7 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Left column — 2x2 tile grid + small name */}
+          {/* Left column — 2×2 tile grid + identity line */}
           <div className="flex flex-col gap-4 sm:gap-5" dir="rtl">
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <HeroTile
@@ -85,10 +105,11 @@ export default function HeroSection() {
                 loading={loading}
               />
               <HeroTile
-                label="שאל את הרב"
-                title="שלחו שאלה בהלכה, אמונה ומחשבה"
-                to="/ask"
-                icon={Send}
+                label="תשובה אחרונה"
+                title={latestQA?.questionContent}
+                to={qaHref}
+                icon={MessageCircle}
+                loading={loading}
               />
               <HeroTile
                 label="אירוע אחרון"
@@ -105,7 +126,6 @@ export default function HeroSection() {
                 <span className="font-semibold text-white">הרב קלמן מאיר בר</span>
                 <span className="mx-2 text-secondary/60" aria-hidden="true">·</span>
                 <span className="text-secondary">הרב הראשי לישראל</span>
-                <span className="text-secondary"> ונשיא מועצת הרבנות הראשית לישראל </span>
               </p>
             </div>
           </div>

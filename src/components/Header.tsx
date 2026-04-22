@@ -1,9 +1,8 @@
-import { Menu, X, Mail, Send, Play } from 'lucide-react';
+import { Menu, X, Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import NewsletterDialog from '@/components/NewsletterDialog';
-import { getVideos } from '@/api/getVideos';
 
 const navLinks = [
   { href: '/ask', label: 'שאל את הרב' },
@@ -15,41 +14,25 @@ const navLinks = [
   { href: '/about', label: 'אודות' },
 ];
 
-let latestShiurCache: string | null = null;
-
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newsletterOpen, setNewsletterOpen] = useState(false);
-  const [latestShiurId, setLatestShiurId] = useState<string | null>(latestShiurCache);
   const location = useLocation();
-
-  useEffect(() => {
-    if (latestShiurCache) return;
-    getVideos()
-      .then(({ shiurim }) => {
-        const latest = shiurim.find((v) => v.isNew) ?? shiurim[0];
-        if (latest?.linkId) {
-          latestShiurCache = latest.linkId;
-          setLatestShiurId(latest.linkId);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const isActive = (href: string) =>
     location.pathname === href || location.pathname.startsWith(href + '/');
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const closeMobileMenu = () => { setIsMenuOpen(false); scrollTop(); };
-  const latestShiurHref = latestShiurId ? `/videos/${latestShiurId}` : '/videos';
 
   return (
     <>
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg" role="banner">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
 
-          {/* Row 1: Logo (right) + CTAs (left, desktop) / hamburger (left, mobile) */}
+          {/* Row 1: Logo (right) + CTAs (left, desktop) / hamburger (mobile) */}
           <div className="flex items-center justify-between h-16 sm:h-20">
+
             {/* Logo */}
             <Link
               to="/"
@@ -70,7 +53,7 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* Desktop CTAs (left side) */}
+            {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-2">
               <button
                 type="button"
@@ -80,14 +63,6 @@ export default function Header() {
                 <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="leading-none">הצטרפות לניוזלטר</span>
               </button>
-              <Link
-                to={latestShiurHref}
-                onClick={scrollTop}
-                className="inline-flex items-center gap-2 rounded-md px-3 min-h-[44px] text-sm font-medium whitespace-nowrap text-primary-foreground hover:bg-white/10 hover:text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-secondary"
-              >
-                <Play className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="leading-none">השיעור האחרון</span>
-              </Link>
               <Link
                 to="/ask"
                 onClick={scrollTop}
@@ -112,7 +87,7 @@ export default function Header() {
             </Button>
           </div>
 
-          {/* Row 2: Desktop nav — under the logo, larger text, right-aligned */}
+          {/* Row 2: Desktop nav */}
           <nav
             className="hidden lg:flex items-center gap-4 xl:gap-7 border-t border-white/10 py-3"
             aria-label="ניווט ראשי"
@@ -169,18 +144,10 @@ export default function Header() {
                   <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">שאל את הרב</span>
                 </Link>
-                <Link
-                  to={latestShiurHref}
-                  onClick={closeMobileMenu}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px]"
-                >
-                  <Play className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  <span className="leading-none">השיעור האחרון</span>
-                </Link>
                 <button
                   type="button"
                   onClick={() => { setNewsletterOpen(true); setIsMenuOpen(false); }}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px] text-right"
+                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px] w-full text-right"
                 >
                   <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">הצטרפות לניוזלטר</span>
