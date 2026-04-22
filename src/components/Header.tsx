@@ -31,12 +31,12 @@ export default function Header() {
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
 
           {/* Row 1: Logo (right) + CTAs (left, desktop) / hamburger (mobile) */}
-          <div className="flex items-center justify-between h-16 sm:h-20">
+          <div className="relative flex items-center justify-between h-16 sm:h-20">
 
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-3 min-w-0"
+              className="flex items-center gap-3 min-w-0 relative z-10"
               aria-label="דף הבית - הרב קלמן מאיר בר"
               onClick={scrollTop}
             >
@@ -47,12 +47,22 @@ export default function Header() {
                   className="h-12 w-12 sm:h-14 sm:w-14 object-cover"
                 />
               </div>
-              <div className="text-secondary text-lg sm:text-xl md:text-2xl font-serif hidden sm:block">
+              {/* Desktop only — shown when full nav is active */}
+              <div className="text-secondary text-lg xl:text-2xl font-serif hidden lg:block">
                 <div className="font-bold leading-tight">הרב קלמן מאיר בר</div>
-                <div className="text-xs sm:text-sm font-normal opacity-90">הרב הראשי לישראל</div>
-                <div className="text-xs sm:text-sm font-normal opacity-75">נשיא מועצת הרבנות הראשית</div>
+                <div className="text-xs xl:text-sm font-normal opacity-90">הרב הראשי לישראל</div>
+                <div className="text-xs xl:text-sm font-normal opacity-75">נשיא מועצת הרבנות הראשית</div>
               </div>
             </Link>
+
+            {/* Mobile/tablet centered title — shown when hamburger is active */}
+            <div className="lg:hidden absolute inset-x-0 flex justify-center pointer-events-none" aria-hidden="true">
+              <div className="text-center font-serif pointer-events-auto">
+                <div className="text-xs sm:text-sm font-bold text-secondary leading-tight">הרב קלמן מאיר בר</div>
+                <div className="text-[10px] sm:text-xs text-secondary/90 leading-snug">הרב הראשי לישראל</div>
+                <div className="text-[10px] sm:text-xs text-secondary/75 leading-snug">נשיא מועצת הרבנות הראשית</div>
+              </div>
+            </div>
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-2">

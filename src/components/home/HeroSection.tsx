@@ -121,7 +121,7 @@ export default function HeroSection() {
             </div>
 
             {/* Identity signature under the tiles */}
-            <div className="text-center lg:text-right space-y-1.5">
+            <div className="hidden lg:block text-right space-y-1.5">
               {/* Gold divider */}
               <div className="h-px w-full bg-gradient-to-l from-transparent via-secondary/50 to-transparent" aria-hidden="true" />
 
