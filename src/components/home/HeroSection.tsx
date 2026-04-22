@@ -62,10 +62,10 @@ export default function HeroSection() {
     return () => { cancelled = true; };
   }, []);
 
-  const videoHref = video?.linkId ? `/videos/${video.linkId}` : '/videos';
-  const articleHref = article?.linkId ? `/articles/${article.linkId}` : '/articles';
-  const eventHref = event?.linkId ? `/events/${event.linkId}` : '/events';
-  const qaHref = latestQA?.id ? `/qa#q-${latestQA.id}` : '/qa';
+  const videoHref = video?.linkId ? `/shiurei-torah/${video.linkId}` : '/shiurei-torah';
+  const articleHref = article?.linkId ? `/hagut-upsika/${article.linkId}` : '/hagut-upsika';
+  const eventHref = event?.linkId ? `/yoman-peilut/${event.linkId}` : '/yoman-peilut';
+  const qaHref = latestQA?.id ? `/shut#q-${latestQA.id}` : '/shut';
 
   return (
     <section className="relative bg-gradient-to-br from-primary via-primary to-[#0f1e38] overflow-hidden">
@@ -122,7 +122,7 @@ export default function HeroSection() {
             </div>
 
             <Link
-              to="/ask"
+              to="/shaal-et-harav"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="lg:hidden flex items-center justify-center gap-2.5 w-full bg-secondary text-primary rounded-xl px-6 py-4 text-base sm:text-lg font-bold shadow-lg hover:bg-secondary/90 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >

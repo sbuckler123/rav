@@ -5,11 +5,11 @@ import { useState } from 'react';
 import NewsletterDialog from '@/components/NewsletterDialog';
 
 const navLinks = [
-  { href: '/qa', label: 'שו"ת' },
-  { href: '/videos', label: 'שיעורי תורה' },
-  { href: '/shiurim', label: 'לוח אירועים' },
-  { href: '/events', label: 'יומן פעילות' },
-  { href: '/articles', label: 'הגות ופסיקה' },
+  { href: '/shut', label: 'שו"ת' },
+  { href: '/shiurei-torah', label: 'שיעורי תורה' },
+  { href: '/luach-iruyim', label: 'לוח אירועים' },
+  { href: '/yoman-peilut', label: 'יומן פעילות' },
+  { href: '/hagut-upsika', label: 'הגות ופסיקה' },
   { href: '/about', label: 'אודות' },
 ];
 
@@ -74,7 +74,7 @@ export default function Header() {
                 <span className="leading-none">הצטרפות לניוזלטר</span>
               </button>
               <Link
-                to="/ask"
+                to="/shaal-et-harav"
                 onClick={scrollTop}
                 className="inline-flex items-center gap-2 rounded-md px-4 min-h-[44px] text-sm font-semibold whitespace-nowrap bg-secondary text-primary hover:bg-secondary/90 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
               >
@@ -147,7 +147,7 @@ export default function Header() {
               {/* Mobile CTAs */}
               <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
                 <Link
-                  to="/ask"
+                  to="/shaal-et-harav"
                   onClick={closeMobileMenu}
                   className="flex items-center gap-3 py-3 px-3 rounded-lg bg-secondary text-primary hover:bg-secondary/90 transition-colors text-base font-semibold min-h-[48px]"
                 >

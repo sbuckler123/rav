@@ -32,7 +32,7 @@ export default function EventsHomeSection() {
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">אירועים אחרונים</h2>
           </div>
-          <Link to="/events">
+          <Link to="/yoman-peilut">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex">
               לכל האירועים
               <ArrowLeft className="h-4 w-4" />
@@ -53,7 +53,7 @@ export default function EventsHomeSection() {
               const style = getEventTypeStyle(event.eventType);
               const imageUrl = event.mainImageUrl || placeholderImg;
               return (
-                <Link key={event.id} to={`/events/${event.linkId}`}>
+                <Link key={event.id} to={`/yoman-peilut/${event.linkId}`}>
                   <div className="rounded-xl border border-border bg-white overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer h-full flex flex-col">
                     {/* Image */}
                     <div className="aspect-video overflow-hidden">
@@ -92,7 +92,7 @@ export default function EventsHomeSection() {
 
         {/* Mobile button */}
         <div className="text-center mt-6 sm:hidden">
-          <Link to="/events">
+          <Link to="/yoman-peilut">
             <Button variant="outline" className="gap-2 w-full min-h-[44px]">
               לכל האירועים
               <ArrowLeft className="h-4 w-4" />

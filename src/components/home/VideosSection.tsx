@@ -13,7 +13,7 @@ function getThumb(video: ShiurItem): string {
 
 function VideoCard({ video }: { video: ShiurItem }) {
   return (
-    <Link to={`/videos/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`}>
+    <Link to={`/shiurei-torah/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`}>
       <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:bg-[#F5F0E8] transition-all duration-300 cursor-pointer group h-full">
         <div className="relative aspect-video bg-primary">
           <img
@@ -72,7 +72,7 @@ export default function VideosSection() {
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שיעורי וידאו אחרונים</h2>
           </div>
-          <Link to="/videos">
+          <Link to="/shiurei-torah">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex">
               לכל שיעורי הוידאו
               <ArrowLeft className="h-4 w-4" />
@@ -95,7 +95,7 @@ export default function VideosSection() {
 
         {/* Mobile "all videos" button */}
         <div className="text-center mt-6 sm:hidden">
-          <Link to="/videos">
+          <Link to="/shiurei-torah">
             <Button variant="outline" className="gap-2 w-full min-h-[44px]">
               לכל שיעורי הוידאו
               <ArrowLeft className="h-4 w-4" />

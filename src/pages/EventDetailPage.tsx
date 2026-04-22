@@ -71,7 +71,7 @@ export default function EventDetailPage() {
     return (
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 text-center">
         <p className="text-muted-foreground">הרשומה לא נמצאה.</p>
-        <Link to="/events">
+        <Link to="/yoman-peilut">
           <Button variant="outline" className="mt-4">חזרה ליומן פעילות</Button>
         </Link>
       </div>
@@ -90,7 +90,7 @@ export default function EventDetailPage() {
         <Breadcrumbs
           items={[
             { label: 'דף הבית', href: '/' },
-            { label: 'יומן פעילות', href: '/events' },
+            { label: 'יומן פעילות', href: '/yoman-peilut' },
             { label: entry.title },
           ]}
         />
@@ -243,7 +243,7 @@ export default function EventDetailPage() {
             >
               <div className="flex-1 min-w-0 text-left">
                 {prevEvent ? (
-                  <Link to={`/events/${prevEvent.linkId}`} className="group block hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
+                  <Link to={`/yoman-peilut/${prevEvent.linkId}`} className="group block hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
                     <span className="text-sm text-muted-foreground">→ האירוע הקודם</span>
                     <span className="block font-semibold text-primary group-hover:text-secondary truncate">{prevEvent.title}</span>
                   </Link>
@@ -251,12 +251,12 @@ export default function EventDetailPage() {
                   <span className="text-muted-foreground text-sm">אין אירוע קודם</span>
                 )}
               </div>
-              <Link to="/events" className="text-primary font-medium hover:text-secondary text-sm shrink-0">
+              <Link to="/yoman-peilut" className="text-primary font-medium hover:text-secondary text-sm shrink-0">
                 חזרה ליומן פעילות
               </Link>
               <div className="flex-1 min-w-0 text-right">
                 {nextEvent ? (
-                  <Link to={`/events/${nextEvent.linkId}`} className="group block hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
+                  <Link to={`/yoman-peilut/${nextEvent.linkId}`} className="group block hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
                     <span className="text-sm text-muted-foreground">האירוע הבא ←</span>
                     <span className="block font-semibold text-primary group-hover:text-secondary truncate">{nextEvent.title}</span>
                   </Link>
@@ -280,7 +280,7 @@ export default function EventDetailPage() {
                   {recentEvents.map((e) => (
                     <li key={e.id}>
                       <Link
-                        to={`/events/${e.linkId}`}
+                        to={`/yoman-peilut/${e.linkId}`}
                         className="flex gap-3 rounded-lg p-2 hover:bg-[#F5F0E8] transition-colors group"
                       >
                         {e.mainImageUrl ? (
@@ -311,7 +311,7 @@ export default function EventDetailPage() {
             <div className="rounded-lg p-6 text-primary-foreground" style={{ backgroundColor: '#1B2A4A' }}>
               <p className="font-serif font-bold mb-3">כל האירועים</p>
               <Button asChild size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 w-full">
-                <Link to="/events" className="flex items-center justify-center gap-2">
+                <Link to="/yoman-peilut" className="flex items-center justify-center gap-2">
                   חזרה ליומן פעילות
                   <ChevronLeft className="h-4 w-4" />
                 </Link>

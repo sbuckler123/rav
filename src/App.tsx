@@ -94,16 +94,16 @@ export default function App() {
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/about" element={<AboutPage />} />
-                    <Route path="/videos" element={<VideosPage />} />
-                    <Route path="/videos/:id" element={<VideoDetailPage />} />
-                    <Route path="/shiurim" element={<ShiurimPage />} />
-                    <Route path="/shiurim/:id" element={<ShiurDetailPage />} />
-                    <Route path="/events" element={<EventsPage />} />
-                    <Route path="/events/:id" element={<EventDetailPage />} />
-                    <Route path="/ask" element={<AskPage />} />
-                    <Route path="/qa" element={<QAPage />} />
-                    <Route path="/articles" element={<ArticlesPage />} />
-                    <Route path="/articles/:id" element={<ArticleDetailPage />} />
+                    <Route path="/shiurei-torah" element={<VideosPage />} />
+                    <Route path="/shiurei-torah/:id" element={<VideoDetailPage />} />
+                    <Route path="/luach-iruyim" element={<ShiurimPage />} />
+                    <Route path="/luach-iruyim/:id" element={<ShiurDetailPage />} />
+                    <Route path="/yoman-peilut" element={<EventsPage />} />
+                    <Route path="/yoman-peilut/:id" element={<EventDetailPage />} />
+                    <Route path="/shaal-et-harav" element={<AskPage />} />
+                    <Route path="/shut" element={<QAPage />} />
+                    <Route path="/hagut-upsika" element={<ArticlesPage />} />
+                    <Route path="/hagut-upsika/:id" element={<ArticleDetailPage />} />
                     <Route path="/accessibility" element={<AccessibilityStatementPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/cookies" element={<CookiePolicyPage />} />

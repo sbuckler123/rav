@@ -113,7 +113,7 @@ export default function Dashboard() {
 
         {/* השיעור הבא */}
         <FadeIn delay={100}>
-        <Link to={nextShiur ? `/shiurim/${nextShiur.linkId}` : '/shiurim'} className="block h-full">
+        <Link to={nextShiur ? `/luach-iruyim/${nextShiur.linkId}` : '/luach-iruyim'} className="block h-full">
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-secondary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
             <div className="flex flex-col items-center text-center h-full">
@@ -174,7 +174,7 @@ export default function Dashboard() {
 
         {/* מאמר אחרון */}
         <FadeIn delay={220}>
-        <Link to={latestArticle ? `/articles/${latestArticle.linkId}` : '/articles'} className="block h-full">
+        <Link to={latestArticle ? `/hagut-upsika/${latestArticle.linkId}` : '/hagut-upsika'} className="block h-full">
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-t-primary h-full cursor-pointer">
           <CardContent className="p-6 lg:p-8 h-full">
             <div className="flex flex-col items-center text-center h-full">
@@ -237,7 +237,7 @@ export default function Dashboard() {
               </div>
 
               <Button size="lg" className="w-full min-h-[44px] bg-secondary text-primary hover:bg-secondary/90 transition-colors" asChild>
-                <Link to="/ask">
+                <Link to="/shaal-et-harav">
                   שלח שאלה
                 </Link>
               </Button>

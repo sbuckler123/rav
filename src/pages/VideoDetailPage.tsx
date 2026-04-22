@@ -45,7 +45,7 @@ export default function VideoDetailPage() {
             <CardContent className="p-6 text-center">
               <h2 className="text-2xl font-bold mb-4">שיעור לא נמצא</h2>
               <Button asChild>
-                <Link to="/videos">חזרה לשיעורים</Link>
+                <Link to="/shiurei-torah">חזרה לשיעורים</Link>
               </Button>
             </CardContent>
           </Card>
@@ -80,7 +80,7 @@ export default function VideoDetailPage() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },
-          { label: 'שיעורי תורה', href: '/videos' },
+          { label: 'שיעורי תורה', href: '/shiurei-torah' },
           { label: video.title }
         ]} />
 
@@ -187,7 +187,7 @@ export default function VideoDetailPage() {
             {/* ניווט */}
             <div className="flex justify-between gap-3">
               {prevVideo ? (
-                <Link to={`/videos/${prevVideo.linkId}`} className="flex-1 sm:flex-none">
+                <Link to={`/shiurei-torah/${prevVideo.linkId}`} className="flex-1 sm:flex-none">
                   <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]">
                     <ChevronRight className="h-4 w-4 flex-shrink-0" />
                     <span className="hidden sm:inline">השיעור הקודם</span>
@@ -202,7 +202,7 @@ export default function VideoDetailPage() {
                 </Button>
               )}
               {nextVideo ? (
-                <Link to={`/videos/${nextVideo.linkId}`} className="flex-1 sm:flex-none">
+                <Link to={`/shiurei-torah/${nextVideo.linkId}`} className="flex-1 sm:flex-none">
                   <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]">
                     <span className="hidden sm:inline">השיעור הבא</span>
                     <span className="sm:hidden">הבא</span>
@@ -236,7 +236,7 @@ export default function VideoDetailPage() {
                   </div>
                   <div className="space-y-2">
                     {categoryVideos.map((v) => (
-                      <Link key={v.id} to={`/videos/${v.linkId}`}>
+                      <Link key={v.id} to={`/shiurei-torah/${v.linkId}`}>
                         <div className="flex gap-3 hover:bg-muted p-2 rounded-lg transition-colors cursor-pointer group">
                           <div className="relative flex-shrink-0">
                             <img
@@ -266,7 +266,7 @@ export default function VideoDetailPage() {
                     ))}
                   </div>
                   {sameCategory.length > 0 && video.category && (
-                    <Link to={`/videos?category=${encodeURIComponent(video.category)}`}>
+                    <Link to={`/shiurei-torah?category=${encodeURIComponent(video.category)}`}>
                       <Button variant="outline" size="sm" className="w-full mt-4 min-h-[44px] sm:min-h-0 text-xs">
                         כל השיעורים בקטגוריה
                       </Button>
@@ -286,7 +286,7 @@ export default function VideoDetailPage() {
                   </h3>
                   <div className="space-y-2">
                     {mostViewed.map((v, i) => (
-                      <Link key={v.id} to={`/videos/${v.linkId}`}>
+                      <Link key={v.id} to={`/shiurei-torah/${v.linkId}`}>
                         <div className="flex gap-3 hover:bg-muted p-2 rounded-lg transition-colors cursor-pointer group items-start">
                           <div className="flex-shrink-0 w-7 h-7 bg-secondary/10 rounded-full flex items-center justify-center text-secondary font-bold text-sm mt-0.5">
                             {i + 1}

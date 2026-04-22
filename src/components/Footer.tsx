@@ -22,12 +22,12 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-3 text-sm sm:text-base">קישורים מהירים</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/ask" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שאל את הרב</Link></li>
-              <li><Link to="/qa" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שו"ת</Link></li>
-              <li><Link to="/videos" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שיעורי תורה</Link></li>
-              <li><Link to="/shiurim" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">לוח אירועים</Link></li>
-              <li><Link to="/events" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">יומן פעילות</Link></li>
-              <li><Link to="/articles" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">הגות ופסיקה</Link></li>
+              <li><Link to="/shaal-et-harav" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שאל את הרב</Link></li>
+              <li><Link to="/shut" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שו"ת</Link></li>
+              <li><Link to="/shiurei-torah" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">שיעורי תורה</Link></li>
+              <li><Link to="/luach-iruyim" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">לוח אירועים</Link></li>
+              <li><Link to="/yoman-peilut" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">יומן פעילות</Link></li>
+              <li><Link to="/hagut-upsika" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">הגות ופסיקה</Link></li>
               <li><Link to="/about" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors block py-0.5">אודות</Link></li>
             </ul>
           </div>

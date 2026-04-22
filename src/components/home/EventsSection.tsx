@@ -39,7 +39,7 @@ function ShiurCard({ event }: { event: ShiurEvent }) {
   const today        = isTodayShiur(event);
 
   return (
-    <Link to={`/shiurim/${event.linkId}`}>
+    <Link to={`/luach-iruyim/${event.linkId}`}>
       <div className={`flex rounded-xl overflow-hidden bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border-2 ${
         today ? 'border-secondary shadow-sm' : 'border-border'
       }`}>
@@ -120,7 +120,7 @@ export default function EventsSection() {
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שיעורים קרובים</h2>
           </div>
-          <Link to="/shiurim">
+          <Link to="/luach-iruyim">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex bg-white">
               לכל השיעורים
               <ArrowLeft className="h-4 w-4" />
@@ -145,7 +145,7 @@ export default function EventsSection() {
 
         {/* Mobile button */}
         <div className="text-center mt-6 sm:hidden">
-          <Link to="/shiurim">
+          <Link to="/luach-iruyim">
             <Button variant="outline" className="gap-2 w-full bg-white min-h-[44px]">
               לכל השיעורים
               <ArrowLeft className="h-4 w-4" />

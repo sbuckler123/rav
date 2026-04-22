@@ -5,7 +5,7 @@ export default function MobileAskFAB() {
   const { pathname } = useLocation();
 
   // Hide on the ask page itself and in admin
-  if (pathname === '/ask' || pathname.startsWith('/admin')) return null;
+  if (pathname === '/shaal-et-harav' || pathname.startsWith('/admin')) return null;
 
   return (
     <div
@@ -13,7 +13,7 @@ export default function MobileAskFAB() {
       aria-label="שאל את הרב — כפתור פעולה מהיר"
     >
       <Link
-        to="/ask"
+        to="/shaal-et-harav"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label="שאל את הרב"
         className="flex items-center gap-2 bg-secondary text-primary font-bold text-sm rounded-full shadow-lg shadow-black/25 px-5 py-3.5 min-h-[52px] transition-all duration-200 hover:bg-secondary/90 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"

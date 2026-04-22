@@ -17,7 +17,7 @@ function formatDate(raw: any): string {
 
 function QuestionCard({ question, categoryName }: { question: Question; categoryName: string | null }) {
   return (
-    <Link to={`/qa#q-${question.id}`} className="block group h-full">
+    <Link to={`/shut#q-${question.id}`} className="block group h-full">
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col">
 
         {/* Top accent */}
@@ -104,7 +104,7 @@ export default function AskRabbiSection() {
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שאלות שנשאלו לאחרונה</h2>
           </div>
-          <Link to="/qa">
+          <Link to="/shut">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex">
               לכל השאלות
               <ArrowLeft className="h-4 w-4" />
@@ -138,7 +138,7 @@ export default function AskRabbiSection() {
 
         {/* Mobile CTA */}
         <div className="mt-6 sm:hidden">
-          <Link to="/qa">
+          <Link to="/shut">
             <Button variant="outline" className="w-full gap-2 min-h-[44px]">
               לכל השאלות
               <ArrowLeft className="h-4 w-4" />

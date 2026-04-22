@@ -29,7 +29,7 @@ export default function ArticlesSection() {
             <div className="w-1 h-6 bg-secondary rounded-full" />
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">מאמרים ופסקי הלכה</h2>
           </div>
-          <Link to="/articles">
+          <Link to="/hagut-upsika">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex bg-white">
               לכל המאמרים
               <ArrowLeft className="h-4 w-4" />
@@ -65,7 +65,7 @@ export default function ArticlesSection() {
                       </div>
 
                       {/* Title */}
-                      <Link to={`/articles/${article.linkId}`}>
+                      <Link to={`/hagut-upsika/${article.linkId}`}>
                         <h3 className="font-serif font-bold text-base sm:text-lg mb-1 hover:text-secondary transition-colors line-clamp-1">
                           {article.title}
                         </h3>
@@ -81,7 +81,7 @@ export default function ArticlesSection() {
                         {article.abstract && (
                           <p className="text-xs sm:text-sm text-foreground/70 line-clamp-1 flex-1">{article.abstract}</p>
                         )}
-                        <Link to={`/articles/${article.linkId}`} className="flex-shrink-0">
+                        <Link to={`/hagut-upsika/${article.linkId}`} className="flex-shrink-0">
                           <Button size="sm" variant="outline" className="text-xs h-8 whitespace-nowrap">
                             לקריאת המאמר
                           </Button>
@@ -97,7 +97,7 @@ export default function ArticlesSection() {
 
         {/* Mobile button */}
         <div className="text-center mt-6 sm:hidden">
-          <Link to="/articles">
+          <Link to="/hagut-upsika">
             <Button variant="outline" className="gap-2 w-full bg-white min-h-[44px]">
               לכל המאמרים
               <ArrowLeft className="h-4 w-4" />

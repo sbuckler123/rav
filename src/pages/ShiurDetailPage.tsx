@@ -60,7 +60,7 @@ export default function ShiurDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl font-bold mb-4">השיעור לא נמצא</p>
-          <Button asChild><Link to="/shiurim">חזרה ללוח אירועים</Link></Button>
+          <Button asChild><Link to="/luach-iruyim">חזרה ללוח אירועים</Link></Button>
         </div>
       </div>
     );
@@ -175,7 +175,7 @@ export default function ShiurDetailPage() {
           <Breadcrumbs
             items={[
               { label: 'דף הבית', href: '/' },
-              { label: 'לוח אירועים', href: '/shiurim' },
+              { label: 'לוח אירועים', href: '/luach-iruyim' },
               { label: shiur.title }
             ]}
           />
@@ -313,14 +313,14 @@ export default function ShiurDetailPage() {
                 שתף שיעור
               </Button>
               <Button variant="outline" className="min-h-[44px] w-full sm:w-auto" asChild>
-                <Link to="/shiurim">חזרה ללוח אירועים</Link>
+                <Link to="/luach-iruyim">חזרה ללוח אירועים</Link>
               </Button>
             </div>
 
             {/* ניווט */}
             <div className="flex justify-between gap-2 sm:gap-3 pt-2 border-t">
               {prevShiur ? (
-                <Link to={`/shiurim/${prevShiur.linkId}`} className="flex-1">
+                <Link to={`/luach-iruyim/${prevShiur.linkId}`} className="flex-1">
                   <Button variant="outline" className="gap-1.5 sm:gap-2 w-full min-h-[44px] text-sm">
                     <ChevronRight className="h-4 w-4 flex-shrink-0" />
                     <span className="hidden sm:inline">השיעור הקודם</span>
@@ -335,7 +335,7 @@ export default function ShiurDetailPage() {
                 </Button>
               )}
               {nextShiur ? (
-                <Link to={`/shiurim/${nextShiur.linkId}`} className="flex-1">
+                <Link to={`/luach-iruyim/${nextShiur.linkId}`} className="flex-1">
                   <Button variant="outline" className="gap-1.5 sm:gap-2 w-full min-h-[44px] text-sm">
                     <span className="hidden sm:inline">השיעור הבא</span>
                     <span className="sm:hidden">הבא</span>
@@ -366,7 +366,7 @@ export default function ShiurDetailPage() {
                       const [sDay, sMonth] = s.date.split('.');
                       const sMonthLabel = sMonth ? monthNames[parseInt(sMonth) - 1] : '';
                       return (
-                        <Link key={s.id} to={`/shiurim/${s.linkId}`}>
+                        <Link key={s.id} to={`/luach-iruyim/${s.linkId}`}>
                           <div className="flex gap-3 p-2.5 rounded-lg hover:bg-muted/40 transition-colors group cursor-pointer">
                             {s.date && (
                               <div className="flex-shrink-0 w-10 h-10 bg-[#F7F4EE] border rounded-lg flex flex-col items-center justify-center">
@@ -389,7 +389,7 @@ export default function ShiurDetailPage() {
                       );
                     })}
                   </div>
-                  <Link to="/shiurim">
+                  <Link to="/luach-iruyim">
                     <Button variant="outline" size="sm" className="w-full mt-3 min-h-[40px] sm:min-h-0 text-xs">
                       כל לוח השיעורים
                     </Button>

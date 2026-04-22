@@ -70,8 +70,8 @@ export default function ArticleDetailPage() {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },
-          { label: 'הגות ופסיקה', href: '/articles' },
-          { label: article.categories[0] ?? '', href: `/articles?category=${article.categories[0]}` },
+          { label: 'הגות ופסיקה', href: '/hagut-upsika' },
+          { label: article.categories[0] ?? '', href: `/hagut-upsika?category=${article.categories[0]}` },
           { label: article.title }
         ]} />
 
@@ -86,30 +86,30 @@ export default function ArticleDetailPage() {
                   {article.journal && (
                     <div>
                       <p className="text-muted-foreground">כתב עת</p>
-                      <Link to={`/articles?journal=${article.journal}`} className="font-medium hover:text-primary">{article.journal}</Link>
+                      <Link to={`/hagut-upsika?journal=${article.journal}`} className="font-medium hover:text-primary">{article.journal}</Link>
                     </div>
                   )}
                   {article.yeshiva && (
                     <div>
                       <p className="text-muted-foreground">ישיבה</p>
-                      <Link to={`/articles?yeshiva=${article.yeshiva}`} className="font-medium hover:text-primary">{article.yeshiva}</Link>
+                      <Link to={`/hagut-upsika?yeshiva=${article.yeshiva}`} className="font-medium hover:text-primary">{article.yeshiva}</Link>
                     </div>
                   )}
                   <div>
                     <p className="text-muted-foreground">שנה</p>
-                    <Link to={`/articles?year=${article.yearEnglish}`} className="font-medium hover:text-primary">
+                    <Link to={`/hagut-upsika?year=${article.yearEnglish}`} className="font-medium hover:text-primary">
                       {article.yearHebrew} {article.yearEnglish ? `(${article.yearEnglish})` : ''}
                     </Link>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {article.categories.map((cat) => (
-                    <Link key={cat} to={`/articles?category=${cat}`}>
+                    <Link key={cat} to={`/hagut-upsika?category=${cat}`}>
                       <Badge variant="secondary" className="cursor-pointer">{cat}</Badge>
                     </Link>
                   ))}
                   {article.tags.map((tag) => (
-                    <Link key={tag} to={`/articles?tag=${tag}`}>
+                    <Link key={tag} to={`/hagut-upsika?tag=${tag}`}>
                       <Badge variant="outline" className="cursor-pointer">{tag}</Badge>
                     </Link>
                   ))}
@@ -226,7 +226,7 @@ export default function ArticleDetailPage() {
             {/* ניווט */}
             <div className="flex flex-wrap justify-between gap-2">
               {prevArticle ? (
-                <Link to={`/articles/${prevArticle.linkId}`}>
+                <Link to={`/hagut-upsika/${prevArticle.linkId}`}>
                   <Button variant="outline" size="sm" className="gap-1">
                     <ChevronRight className="h-4 w-4" />
                     <span className="hidden sm:inline">המאמר הקודם</span>
@@ -238,11 +238,11 @@ export default function ArticleDetailPage() {
                   <span className="hidden sm:inline">המאמר הקודם</span>
                 </Button>
               )}
-              <Link to="/articles">
+              <Link to="/hagut-upsika">
                 <Button variant="outline" size="sm">חזרה לכל המאמרים</Button>
               </Link>
               {nextArticle ? (
-                <Link to={`/articles/${nextArticle.linkId}`}>
+                <Link to={`/hagut-upsika/${nextArticle.linkId}`}>
                   <Button variant="outline" size="sm" className="gap-1">
                     <span className="hidden sm:inline">המאמר הבא</span>
                     <ChevronLeft className="h-4 w-4" />
@@ -264,17 +264,17 @@ export default function ArticleDetailPage() {
                 <h3 className="font-bold mb-3">סינון מהיר</h3>
                 <div className="space-y-2 sm:space-y-3">
                   {article.journal && (
-                    <Link to={`/articles?journal=${article.journal}`}>
+                    <Link to={`/hagut-upsika?journal=${article.journal}`}>
                       <Button variant="outline" size="sm" className="w-full justify-start text-right">כל המאמרים מ{article.journal}</Button>
                     </Link>
                   )}
                   {article.categories[0] && (
-                    <Link to={`/articles?category=${article.categories[0]}`}>
+                    <Link to={`/hagut-upsika?category=${article.categories[0]}`}>
                       <Button variant="outline" size="sm" className="w-full justify-start text-right">כל המאמרים ב{article.categories[0]}</Button>
                     </Link>
                   )}
                   {article.yearHebrew && (
-                    <Link to={`/articles?year=${article.yearEnglish}`}>
+                    <Link to={`/hagut-upsika?year=${article.yearEnglish}`}>
                       <Button variant="outline" size="sm" className="w-full justify-start text-right">כל המאמרים מ{article.yearHebrew}</Button>
                     </Link>
                   )}

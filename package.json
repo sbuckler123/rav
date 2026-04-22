@@ -2,7 +2,9 @@
   "name": "rav-app",
   "private": true,
   "version": "0.0.0",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -13,10 +15,12 @@
     "@clerk/backend": "^3.2.8",
     "@clerk/clerk-react": "^5.61.4",
     "@clerk/localizations": "^4.4.0",
+    "@supabase/supabase-js": "^2.103.3",
     "@tailwindcss/typography": "^0.5.19",
     "airtable": "^0.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
