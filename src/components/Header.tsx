@@ -10,7 +10,7 @@ const navLinks = [
   { href: '/luach-iruyim', label: 'לוח אירועים' },
   { href: '/yoman-peilut', label: 'יומן פעילות' },
   { href: '/hagut-upsika', label: 'הגות ופסיקה' },
-  { href: '/about', label: 'אודות' },
+  { href: '/odot', label: 'אודות' },
 ];
 
 export default function Header() {

@@ -93,7 +93,7 @@ export default function App() {
                 <main className="flex-1">
                   <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/odot" element={<AboutPage />} />
                     <Route path="/shiurei-torah" element={<VideosPage />} />
                     <Route path="/shiurei-torah/:id" element={<VideoDetailPage />} />
                     <Route path="/luach-iruyim" element={<ShiurimPage />} />
