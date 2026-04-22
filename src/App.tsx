@@ -10,6 +10,7 @@ function ScrollToTop() {
   return null;
 }
 import Header from '@/components/Header';
+import MobileAskFAB from '@/components/MobileAskFAB';
 import Footer from '@/components/Footer';
 import HomePage from '@/pages/HomePage';
 import AboutPage from '@/pages/AboutPage';
@@ -111,6 +112,7 @@ export default function App() {
                   </Routes>
                 </main>
                 <Footer />
+                <MobileAskFAB />
               </div>
             }
           />
