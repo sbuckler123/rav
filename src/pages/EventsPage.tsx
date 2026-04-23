@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 import { getEvents, type EventItem } from '@/api/getEvents';
 import { getEventTypeStyle } from '@/lib/yoman';
 
@@ -74,7 +75,7 @@ export default function EventsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader title="יומן פעילות" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
+        <PageHeader title="יומן פעילות" subtitle={PAGE_DESC['/yoman-peilut']} />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-muted-foreground">טוען אירועים...</div>
       </div>
     );
@@ -83,7 +84,7 @@ export default function EventsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader title="יומן פעילות" subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי" />
+        <PageHeader title="יומן פעילות" subtitle={PAGE_DESC['/yoman-peilut']} />
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-destructive">{error}</div>
       </div>
     );
@@ -99,7 +100,7 @@ export default function EventsPage() {
       {/* Page header — title + subtitle only, no search bar inside */}
       <PageHeader
         title="יומן פעילות"
-        subtitle="תיעוד וסיכום של פגישות, ביקורי רבנים ואירועים ציבוריים במחיצת הרב הראשי"
+        subtitle={PAGE_DESC['/yoman-peilut']}
       />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">

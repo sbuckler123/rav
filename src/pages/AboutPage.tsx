@@ -1,6 +1,7 @@
 import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 
 export default function AboutPage() {
   return (
@@ -11,7 +12,7 @@ export default function AboutPage() {
       />
       <PageHeader
         title='הגאון הרב קלמן מאיר בר שליט"א'
-        subtitle="הרב הראשי לישראל ונשיא מועצת הרבנות הראשית לישראל"
+        subtitle={PAGE_DESC['/odot']}
         breadcrumbs={[{ label: 'דף הבית', href: '/' }, { label: 'אודות' }]}
       />
 

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 import { getVideos, type ShiurItem } from '@/api/getVideos';
 
 function getThumb(video: ShiurItem): string {
@@ -72,14 +73,14 @@ export default function VideosPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-muted-foreground">טוען שיעורים...</div>
     </div>
   );
 
   if (error) return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-destructive">{error}</div>
     </div>
   );
@@ -90,7 +91,7 @@ export default function VideosPage() {
         title="שיעורי תורה"
         description="צפו בשיעורי התורה של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
       />
-      <PageHeader title="שיעורי תורה" subtitle="ארכיון שיעורי הרב הראשי לישראל" />
+      <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

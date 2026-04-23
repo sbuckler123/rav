@@ -7,6 +7,7 @@ import { Calendar, MapPin, Clock, Search, X, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
 
 const dateFilters = [
@@ -109,7 +110,7 @@ export default function ShiurimPage() {
         title="לוח אירועים"
         description="לוח האירועים העדכני של הרב קלמן מאיר בר — שיעורים, הרצאות ומפגשים."
       />
-      <PageHeader title="לוח אירועים" subtitle="כל השיעורים וההרצאות הקרובים" />
+      <PageHeader title="לוח אירועים" subtitle={PAGE_DESC['/luach-iruyim']} />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 

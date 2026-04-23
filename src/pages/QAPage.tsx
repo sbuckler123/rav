@@ -5,6 +5,7 @@ import { getPublishedQuestions } from '@/api/getPublishedQuestions';
 import PublishedQA from '@/components/ask/PublishedQA';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 
 type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
 
@@ -30,7 +31,7 @@ export default function QAPage() {
 
       <PageHeader
         title='שו"ת'
-        subtitle="שאלות ותשובות מפורסמות מלשכת הרב הראשי"
+        subtitle={PAGE_DESC['/shut']}
       />
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-10">

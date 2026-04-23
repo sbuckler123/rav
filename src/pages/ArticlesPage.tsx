@@ -8,6 +8,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
+import { PAGE_DESC } from '@/config/nav';
 import { getArticles, type Article } from '@/api/getArticles';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -62,7 +63,7 @@ export default function ArticlesPage() {
       />
       <PageHeader
         title="הגות ופסיקה"
-        subtitle="פסקי הלכה, מאמרים תורניים וחידושים מאת הרב הראשי"
+        subtitle={PAGE_DESC['/hagut-upsika']}
       />
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
