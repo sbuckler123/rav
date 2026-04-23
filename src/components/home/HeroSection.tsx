@@ -73,22 +73,22 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_80%_50%,rgba(197,165,90,0.07),transparent)] pointer-events-none" aria-hidden="true" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-10 lg:py-14">
-        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-6 sm:gap-8 lg:gap-10 items-stretch">
 
-          {/* Right column — image (first source child; RTL puts it on the right) */}
-          <div className="relative mx-auto w-full max-w-[220px] sm:max-w-xs lg:max-w-none">
+          {/* Right column — image (RTL puts it on the right); 1/3 width on desktop */}
+          <div className="relative mx-auto w-full max-w-[220px] sm:max-w-xs lg:max-w-none lg:h-full">
             <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-10 h-10 sm:w-12 sm:h-12 border-t-2 border-r-2 border-secondary/60 rounded-tr-xl pointer-events-none" aria-hidden="true" />
             <div className="absolute -bottom-1.5 -left-1.5 sm:-bottom-2 sm:-left-2 w-10 h-10 sm:w-12 sm:h-12 border-b-2 border-l-2 border-secondary/60 rounded-bl-xl pointer-events-none" aria-hidden="true" />
-            <div className="relative rounded-xl overflow-hidden ring-1 ring-secondary/20 shadow-2xl">
+            <div className="relative rounded-xl overflow-hidden ring-1 ring-secondary/20 shadow-2xl lg:h-full">
               <img
                 src="/og-image.jpg"
                 alt="הרב קלמן מאיר בר"
-                className="w-full object-cover object-top max-h-[200px] sm:max-h-[280px] lg:max-h-[440px]"
+                className="w-full object-cover object-top max-h-[200px] sm:max-h-[280px] lg:max-h-none lg:h-full"
               />
             </div>
           </div>
 
-          {/* Left column — 2×2 tile grid + identity line */}
+          {/* Left column — 2×2 tile grid; 2/3 width on desktop */}
           <div className="flex flex-col gap-4 sm:gap-5" dir="rtl">
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <HeroTile
