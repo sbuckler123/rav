@@ -45,11 +45,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-secondary flex-shrink-0" />
-                <span className="opacity-80" dir="ltr">02-5313131</span>
+                <a href="tel:0253131313" dir="ltr" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors">02-5313131</a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-secondary flex-shrink-0" />
-                <span className="opacity-80 break-all" dir="ltr">Kh@rab.gov.il</span>
+                <a href="mailto:Kh@rab.gov.il" dir="ltr" className="opacity-80 hover:opacity-100 hover:text-secondary transition-colors break-all">Kh@rab.gov.il</a>
               </li>
             </ul>
           </div>
