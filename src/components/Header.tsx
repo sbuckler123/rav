@@ -108,17 +108,25 @@ export default function Header() {
                 aria-current={isActive(link.href) ? 'page' : undefined}
               >
                 {link.label}
-                <span
-                  role="tooltip"
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-3 w-52 rounded-xl bg-white text-primary text-xs leading-relaxed px-3 py-2.5 shadow-xl border border-gray-100 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 text-right z-20 whitespace-normal font-normal"
-                >
+                {link.desc && (
                   <span
+                    role="tooltip"
                     aria-hidden="true"
-                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-gray-100 rotate-45"
-                  />
-                  {link.desc}
-                </span>
+                    className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl bg-primary border border-secondary/25 text-primary-foreground/80 text-xs leading-relaxed px-3 pt-3.5 pb-3 shadow-2xl shadow-black/40 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 text-right z-50 whitespace-normal font-normal overflow-hidden"
+                  >
+                    {/* Gold top accent — matches PageHeader ornament style */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-secondary/70 to-transparent"
+                    />
+                    {/* Arrow caret */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-[7px] left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-primary border-t border-l border-secondary/25 rotate-45"
+                    />
+                    {link.desc}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
@@ -144,7 +152,9 @@ export default function Header() {
                     )}
                     <span className="flex flex-col min-w-0">
                       <span className="text-base leading-tight">{link.label}</span>
-                      <span className="text-xs opacity-60 font-normal leading-snug mt-0.5">{link.desc}</span>
+                      {link.desc && (
+                        <span className="text-xs text-secondary/70 font-normal leading-snug mt-0.5">{link.desc}</span>
+                      )}
                     </span>
                   </Link>
                 ))}
