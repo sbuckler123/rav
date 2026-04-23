@@ -5,11 +5,11 @@ import { useState } from 'react';
 import NewsletterDialog from '@/components/NewsletterDialog';
 
 const navLinks = [
-  { href: '/shut', label: 'שו"ת' },
   { href: '/shiurei-torah', label: 'שיעורי תורה' },
+  { href: '/hagut-upsika', label: 'הגות ופסיקה' },
+  { href: '/shut', label: 'שו"ת' },
   { href: '/luach-iruyim', label: 'לוח אירועים' },
   { href: '/yoman-peilut', label: 'יומן פעילות' },
-  { href: '/hagut-upsika', label: 'הגות ופסיקה' },
   { href: '/odot', label: 'אודות' },
 ];
 
