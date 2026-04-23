@@ -234,7 +234,7 @@ export default function ArticlesPage() {
                         <Badge key={cat} variant="secondary" className="text-xs">{cat}</Badge>
                       ))}
                     </div>
-                    <Link to={`/articles/${article.linkId}`}>
+                    <Link to={`/hagut-upsika/${article.linkId}`}>
                       <h2 className="font-bold text-base mb-1 hover:text-primary transition-colors line-clamp-2">{article.title}</h2>
                     </Link>
                     <div className="text-xs text-muted-foreground mb-2">
@@ -248,7 +248,7 @@ export default function ArticlesPage() {
                         <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                       ))}
                     </div>
-                    <Link to={`/articles/${article.linkId}`} className="mt-auto">
+                    <Link to={`/hagut-upsika/${article.linkId}`} className="mt-auto">
                       <Button size="sm" variant="outline" className="w-full">לקריאת המאמר</Button>
                     </Link>
                   </CardContent>
@@ -274,7 +274,7 @@ export default function ArticlesPage() {
                           </div>
 
                           {/* כותרת */}
-                          <Link to={`/articles/${article.linkId}`}>
+                          <Link to={`/hagut-upsika/${article.linkId}`}>
                             <h2 className="font-serif font-bold text-lg sm:text-xl mb-1 hover:text-primary transition-colors">{article.title}</h2>
                           </Link>
 
@@ -295,7 +295,7 @@ export default function ArticlesPage() {
                                 <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                               ))}
                             </div>
-                            <Link to={`/articles/${article.linkId}`}>
+                            <Link to={`/hagut-upsika/${article.linkId}`}>
                               <Button size="sm" variant="outline" className="shrink-0">לקריאת המאמר</Button>
                             </Link>
                           </div>

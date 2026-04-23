@@ -308,7 +308,7 @@ function TimelineView({ items, placeholderImg }: { items: EventItem[]; placehold
                 >
                   {entry.eventType}
                 </span>
-                <Link to={`/events/${entry.linkId}`}>
+                <Link to={`/yoman-peilut/${entry.linkId}`}>
                   <h2 className="text-xl font-serif font-bold text-primary mb-2 hover:text-secondary transition-colors">
                     {entry.title}
                   </h2>
@@ -322,7 +322,7 @@ function TimelineView({ items, placeholderImg }: { items: EventItem[]; placehold
                     {entry.location}
                   </p>
                 )}
-                <Link to={`/events/${entry.linkId}`} className="hidden sm:inline-block">
+                <Link to={`/yoman-peilut/${entry.linkId}`} className="hidden sm:inline-block">
                   <Button size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
                     לקריאה המלאה →
                   </Button>
@@ -354,7 +354,7 @@ function GridView({ items, placeholderImg }: { items: EventItem[]; placeholderIm
               >
                 {entry.eventType}
               </span>
-              <Link to={`/events/${entry.linkId}`}>
+              <Link to={`/yoman-peilut/${entry.linkId}`}>
                 <h2 className="font-serif font-bold text-primary text-lg mb-1 hover:text-secondary transition-colors line-clamp-2">
                   {entry.title}
                 </h2>
@@ -365,7 +365,7 @@ function GridView({ items, placeholderImg }: { items: EventItem[]; placeholderIm
                 {entry.location}
               </p>
               <p className="text-sm text-foreground line-clamp-2 mb-3">{entry.excerpt}</p>
-              <Link to={`/events/${entry.linkId}`}>
+              <Link to={`/yoman-peilut/${entry.linkId}`}>
                 <Button size="sm" className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90">
                   לקריאה המלאה →
                 </Button>

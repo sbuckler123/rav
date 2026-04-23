@@ -241,7 +241,7 @@ export default function ShiurimPage() {
                   const today  = isTodayShiur(event);
                   const todayUpcoming = today && !past;
                   return (
-                    <Link key={event.id} to={`/shiurim/${event.linkId}`}>
+                    <Link key={event.id} to={`/luach-iruyim/${event.linkId}`}>
                       <Card className={`overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer border-2 ${
                         todayUpcoming ? 'border-secondary shadow-md'
                         : past        ? 'border-border/50 opacity-60 hover:opacity-80'

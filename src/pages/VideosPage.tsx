@@ -170,7 +170,7 @@ export default function VideosPage() {
 
             {/* Featured Video */}
             {featuredVideo && (
-              <Link to={`/videos/${featuredVideo.linkId}`} aria-label={`צפה בשיעור: ${featuredVideo.title}`}>
+              <Link to={`/shiurei-torah/${featuredVideo.linkId}`} aria-label={`צפה בשיעור: ${featuredVideo.title}`}>
                 <Card className="mb-10 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                     <div className="relative h-56 sm:h-64 lg:h-auto bg-primary">
@@ -284,7 +284,7 @@ export default function VideosPage() {
 function VideoCard({ video }: { video: ShiurItem }) {
   const thumbnailUrl = getThumb(video);
   return (
-    <Link to={`/videos/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`} className="h-full block">
+    <Link to={`/shiurei-torah/${video.linkId}`} aria-label={`צפה בשיעור: ${video.title}`} className="h-full block">
       <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:bg-[#F5F0E8] transition-all duration-300 cursor-pointer group h-full flex flex-col">
         <div className="relative aspect-video bg-primary flex-shrink-0">
           <img src={thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
