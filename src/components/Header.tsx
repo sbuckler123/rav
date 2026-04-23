@@ -5,12 +5,12 @@ import { useState } from 'react';
 import NewsletterDialog from '@/components/NewsletterDialog';
 
 const navLinks = [
-  { href: '/shiurei-torah', label: 'שיעורי תורה' },
-  { href: '/hagut-upsika', label: 'הגות ופסיקה' },
-  { href: '/shut', label: 'שו"ת' },
-  { href: '/luach-iruyim', label: 'לוח אירועים' },
-  { href: '/yoman-peilut', label: 'יומן פעילות' },
-  { href: '/odot', label: 'אודות' },
+  { href: '/shiurei-torah', label: 'שיעורי תורה',  desc: 'ארכיון שיעורי וידאו ואודיו' },
+  { href: '/hagut-upsika', label: 'הגות ופסיקה',   desc: 'מאמרי הגות, חידושים וביאורים בהלכה, פסקי דין מורחבים' },
+  { href: '/shut',          label: 'שו"ת',          desc: 'ארכיון מענה הלכתי לשאלות הציבור' },
+  { href: '/luach-iruyim', label: 'לוח אירועים',   desc: 'שיעורים וכנסים מתוכננים' },
+  { href: '/yoman-peilut', label: 'יומן פעילות',   desc: 'תיעוד ביקורים, שיעורים ומפגשים ברחבי הארץ' },
+  { href: '/odot',          label: 'אודות',          desc: 'עדכונים אקטואליים, מכתבים לציבור ופסקי שעה' },
 ];
 
 export default function Header() {
@@ -108,7 +108,7 @@ export default function Header() {
                 key={link.href}
                 to={link.href}
                 onClick={scrollTop}
-                className={`text-base xl:text-lg transition-colors relative pb-1 whitespace-nowrap ${
+                className={`group relative text-base xl:text-lg transition-colors pb-1 whitespace-nowrap ${
                   isActive(link.href)
                     ? 'text-secondary font-semibold after:absolute after:bottom-0 after:right-0 after:left-0 after:h-0.5 after:bg-secondary after:rounded-full'
                     : 'hover:text-secondary'
@@ -116,6 +116,17 @@ export default function Header() {
                 aria-current={isActive(link.href) ? 'page' : undefined}
               >
                 {link.label}
+                <span
+                  role="tooltip"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-3 w-52 rounded-xl bg-white text-primary text-xs leading-relaxed px-3 py-2.5 shadow-xl border border-gray-100 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 text-right z-20 whitespace-normal font-normal"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-gray-100 rotate-45"
+                  />
+                  {link.desc}
+                </span>
               </Link>
             ))}
           </nav>
@@ -128,7 +139,7 @@ export default function Header() {
                   <Link
                     key={link.href}
                     to={link.href}
-                    className={`flex items-center gap-3 py-3 px-3 rounded-lg transition-colors text-base min-h-[48px] ${
+                    className={`flex items-center gap-3 py-3 px-3 rounded-lg transition-colors min-h-[56px] ${
                       isActive(link.href)
                         ? 'text-secondary font-semibold bg-white/10'
                         : 'hover:text-secondary hover:bg-white/5'
@@ -139,7 +150,10 @@ export default function Header() {
                     {isActive(link.href) && (
                       <span className="w-1 h-4 bg-secondary rounded-full shrink-0" aria-hidden="true" />
                     )}
-                    {link.label}
+                    <span className="flex flex-col min-w-0">
+                      <span className="text-base leading-tight">{link.label}</span>
+                      <span className="text-xs opacity-60 font-normal leading-snug mt-0.5">{link.desc}</span>
+                    </span>
                   </Link>
                 ))}
               </nav>
