@@ -16,6 +16,14 @@ export default function Header() {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const closeMobileMenu = () => { setIsMenuOpen(false); scrollTop(); };
 
+  // Keep tooltip within viewport: right-align first item (RTL right edge),
+  // left-align last item (RTL left edge), center everything in between.
+  const tooltipAlign = (idx: number) => {
+    if (idx === 0) return 'right-0';
+    if (idx === navLinks.length - 1) return 'left-0';
+    return 'left-1/2 -translate-x-1/2';
+  };
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg" role="banner">
@@ -95,7 +103,7 @@ export default function Header() {
             aria-label="ניווט ראשי"
             dir="rtl"
           >
-            {navLinks.map((link) => (
+            {navLinks.map((link, idx) => (
               <Link
                 key={link.href}
                 to={link.href}
@@ -112,17 +120,19 @@ export default function Header() {
                   <span
                     role="tooltip"
                     aria-hidden="true"
-                    className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl bg-primary border border-secondary/25 text-primary-foreground/80 text-xs leading-relaxed px-3 pt-3.5 pb-3 shadow-2xl shadow-black/40 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 text-right z-50 whitespace-normal font-normal overflow-hidden"
+                    className={`pointer-events-none absolute top-full mt-3 w-56 rounded-xl bg-primary border border-secondary/25 text-primary-foreground/80 text-xs leading-relaxed px-3 pt-3.5 pb-3 shadow-2xl shadow-black/40 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 text-right z-50 whitespace-normal font-normal overflow-hidden ${tooltipAlign(idx)}`}
                   >
-                    {/* Gold top accent — matches PageHeader ornament style */}
+                    {/* Gold top accent */}
                     <span
                       aria-hidden="true"
                       className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-secondary/70 to-transparent"
                     />
-                    {/* Arrow caret */}
+                    {/* Arrow — follows same alignment as tooltip */}
                     <span
                       aria-hidden="true"
-                      className="absolute -top-[7px] left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-primary border-t border-l border-secondary/25 rotate-45"
+                      className={`absolute -top-[7px] w-3.5 h-3.5 bg-primary border-t border-l border-secondary/25 rotate-45 ${
+                        idx === 0 ? 'right-4' : idx === navLinks.length - 1 ? 'left-4' : 'left-1/2 -translate-x-1/2'
+                      }`}
                     />
                     {link.desc}
                   </span>
