@@ -4,7 +4,7 @@ export const NAV_LINKS = [
   { href: '/shut',          label: 'שו"ת',          desc: 'ארכיון מענה הלכתי לשאלות הציבור' },
   { href: '/luach-iruyim', label: 'לוח אירועים',   desc: 'שיעורים וכנסים מתוכננים' },
   { href: '/yoman-peilut', label: 'יומן פעילות',   desc: 'תיעוד ביקורים, שיעורים ומפגשים ברחבי הארץ' },
-  { href: '/odot',          label: 'אודות',          desc: 'עדכונים אקטואליים, מכתבים לציבור ופסקי שעה' },
+  { href: '/odot',          label: 'אודות',          desc: '' },
 ] as const;
 
 export type NavLink = (typeof NAV_LINKS)[number];
