@@ -3,6 +3,7 @@ import { apiFetch } from './apiFetch';
 
 export interface AdminAnswer {
   id: string;
+  title?: string;
   content: string;
   writerType: string;
   date?: string;
@@ -78,11 +79,11 @@ export async function deleteQuestion(questionId: string) {
   return apiFetch(`/api/admin?section=questions&id=${questionId}`, { method: 'DELETE' });
 }
 
-export async function updateAnswer(answerId: string, content: string) {
+export async function updateAnswer(answerId: string, content: string, title?: string) {
   return apiFetch(`/api/admin?section=questions&type=answer&id=${answerId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, ...(title !== undefined && { title }) }),
   });
 }
 

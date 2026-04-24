@@ -99,8 +99,10 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // ── Answer CRUD ──────────────────────────────────────────────────────────
     if (type === 'answer') {
       if (req.method === 'PATCH' && id) {
-        const { content } = JSON.parse(await readBody(req)) as { content: string };
-        await atUpdate('תשובות', id, { 'תוכן התשובה': content });
+        const { content, title } = JSON.parse(await readBody(req)) as { content: string; title?: string };
+        const fields: Record<string, unknown> = { 'תוכן התשובה': content };
+        if (title !== undefined) fields['כותרת התשובה'] = title;
+        await atUpdate('תשובות', id, fields);
         res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
       }
       if (req.method === 'DELETE' && id) {
@@ -112,7 +114,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // ── Submit reply (public — no auth required) ─────────────────────────────
     if (type === 'reply' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req)) as {
-        questionId: string; content: string; writerType?: string;
+        questionId: string; content: string; writerType?: string; title?: string;
       };
       const fields: Record<string, unknown> = {
         'שאלה':          [body.questionId],
@@ -120,6 +122,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         'סוג כותב':      body.writerType ?? 'רב',
         'תאריך':         new Date().toISOString(),
       };
+      if (body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
       const record = await atCreate('תשובות', fields);
       // Also set question status back to ממתין so admin sees the new reply
       await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
@@ -171,6 +174,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         .filter((a) => linkedAnswerIds.includes(a.id))
         .map((a) => ({
           id:          a.id,
+          title:       (a.fields['כותרת התשובה'] as string) ?? '',
           content:     (a.fields['תוכן התשובה'] as string) ?? '',
           writerType:  (a.fields['סוג כותב'] as string) ?? 'רב',
           date:        a.fields['תאריך'] as string | undefined,

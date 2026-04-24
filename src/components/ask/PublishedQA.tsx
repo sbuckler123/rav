@@ -93,6 +93,11 @@ function AnswerBlock({ answer }: { answer: Answer }) {
           )}
         </div>
         <div className={`rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed break-words ${isRabbi ? 'bg-[#F7F4EE] border border-secondary/15' : 'bg-muted/30 border border-border'}`}>
+          {answer.title && (
+            <p className={`text-sm font-semibold mb-2 ${isRabbi ? 'text-primary' : 'text-foreground'}`}>
+              {answer.title}
+            </p>
+          )}
           <ExpandableText text={answer.content} />
         </div>
       </div>

@@ -133,6 +133,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           .filter((a) => linkedAnswerIds.includes(a.id))
           .map((a) => ({
             id: a.id,
+            title: (a.fields['כותרת התשובה'] as string) ?? '',
             content: a.fields['תוכן התשובה'] ?? '',
             writerType: a.fields['סוג כותב'] ?? 'רב',
             date: a.fields['תאריך'],

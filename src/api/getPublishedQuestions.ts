@@ -8,6 +8,7 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
     createdAt?: string;
     answers: Array<{
       id: string;
+      title?: string;
       content: string;
       writerType: string;
       date?: any;

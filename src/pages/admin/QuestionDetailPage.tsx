@@ -46,6 +46,7 @@ export default function QuestionDetailPage() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
+  const [replyTitle, setReplyTitle] = useState('');
   const [replyWriterType, setReplyWriterType] = useState('');
   const [writerTypeOptions, setWriterTypeOptions] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +59,7 @@ export default function QuestionDetailPage() {
   // Editing answers
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [answerEditText, setAnswerEditText] = useState('');
+  const [answerEditTitle, setAnswerEditTitle] = useState('');
 
   // Delete confirmation
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -92,7 +94,7 @@ export default function QuestionDetailPage() {
     if (!replyText.trim() || !id) return;
     setSubmitting(true);
     try {
-      await submitReply({ questionId: id, content: replyText.trim(), writerType: replyWriterType });
+      await submitReply({ questionId: id, content: replyText.trim(), writerType: replyWriterType, title: replyTitle.trim() || undefined });
       if (question?.status === 'ממתין') await markAnswered(id);
 
       // Notify asker via Make.com (fire-and-forget)
@@ -112,6 +114,7 @@ export default function QuestionDetailPage() {
 
       toast.success('התשובה נשלחה בהצלחה');
       setReplyText('');
+      setReplyTitle('');
       reload();
     } catch {
       toast.error('שגיאה בשליחת התשובה');
@@ -172,7 +175,7 @@ export default function QuestionDetailPage() {
     if (!answerEditText.trim()) return;
     setActionLoading('editAnswer-' + answerId);
     try {
-      await updateAnswer(answerId, answerEditText.trim());
+      await updateAnswer(answerId, answerEditText.trim(), answerEditTitle);
       toast.success('התשובה עודכנה');
       setEditingAnswerId(null);
       reload();
@@ -359,7 +362,7 @@ export default function QuestionDetailPage() {
                           ) : (
                             <>
                               <button
-                                onClick={() => { setEditingAnswerId(answer.id); setAnswerEditText(answer.content); }}
+                                onClick={() => { setEditingAnswerId(answer.id); setAnswerEditText(answer.content); setAnswerEditTitle(answer.title ?? ''); }}
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                                 title="ערוך תשובה"
                               >
@@ -380,16 +383,30 @@ export default function QuestionDetailPage() {
                         </div>
                       </div>
                       {editingAnswerId === answer.id ? (
-                        <Textarea
-                          value={answerEditText}
-                          onChange={e => setAnswerEditText(e.target.value)}
-                          rows={4}
-                          className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none text-sm"
-                        />
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={answerEditTitle}
+                            onChange={e => setAnswerEditTitle(e.target.value)}
+                            placeholder="כותרת התשובה (אופציונלי)"
+                            className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary"
+                          />
+                          <Textarea
+                            value={answerEditText}
+                            onChange={e => setAnswerEditText(e.target.value)}
+                            rows={4}
+                            className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary resize-none text-sm"
+                          />
+                        </div>
                       ) : (
-                        <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                          {answer.content}
-                        </p>
+                        <>
+                          {answer.title && (
+                            <p className="text-sm font-semibold text-primary mb-1">{answer.title}</p>
+                          )}
+                          <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                            {answer.content}
+                          </p>
+                        </>
                       )}
                     </div>
                   </div>
@@ -401,6 +418,13 @@ export default function QuestionDetailPage() {
           {/* Reply form */}
           <div className="bg-white rounded-xl border border-border p-5">
             <p className="text-sm font-semibold text-primary mb-3">כתוב תשובה</p>
+            <input
+              type="text"
+              value={replyTitle}
+              onChange={e => setReplyTitle(e.target.value)}
+              placeholder="כותרת התשובה (אופציונלי)"
+              className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-secondary mb-3"
+            />
             <Textarea
               value={replyText}
               onChange={e => setReplyText(e.target.value)}

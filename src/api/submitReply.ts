@@ -4,6 +4,7 @@ export async function submitReply(input: {
   questionId: string;
   content: string;
   writerType?: string;
+  title?: string;
 }): Promise<{ success: boolean; id?: string }> {
   const res = await fetch('/api/admin?section=questions&type=reply', {
     method: 'POST',
