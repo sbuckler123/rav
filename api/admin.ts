@@ -18,12 +18,13 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { requireAuth } from './_verifyAuth';
-import { handle as handleQuestions } from './_admin-questions';
-import { handle as handleArticles }  from './_admin-articles';
-import { handle as handleEvents }    from './_admin-events';
-import { handle as handleShiurim }   from './_admin-shiurim';
-import { handle as handleVideos }    from './_admin-videos';
-import { handle as handleUsers }     from './_users';
+import { handle as handleQuestions }      from './_admin-questions';
+import { handle as handleArticles }       from './_admin-articles';
+import { handle as handleEvents }         from './_admin-events';
+import { handle as handleShiurim }        from './_admin-shiurim';
+import { handle as handleVideos }         from './_admin-videos';
+import { handle as handleUsers }          from './_users';
+import { handle as handleCloudinarySign } from './_cloudinary-sign';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
@@ -42,12 +43,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     switch (section) {
-      case 'questions': return await handleQuestions(req, res);
-      case 'articles':  return await handleArticles(req, res);
-      case 'events':    return await handleEvents(req, res);
-      case 'shiurim':   return await handleShiurim(req, res);
-      case 'videos':    return await handleVideos(req, res);
-      case 'users':     return await handleUsers(req, res);
+      case 'questions':       return await handleQuestions(req, res);
+      case 'articles':        return await handleArticles(req, res);
+      case 'events':          return await handleEvents(req, res);
+      case 'shiurim':         return await handleShiurim(req, res);
+      case 'videos':          return await handleVideos(req, res);
+      case 'users':           return await handleUsers(req, res);
+      case 'cloudinary-sign': return await handleCloudinarySign(req, res);
       default:
         res.statusCode = 400;
         res.end(JSON.stringify({ error: 'Unknown section' }));
