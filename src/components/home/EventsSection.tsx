@@ -102,7 +102,7 @@ export default function EventsSection() {
     getShiurim()
       .then(({ shiurim }) => {
         const upcoming = shiurim.filter(s => s.date && !isPastShiur(s));
-        setShiurim((upcoming.length > 0 ? upcoming : shiurim).slice(0, 3));
+        setShiurim(upcoming.slice(0, 3));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
