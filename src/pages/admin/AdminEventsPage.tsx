@@ -145,6 +145,22 @@ export default function AdminEventsPage() {
     setSaving(true);
     try {
       if (editing) {
+        // Auto-save any staged gallery image before closing
+        if (newGallery.url.trim()) {
+          const result = await apiFetch<{ id: string; galleryIds: string[] }>('/api/admin?section=events&type=gallery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: editing.id,
+              url: newGallery.url,
+              caption: newGallery.caption,
+              order: newGallery.order,
+              userId: user?.id,
+            }),
+          });
+          setEditing(e => e ? { ...e, galleryIds: result.galleryIds } : e);
+          setNewGallery(EMPTY_GALLERY_FORM);
+        }
         await apiFetch(`/api/admin?section=events&id=${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
