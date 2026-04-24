@@ -37,6 +37,15 @@ function pickLatestAnswered(questions: Question[]): Question | null {
   })[0];
 }
 
+function latestAnswerTitle(question: Question | null): string | undefined {
+  if (!question) return undefined;
+  const sorted = [...question.answers].sort((a, b) =>
+    (a.date ?? '').localeCompare(b.date ?? ''),
+  );
+  const latest = sorted[sorted.length - 1];
+  return latest?.title?.trim() || question.questionContent || undefined;
+}
+
 export default function HeroSection() {
   const [video, setVideo] = useState<ShiurItem | null>(null);
   const [article, setArticle] = useState<Article | null>(null);
@@ -107,7 +116,7 @@ export default function HeroSection() {
               />
               <HeroTile
                 label="תשובה אחרונה"
-                title={latestQA?.questionContent}
+                title={latestAnswerTitle(latestQA)}
                 to={qaHref}
                 icon={MessageCircle}
                 loading={loading}
