@@ -6,9 +6,18 @@ export async function uploadToCloudinary(file: File): Promise<string> {
     throw new Error('Cloudinary env vars missing: VITE_CLOUDINARY_CLOUD_NAME / VITE_CLOUDINARY_UPLOAD_PRESET');
   }
 
+  const publicId = file.name
+    .replace(/\.[^/.]+$/, '')           // strip extension
+    .replace(/[^a-z0-9]/gi, '_')        // replace spaces/special chars with _
+    .replace(/_+/g, '_')                // collapse consecutive underscores
+    .toLowerCase()
+    .slice(0, 60)
+    + '_' + Date.now();                 // ensure uniqueness
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', uploadPreset);
+  formData.append('public_id', publicId);
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
