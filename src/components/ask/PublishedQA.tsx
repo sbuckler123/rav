@@ -49,7 +49,7 @@ function ExpandableText({ text, className }: { text: string; className?: string 
 
   return (
     <div>
-      <p className={`text-sm leading-relaxed break-words ${className ?? ''}`}>
+      <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${className ?? ''}`}>
         {isLong && !expanded ? text.slice(0, CHAR_LIMIT) + '...' : text}
       </p>
       {isLong && (
