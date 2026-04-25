@@ -192,6 +192,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         status:             (f['סטטוס'] as string) ?? 'ממתין',
         approvedForPublish: f['מאושר לפרסום'] === true,
         consentToPublish:   f['הסכמה לפרסום'] === true,
+        followUpBlocked:    f['חסום שאלות המשך'] === true,
         answers,
       };
     });

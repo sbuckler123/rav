@@ -145,6 +145,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           questionContent: r.fields['תוכן השאלה'] ?? '',
           category: Array.isArray(r.fields['קטגוריה']) ? r.fields['קטגוריה'][0] : undefined,
           createdAt: r.fields['תאריך'],
+          followUpBlocked: r.fields['חסום שאלות המשך'] === true,
           answers,
         };
       });

@@ -20,6 +20,7 @@ export interface AdminQuestion {
   status?: string;
   approvedForPublish: boolean;
   consentToPublish: boolean;
+  followUpBlocked: boolean;
   answers: AdminAnswer[];
 }
 
@@ -65,6 +66,10 @@ export async function createQuestion(input: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
+}
+
+export function blockFollowUp(questionId: string, blocked: boolean) {
+  return updateQuestion(questionId, { 'חסום שאלות המשך': blocked });
 }
 
 export async function updateQuestion(questionId: string, fields: Record<string, unknown>) {

@@ -423,43 +423,45 @@ function QuestionCard({ question, categories }: { question: Question; categories
           <p className="text-xs text-muted-foreground italic">התשובה בהכנה...</p>
         )}
 
-        <div className="mt-2 pt-3 border-t border-dashed">
-          {sent ? (
-            <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
-              ✓ תגובתך נשלחה לרב
-            </p>
-          ) : (
-            <>
-              <button
-                onClick={() => setReplyOpen(prev => !prev)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-secondary transition-colors min-h-[44px] w-full sm:w-auto"
-              >
-                {replyOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                {replyOpen ? 'סגור' : 'שלח שאלת המשך לרב'}
-              </button>
-              {replyOpen && (
-                <div className="mt-2 space-y-2">
-                  <Textarea
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    placeholder="כתוב שאלת המשך..."
-                    rows={4}
-                    className="text-sm resize-none border border-input bg-white focus-visible:ring-1 w-full"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleReply}
-                    disabled={submitting || !replyText.trim()}
-                    className="gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] w-full sm:w-auto"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    {submitting ? 'שולח...' : 'שלח'}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        {!question.followUpBlocked && (
+          <div className="mt-2 pt-3 border-t border-dashed">
+            {sent ? (
+              <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
+                ✓ תגובתך נשלחה לרב
+              </p>
+            ) : (
+              <>
+                <button
+                  onClick={() => setReplyOpen(prev => !prev)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-secondary transition-colors min-h-[44px] w-full sm:w-auto"
+                >
+                  {replyOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  {replyOpen ? 'סגור' : 'שלח שאלת המשך לרב'}
+                </button>
+                {replyOpen && (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      placeholder="כתוב שאלת המשך..."
+                      rows={4}
+                      className="text-sm resize-none border border-input bg-white focus-visible:ring-1 w-full"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleReply}
+                      disabled={submitting || !replyText.trim()}
+                      className="gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] w-full sm:w-auto"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      {submitting ? 'שולח...' : 'שלח'}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

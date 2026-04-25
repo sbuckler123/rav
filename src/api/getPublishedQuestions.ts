@@ -5,6 +5,7 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
     questionContent: string;
     category?: string;
     createdAt?: string;
+    followUpBlocked?: boolean;
     answers: Array<{
       id: string;
       title?: string;

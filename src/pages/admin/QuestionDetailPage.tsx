@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   ArrowRight, CheckCircle2, BookOpen,
   MessageCircle, HelpCircle, Loader2, Send, Eye, EyeOff,
-  Pencil, Trash2, Check, X,
+  Pencil, Trash2, Check, X, Ban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +15,15 @@ import {
   markAnswered,
   submitReply,
   updateQuestion,
+  blockFollowUp,
   updateAnswer,
   deleteAnswer,
   deleteQuestion,
   getWriterTypeChoices,
   type AdminQuestion,
 } from '@/api/adminQuestionsApi';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import { getCategories } from '@/api/getCategories';
 import { cn, formatAdminDate } from '@/lib/utils';
 
@@ -41,6 +44,7 @@ function statusBadge(status?: string) {
 export default function QuestionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [question, setQuestion] = useState<AdminQuestion | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
@@ -133,6 +137,10 @@ export default function QuestionDetailPage() {
       } else if (action === 'toggleConsent') {
         await updateQuestion(id, { 'הסכמה לפרסום': !question?.consentToPublish });
         toast.success('עודכן');
+      } else if (action === 'toggleFollowUpBlocked') {
+        await blockFollowUp(id, !question?.followUpBlocked);
+        toast.success(question?.followUpBlocked ? 'שאלות המשך הופעלו' : 'שאלות המשך נחסמו');
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.questions() });
       }
       reload();
     } catch {
@@ -535,6 +543,12 @@ export default function QuestionDetailPage() {
                   {question.approvedForPublish ? 'כן' : 'לא'}
                 </dd>
               </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">שאלות המשך</dt>
+                <dd className={`font-medium ${question.followUpBlocked ? 'text-red-600' : 'text-primary'}`}>
+                  {question.followUpBlocked ? 'חסומות' : 'מותרות'}
+                </dd>
+              </div>
             </dl>
           </div>
 
@@ -567,6 +581,19 @@ export default function QuestionDetailPage() {
                   : question.consentToPublish ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />
                 }
                 {question.consentToPublish ? 'בטל הסכמה לפרסום' : 'סמן הסכמה לפרסום'}
+              </Button>
+
+              <Button
+                variant="outline"
+                className={`w-full min-h-[44px] gap-2 justify-start ${question.followUpBlocked ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-muted text-muted-foreground hover:bg-muted/40'}`}
+                disabled={!!actionLoading}
+                onClick={() => handleAction('toggleFollowUpBlocked')}
+              >
+                {actionLoading === 'toggleFollowUpBlocked'
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : question.followUpBlocked ? <MessageCircle className="h-4 w-4" /> : <Ban className="h-4 w-4" />
+                }
+                {question.followUpBlocked ? 'אפשר שאלות המשך' : 'חסום שאלות המשך'}
               </Button>
 
               <div className="pt-2 border-t border-border">
