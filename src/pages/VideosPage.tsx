@@ -61,7 +61,7 @@ export default function VideosPage() {
 
   const hasActiveFilter = searchQuery.trim() !== '' || categoryFilter !== 'all' || yearFilter !== 'all';
   const featuredVideo = !hasActiveFilter ? (videos.find((v) => v.isNew) ?? videos[0]) : null;
-  const gridVideos = featuredVideo ? filtered.filter((v) => v.id !== featuredVideo.id) : filtered;
+  const gridVideos = featuredVideo ? filtered.filter((v) => v.linkId !== featuredVideo.linkId) : filtered;
   const totalPages = Math.max(1, Math.ceil(gridVideos.length / ITEMS_PER_PAGE));
   const pageVideos = gridVideos.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 

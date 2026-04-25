@@ -55,7 +55,7 @@ function addToCalendar(shiur: ShiurEvent) {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${shiur.id}@ravapp`,
+    `UID:${shiur.linkId}@ravapp`,
     allDay ? `DTSTART;VALUE=DATE:${dtStart}` : `DTSTART:${dtStart}`,
     allDay ? `DTEND;VALUE=DATE:${dtEnd}` : `DTEND:${dtEnd}`,
     `SUMMARY:${shiur.title}`,
