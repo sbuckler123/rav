@@ -360,7 +360,7 @@ export default function ShiurDetailPage() {
                       const [sDay, sMonth] = s.date.split('.');
                       const sMonthLabel = sMonth ? monthNames[parseInt(sMonth) - 1] : '';
                       return (
-                        <Link key={s.id} to={`/luach-iruyim/${s.linkId}`}>
+                        <Link key={s.linkId} to={`/luach-iruyim/${s.linkId}`}>
                           <div className="flex gap-3 p-2.5 rounded-lg hover:bg-muted/40 transition-colors group cursor-pointer">
                             {s.date && (
                               <div className="flex-shrink-0 w-10 h-10 bg-[#F7F4EE] border rounded-lg flex flex-col items-center justify-center">

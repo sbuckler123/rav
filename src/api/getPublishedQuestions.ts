@@ -3,7 +3,6 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
     id: string;
     referenceId: any;
     questionContent: string;
-    askerName?: string;
     category?: string;
     createdAt?: string;
     answers: Array<{

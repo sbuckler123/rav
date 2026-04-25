@@ -216,7 +216,7 @@ export default function VideosPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
-                {pageVideos.map((video) => <VideoCard key={video.id} video={video} />)}
+                {pageVideos.map((video) => <VideoCard key={video.linkId} video={video} />)}
               </div>
             )}
 

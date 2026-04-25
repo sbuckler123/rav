@@ -218,7 +218,7 @@ export default function ArticlesPage() {
           }{viewMode === 'grid' ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {pageArticles.map((article) => (
-                <Card key={article.id} className="hover:shadow-lg transition-shadow flex flex-col">
+                <Card key={article.linkId} className="hover:shadow-lg transition-shadow flex flex-col">
                   <CardContent className="p-4 flex flex-col flex-1">
                     <div className="h-20 bg-gradient-to-br from-secondary/10 to-primary/10 rounded-lg flex items-center justify-center mb-3" aria-hidden="true">
                       <FileText className="h-10 w-10 text-primary" />
@@ -252,7 +252,7 @@ export default function ArticlesPage() {
           ) : (
             <div className="space-y-3">
               {pageArticles.map((article) => (
-                <article key={article.id}>
+                <article key={article.linkId}>
                   <Card className="hover:shadow-md transition-shadow border-r-4 border-r-secondary/40 hover:border-r-secondary">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-4">

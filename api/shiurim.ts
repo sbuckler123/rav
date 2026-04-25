@@ -71,7 +71,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const dateRaw = (f['תאריך'] as string) ?? '';
       const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
       return {
-        id: r.id,
         linkId: extractField(f['מזהה קישור']) ?? r.id,
         title: extractField(f['כותרת']) ?? extractField(f['שם']) ?? '',
         date: formatDate(dateRaw),

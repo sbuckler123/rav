@@ -1,7 +1,5 @@
 export interface EventDetail {
-  id: string;
   linkId: string;
-  slug: string;
   title: string;
   eventType: string;
   dateHebrew: string;
@@ -10,7 +8,6 @@ export interface EventDetail {
   duration: string;
   teurDescription: string;
   description: string;
-  participants: string[];
   gallery: { url: string; caption: string; order: number }[];
   quotes: { text: string; author: string }[];
   schedule: { time: string; description: string }[];

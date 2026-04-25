@@ -40,7 +40,7 @@ export default function ArticlesSection() {
           <div className="space-y-3">
             {articles.map((article) => (
               <Card
-                key={article.id}
+                key={article.linkId}
                 className="bg-white hover:shadow-md transition-all border-r-4 border-r-secondary/40 hover:border-r-secondary hover:-translate-y-0.5 duration-200"
               >
                 <CardContent className="p-4 sm:p-5">

@@ -45,7 +45,7 @@ export default function EventsHomeSection() {
               const style = getEventTypeStyle(event.eventType);
               const imageUrl = event.mainImageUrl || placeholderImg;
               return (
-                <Link key={event.id} to={`/yoman-peilut/${event.linkId}`}>
+                <Link key={event.linkId} to={`/yoman-peilut/${event.linkId}`}>
                   <div className="rounded-xl border border-border bg-white overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer h-full flex flex-col">
                     {/* Image */}
                     <div className="aspect-video overflow-hidden">

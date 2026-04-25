@@ -280,7 +280,7 @@ function TimelineView({ items, placeholderImg }: { items: EventItem[]; placehold
         const style = getEventTypeStyle(entry.eventType);
         const imageUrl = entry.mainImageUrl || placeholderImg;
         return (
-          <div key={entry.id} className="rounded-lg border border-border bg-card shadow-sm hover:shadow-md hover:bg-[#F5F0E8] transition-all duration-200 overflow-hidden">
+          <div key={entry.linkId} className="rounded-lg border border-border bg-card shadow-sm hover:shadow-md hover:bg-[#F5F0E8] transition-all duration-200 overflow-hidden">
             <div className="flex flex-col sm:flex-row">
               {/* Image */}
               <div className="sm:w-[180px] shrink-0">
@@ -337,7 +337,7 @@ function GridView({ items, placeholderImg }: { items: EventItem[]; placeholderIm
         const style = getEventTypeStyle(entry.eventType);
         const imageUrl = entry.mainImageUrl || placeholderImg;
         return (
-          <article key={entry.id} className="rounded-lg border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:bg-[#F5F0E8] transition-all duration-200">
+          <article key={entry.linkId} className="rounded-lg border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:bg-[#F5F0E8] transition-all duration-200">
             <div className="aspect-video overflow-hidden">
               <img src={imageUrl} alt={entry.title} className="w-full h-full object-cover" loading="lazy" />
             </div>

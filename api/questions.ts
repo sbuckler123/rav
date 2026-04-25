@@ -143,7 +143,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           id: r.id,
           referenceId: r.fields['מזהה שאלה'],
           questionContent: r.fields['תוכן השאלה'] ?? '',
-          askerName: r.fields['שם השואל'],
           category: Array.isArray(r.fields['קטגוריה']) ? r.fields['קטגוריה'][0] : undefined,
           createdAt: r.fields['תאריך'],
           answers,

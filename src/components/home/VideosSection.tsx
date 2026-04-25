@@ -82,7 +82,7 @@ export default function VideosSection() {
           </div>
         ) : videos.length === 0 ? null : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {videos.map(v => <VideoCard key={v.id} video={v} />)}
+            {videos.map(v => <VideoCard key={v.linkId} video={v} />)}
           </div>
         )}
 

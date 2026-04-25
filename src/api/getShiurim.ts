@@ -1,5 +1,4 @@
 export interface ShiurEvent {
-  id: string;
   linkId: string;
   title: string;
   date: string;

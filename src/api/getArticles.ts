@@ -1,5 +1,4 @@
 export interface Article {
-  id: string;
   linkId: string;
   title: string;
   journal: string;

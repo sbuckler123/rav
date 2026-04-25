@@ -83,8 +83,6 @@ function toEventList(
       .sort((a, b) => a.order - b.order);
 
     return {
-      id: r.id,
-      slug: extractField(f['מזהה URL']) ?? r.id,
       linkId: extractField(f['מזהה קישור']) ?? r.id,
       title: f['כותרת'] ?? '',
       eventType: f['סוג אירוע'] ?? '',
@@ -105,11 +103,6 @@ function toEventDetail(
   galleryMap: Map<string, { url: string; caption: string; order: number }>,
 ) {
   const f = record.fields;
-
-  const rawParticipants = extractField(f['משתתפים']);
-  const participants = rawParticipants
-    ? rawParticipants.split('\n').map((s) => s.trim()).filter(Boolean)
-    : [];
 
   const linkedGalleryIds = Array.isArray(f['גלריה']) ? (f['גלריה'] as string[]) : [];
   const gallery = linkedGalleryIds
@@ -136,9 +129,7 @@ function toEventDetail(
     : [];
 
   return {
-    id: record.id,
     linkId,
-    slug: extractField(f['מזהה URL']) ?? record.id,
     title: f['כותרת'] ?? '',
     eventType: f['סוג אירוע'] ?? '',
     dateHebrew: f['תאריך עברי'] ?? '',
@@ -147,7 +138,6 @@ function toEventDetail(
     duration: f['משך'] ?? '',
     teurDescription: extractField(f['תיאור']) ?? '',
     description: extractField(f['תיאור מלא']) ?? extractField(f['תקציר קצר']) ?? '',
-    participants,
     gallery,
     quotes,
     schedule,

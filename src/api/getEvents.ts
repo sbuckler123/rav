@@ -1,6 +1,4 @@
 export interface EventItem {
-  id: string;
-  slug: string;
   linkId: string;
   title: string;
   eventType: string;

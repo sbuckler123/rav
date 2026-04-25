@@ -59,7 +59,6 @@ function toArticleList(
     const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
     const categoryName = catIds.length ? (catMap[catIds[0]] ?? '') : '';
     return {
-      id: r.id,
       linkId: extractField(f['מזהה קישור']) ?? r.id,
       title: f['כותרת'] ?? '',
       journal: f['כתב עת'] ?? '',
@@ -85,7 +84,6 @@ function toArticleDetail(record: { id: string; fields: Record<string, unknown> }
     : [];
 
   return {
-    id: record.id,
     linkId,
     title: f['כותרת'] ?? '',
     journal: f['כתב עת'] ?? '',

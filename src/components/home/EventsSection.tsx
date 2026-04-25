@@ -128,7 +128,7 @@ export default function EventsSection() {
         ) : (
           <div className="space-y-3">
             {shiurim.map(event => (
-              <ShiurCard key={event.id} event={event} />
+              <ShiurCard key={event.linkId} event={event} />
             ))}
           </div>
         )}

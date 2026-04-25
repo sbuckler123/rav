@@ -230,7 +230,7 @@ export default function VideoDetailPage() {
                   </div>
                   <div className="space-y-2">
                     {categoryVideos.map((v) => (
-                      <Link key={v.id} to={`/shiurei-torah/${v.linkId}`}>
+                      <Link key={v.linkId} to={`/shiurei-torah/${v.linkId}`}>
                         <div className="flex gap-3 hover:bg-muted p-2 rounded-lg transition-colors cursor-pointer group">
                           <div className="relative flex-shrink-0">
                             <img
@@ -280,7 +280,7 @@ export default function VideoDetailPage() {
                   </h3>
                   <div className="space-y-2">
                     {mostViewed.map((v, i) => (
-                      <Link key={v.id} to={`/shiurei-torah/${v.linkId}`}>
+                      <Link key={v.linkId} to={`/shiurei-torah/${v.linkId}`}>
                         <div className="flex gap-3 hover:bg-muted p-2 rounded-lg transition-colors cursor-pointer group items-start">
                           <div className="flex-shrink-0 w-7 h-7 bg-secondary/10 rounded-full flex items-center justify-center text-secondary font-bold text-sm mt-0.5">
                             {i + 1}

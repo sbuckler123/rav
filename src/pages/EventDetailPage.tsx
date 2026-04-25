@@ -275,7 +275,7 @@ export default function EventDetailPage() {
                 </h3>
                 <ul className="space-y-3">
                   {recentEvents.map((e) => (
-                    <li key={e.id}>
+                    <li key={e.linkId}>
                       <Link
                         to={`/yoman-peilut/${e.linkId}`}
                         className="flex gap-3 rounded-lg p-2 hover:bg-[#F5F0E8] transition-colors group"

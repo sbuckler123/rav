@@ -1,5 +1,4 @@
 export interface ShiurItem {
-  id: string;
   linkId: string;
   title: string;
   date: string;
