@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, LayoutGrid, List, X, Users, Plane, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
-import { getEvents, type EventItem } from '@/api/getEvents';
+import { type EventItem } from '@/api/getEvents';
+import { useEvents } from '@/hooks/useQueries';
 import { getEventTypeStyle } from '@/lib/yoman';
 
 const ITEMS_PER_PAGE = 6;
@@ -16,16 +17,9 @@ export default function EventsPage() {
   const [viewMode, setViewMode] = useState<'timeline' | 'grid'>('timeline');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getEvents()
-      .then(({ events }) => setEvents(events))
-      .catch((err) => { console.error('getEvents error:', err); setError('שגיאה בטעינת האירועים'); })
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading, isError } = useEvents();
+  const events: EventItem[] = data?.events ?? [];
+  const error = isError ? 'שגיאה בטעינת האירועים' : null;
 
   const filtered = useMemo(() => {
     let list = [...events];

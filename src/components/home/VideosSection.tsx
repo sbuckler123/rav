@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Play, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getVideos, type ShiurItem } from '@/api/getVideos';
+import { type ShiurItem } from '@/api/getVideos';
+import { useVideos } from '@/hooks/useQueries';
 
 function getThumb(video: ShiurItem): string {
   if (video.thumbnail) return video.thumbnail;
@@ -52,15 +52,8 @@ function VideoCard({ video }: { video: ShiurItem }) {
 }
 
 export default function VideosSection() {
-  const [videos, setVideos] = useState<ShiurItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getVideos()
-      .then(({ shiurim }) => setVideos(shiurim.slice(0, 4)))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useVideos();
+  const videos = (data?.shiurim ?? []).slice(0, 4);
 
   return (
     <section className="bg-background py-12 sm:py-16">

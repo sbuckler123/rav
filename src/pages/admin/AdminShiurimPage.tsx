@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import { CalendarDays, Plus, Pencil, Trash2, Loader2, Search, Clock, MapPin } from 'lucide-react';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
@@ -44,6 +46,7 @@ const EMPTY_FORM: FormState = {
 
 export default function AdminShiurimPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [shiurim, setShiurim] = useState<Shiur[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +132,7 @@ export default function AdminShiurimPage() {
           body: JSON.stringify(body),
         });
         toast.success('השיעור עודכן');
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       } else {
         await apiFetch('/api/admin?section=shiurim', {
           method: 'POST',
@@ -136,6 +140,7 @@ export default function AdminShiurimPage() {
           body: JSON.stringify(body),
         });
         toast.success('השיעור נוסף');
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       }
       setDialogOpen(false);
       load();
@@ -152,6 +157,7 @@ export default function AdminShiurimPage() {
     try {
       await apiFetch(`/api/admin?section=shiurim&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       setDeleteTarget(null);
       load();
     } catch {

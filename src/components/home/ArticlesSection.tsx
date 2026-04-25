@@ -1,21 +1,13 @@
-import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getArticles, type Article } from '@/api/getArticles';
+import { useArticles } from '@/hooks/useQueries';
 
 export default function ArticlesSection() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getArticles()
-      .then(({ articles }) => setArticles(articles.slice(0, 4)))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useArticles();
+  const articles = (data?.articles ?? []).slice(0, 4);
 
   if (!loading && articles.length === 0) return null;
 

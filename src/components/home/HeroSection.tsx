@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Play, FileText, MessageCircle, Calendar, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HeroTile from './HeroTile';
-import { getVideos, type ShiurItem } from '@/api/getVideos';
-import { getArticles, type Article } from '@/api/getArticles';
-import { getEvents, type EventItem } from '@/api/getEvents';
-import { getPublishedQuestions } from '@/api/getPublishedQuestions';
+import { type ShiurItem } from '@/api/getVideos';
+import { type Article } from '@/api/getArticles';
+import { type EventItem } from '@/api/getEvents';
+import { type getPublishedQuestions } from '@/api/getPublishedQuestions';
+import { useArticles, useVideos, useEvents, useQuestions } from '@/hooks/useQueries';
 
 type Question = Awaited<ReturnType<typeof getPublishedQuestions>>['questions'][number];
 
@@ -47,29 +47,17 @@ function latestAnswerTitle(question: Question | null): string | undefined {
 }
 
 export default function HeroSection() {
-  const [video, setVideo] = useState<ShiurItem | null>(null);
-  const [article, setArticle] = useState<Article | null>(null);
-  const [event, setEvent] = useState<EventItem | null>(null);
-  const [latestQA, setLatestQA] = useState<Question | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: videosData, isLoading: videosLoading } = useVideos();
+  const { data: articlesData, isLoading: articlesLoading } = useArticles();
+  const { data: eventsData, isLoading: eventsLoading } = useEvents();
+  const { data: questionsData, isLoading: questionsLoading } = useQuestions();
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.allSettled([
-      getVideos(),
-      getArticles(),
-      getEvents(),
-      getPublishedQuestions({}),
-    ]).then((results) => {
-      if (cancelled) return;
-      if (results[0].status === 'fulfilled') setVideo(pickLatestVideo(results[0].value.shiurim));
-      if (results[1].status === 'fulfilled') setArticle(results[1].value.articles[0] ?? null);
-      if (results[2].status === 'fulfilled') setEvent(pickNextEvent(results[2].value.events));
-      if (results[3].status === 'fulfilled') setLatestQA(pickLatestAnswered(results[3].value.questions));
-      setLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, []);
+  const loading = videosLoading || articlesLoading || eventsLoading || questionsLoading;
+
+  const video = videosData ? pickLatestVideo(videosData.shiurim) : null;
+  const article = articlesData?.articles[0] ?? null;
+  const event = eventsData ? pickNextEvent(eventsData.events) : null;
+  const latestQA = questionsData ? pickLatestAnswered(questionsData.questions) : null;
 
   const videoHref = video?.linkId ? `/shiurei-torah/${video.linkId}` : '/shiurei-torah';
   const articleHref = article?.linkId ? `/hagut-upsika/${article.linkId}` : '/hagut-upsika';

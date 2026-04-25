@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { Calendar, Clock, MapPin, Share2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
+import { type ShiurEvent } from '@/api/getShiurim';
+import { useShiurim } from '@/hooks/useQueries';
 
 const monthNames = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
 const monthNamesFull = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -35,15 +36,8 @@ function getShiurStatus(shiur: ShiurEvent): 'today' | 'past' | 'upcoming' {
 
 export default function ShiurDetailPage() {
   const { id } = useParams();
-  const [shiurim, setShiurim] = useState<ShiurEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getShiurim()
-      .then(({ shiurim }) => setShiurim(shiurim))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data, isLoading: loading } = useShiurim();
+  const shiurim: ShiurEvent[] = data?.shiurim ?? [];
 
   if (loading) {
     return (

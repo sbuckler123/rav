@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,8 @@ import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
-import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
+import { type ShiurEvent } from '@/api/getShiurim';
+import { useShiurim } from '@/hooks/useQueries';
 
 const dateFilters = [
   { label: 'הכל',      value: 'all' },
@@ -67,16 +68,9 @@ export default function ShiurimPage() {
   const [searchQuery, setSearchQuery]           = useState('');
   const [selectedCategory, setSelectedCategory] = useState('הכל');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
-  const [events, setEvents]   = useState<ShiurEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
-
-  useEffect(() => {
-    getShiurim()
-      .then(({ shiurim }) => setEvents(shiurim))
-      .catch(() => setError('שגיאה בטעינת השיעורים'))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading, isError } = useShiurim();
+  const events: ShiurEvent[] = data?.shiurim ?? [];
+  const error = isError ? 'שגיאה בטעינת השיעורים' : null;
 
   const allCategories = useMemo(
     () => ['הכל', ...new Set(events.map(e => e.category).filter(Boolean))],

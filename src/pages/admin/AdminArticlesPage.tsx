@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import { BookOpen, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,7 @@ interface AdminArticle {
 }
 
 export default function AdminArticlesPage() {
+  const queryClient = useQueryClient();
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -47,6 +50,7 @@ export default function AdminArticlesPage() {
       await apiFetch(`/api/admin?section=articles&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המאמר נמחק');
       setDeleteTarget(null);
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.articles });
       load();
     } catch {
       toast.error('שגיאה במחיקה');

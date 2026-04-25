@@ -8,29 +8,26 @@ import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import SEO from '@/components/SEO';
 import { getEventByLinkId, type EventDetail } from '@/api/getEventByLinkId';
-import { getEvents, type EventItem } from '@/api/getEvents';
+import { type EventItem } from '@/api/getEvents';
+import { useEvents } from '@/hooks/useQueries';
 import { getEventTypeStyle } from '@/lib/yoman';
 
 export default function EventDetailPage() {
   const { id } = useParams<string>();
   const [entry, setEntry] = useState<EventDetail | null | undefined>(undefined);
-  const [recentEvents, setRecentEvents] = useState<EventItem[]>([]);
-  const [prevEvent, setPrevEvent] = useState<EventItem | null>(null);
-  const [nextEvent, setNextEvent] = useState<EventItem | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const { data: eventsData } = useEvents();
+  const allEvents: EventItem[] = eventsData?.events ?? [];
+  const recentEvents = allEvents.filter((e) => e.linkId !== id).slice(0, 4);
+  const idx = id ? allEvents.findIndex((e) => e.linkId === id) : -1;
+  const prevEvent: EventItem | null = idx !== -1 ? (allEvents[idx + 1] ?? null) : null;
+  const nextEvent: EventItem | null = idx !== -1 ? (allEvents[idx - 1] ?? null) : null;
 
   useEffect(() => {
     if (!id) { setEntry(null); return; }
     getEventByLinkId(id).then(setEntry).catch(() => setEntry(null));
-    getEvents().then(({ events }) => {
-      setRecentEvents(events.filter((e) => e.linkId !== id).slice(0, 4));
-      const idx = events.findIndex((e) => e.linkId === id);
-      if (idx !== -1) {
-        setPrevEvent(events[idx + 1] ?? null); // older (desc order)
-        setNextEvent(events[idx - 1] ?? null); // newer (desc order)
-      }
-    }).catch(() => {});
   }, [id]);
 
   const openLightbox = useCallback((index: number) => {

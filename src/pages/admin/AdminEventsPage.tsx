@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import { Tv2, Plus, Pencil, Trash2, Loader2, Search, MapPin, CalendarDays, Images, Check, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import ImageUpload from '@/components/admin/ImageUpload';
@@ -53,6 +55,7 @@ const EMPTY_GALLERY_FORM = { url: '', caption: '', order: '' };
 
 export default function AdminEventsPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -167,6 +170,7 @@ export default function AdminEventsPage() {
           body: JSON.stringify({ ...form, userId: user?.id }),
         });
         toast.success('האירוע עודכן');
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       } else {
         await apiFetch('/api/admin?section=events', {
           method: 'POST',
@@ -178,6 +182,7 @@ export default function AdminEventsPage() {
           }),
         });
         toast.success('האירוע נוסף');
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       }
       setDialogOpen(false);
       load();
@@ -266,6 +271,7 @@ export default function AdminEventsPage() {
     try {
       await apiFetch(`/api/admin?section=events&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('האירוע נמחק');
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       setDeleteTarget(null);
       load();
     } catch {

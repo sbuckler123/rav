@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Clock, MapPin, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
+import { type ShiurEvent } from '@/api/getShiurim';
+import { useShiurim } from '@/hooks/useQueries';
 
 const monthNames = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
 
@@ -95,18 +95,8 @@ function ShiurCard({ event }: { event: ShiurEvent }) {
 }
 
 export default function EventsSection() {
-  const [shiurim, setShiurim] = useState<ShiurEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getShiurim()
-      .then(({ shiurim }) => {
-        const upcoming = shiurim.filter(s => s.date && !isPastShiur(s));
-        setShiurim(upcoming.slice(0, 3));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useShiurim();
+  const shiurim = (data?.shiurim ?? []).filter(s => s.date && !isPastShiur(s)).slice(0, 3);
 
   if (!loading && shiurim.length === 0) return null;
 

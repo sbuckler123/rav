@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPin, ArrowLeft } from 'lucide-react';
-import { getEvents, type EventItem } from '@/api/getEvents';
+import { useEvents } from '@/hooks/useQueries';
 import { getEventTypeStyle } from '@/lib/yoman';
 
 const placeholderImg = "data:image/svg+xml," + encodeURIComponent(
@@ -10,15 +9,8 @@ const placeholderImg = "data:image/svg+xml," + encodeURIComponent(
 );
 
 export default function EventsHomeSection() {
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getEvents()
-      .then(({ events }) => setEvents(events.slice(0, 3)))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useEvents();
+  const events = (data?.events ?? []).slice(0, 3);
 
   if (!loading && events.length === 0) return null;
 

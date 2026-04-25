@@ -3,6 +3,17 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { heIL } from '@clerk/localizations';
 import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      retry: 1,
+    },
+  },
+});
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -51,6 +62,7 @@ export default function App() {
   const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
   return (
+    <QueryClientProvider client={queryClient}>
     <HelmetProvider>
     <ClerkProvider publishableKey={clerkKey} localization={{ ...heIL, signIn: { ...heIL.signIn, start: { ...heIL.signIn?.start, subtitle: '' } } }}>
     <AuthProvider>
@@ -122,5 +134,6 @@ export default function App() {
     </AuthProvider>
     </ClerkProvider>
     </HelmetProvider>
+    </QueryClientProvider>
   );
 }

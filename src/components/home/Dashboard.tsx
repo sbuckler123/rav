@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Calendar, MessageCircle, Clock, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getShiurim, type ShiurEvent } from '@/api/getShiurim';
-import { getArticles, type Article } from '@/api/getArticles';
+import { type ShiurEvent } from '@/api/getShiurim';
+import { useShiurim, useArticles } from '@/hooks/useQueries';
 import FadeIn from '@/components/FadeIn';
 
 function parseDate(dateStr: string): Date {
@@ -80,26 +79,13 @@ function addToCalendar(shiur: ShiurEvent) {
 }
 
 export default function Dashboard() {
-  const [nextShiur, setNextShiur] = useState<ShiurEvent | null>(null);
-  const [shiurLoading, setShiurLoading] = useState(true);
-  const [latestArticle, setLatestArticle] = useState<Article | null>(null);
-  const [articleLoading, setArticleLoading] = useState(true);
+  const { data: shiurimData, isLoading: shiurLoading } = useShiurim();
+  const { data: articlesData, isLoading: articleLoading } = useArticles();
 
-  useEffect(() => {
-    getShiurim()
-      .then(({ shiurim }) => {
-        const now = new Date();
-        const upcoming = shiurim.filter(s => s.date && !isPastShiur(s));
-        setNextShiur(upcoming.length > 0 ? upcoming[0] : null);
-      })
-      .catch(() => {})
-      .finally(() => setShiurLoading(false));
-
-    getArticles()
-      .then(({ articles }) => setLatestArticle(articles[0] ?? null))
-      .catch(() => {})
-      .finally(() => setArticleLoading(false));
-  }, []);
+  const nextShiur: ShiurEvent | null = shiurimData
+    ? (shiurimData.shiurim.filter(s => s.date && !isPastShiur(s))[0] ?? null)
+    : null;
+  const latestArticle = articlesData?.articles[0] ?? null;
 
   const shiurParsed = nextShiur?.date ? parseDate(nextShiur.date) : null;
   const shiurDayLabel = shiurParsed ? `יום ${dayNames[shiurParsed.getDay()]}` : null;

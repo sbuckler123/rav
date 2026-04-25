@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,8 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import { Share2, Eye, Clock, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import SEO from '@/components/SEO';
-import { getVideos, type ShiurItem } from '@/api/getVideos';
+import { type ShiurItem } from '@/api/getVideos';
+import { useVideos } from '@/hooks/useQueries';
 
 function getThumb(video: ShiurItem): string {
   if (video.thumbnail) return video.thumbnail;
@@ -17,15 +18,8 @@ function getThumb(video: ShiurItem): string {
 
 export default function VideoDetailPage() {
   const { id } = useParams();
-  const [videos, setVideos] = useState<ShiurItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getVideos()
-      .then(({ shiurim }) => setVideos(shiurim))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data, isLoading: loading } = useVideos();
+  const videos: ShiurItem[] = data?.shiurim ?? [];
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,8 @@ import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
-import { getVideos, type ShiurItem } from '@/api/getVideos';
+import { type ShiurItem } from '@/api/getVideos';
+import { useVideos } from '@/hooks/useQueries';
 
 function getThumb(video: ShiurItem): string {
   if (video.thumbnail) return video.thumbnail;
@@ -24,17 +25,10 @@ export default function VideosPage() {
   const [yearFilter, setYearFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc');
   const [page, setPage] = useState(1);
-  const [videos, setVideos] = useState<ShiurItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading: loading, isError } = useVideos();
+  const videos: ShiurItem[] = data?.shiurim ?? [];
+  const error = isError ? 'שגיאה בטעינת השיעורים' : null;
   const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    getVideos()
-      .then(({ shiurim }) => setVideos(shiurim))
-      .catch(() => setError('שגיאה בטעינת השיעורים'))
-      .finally(() => setLoading(false));
-  }, []);
 
   const clearFilters = () => { setSearchQuery(''); setCategoryFilter('all'); setYearFilter('all'); setSortBy('date-desc'); setPage(1); };
 

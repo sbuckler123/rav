@@ -9,15 +9,20 @@ import { Printer, Share2, ExternalLink, Clock, ChevronRight, ChevronLeft, Downlo
 import ReactMarkdown from 'react-markdown';
 import SEO from '@/components/SEO';
 import { getArticleByLinkId, type ArticleDetail } from '@/api/getArticleByLinkId';
-import { getArticles, type Article } from '@/api/getArticles';
+import { type Article } from '@/api/getArticles';
+import { useArticles } from '@/hooks/useQueries';
 
 export default function ArticleDetailPage() {
   const { id } = useParams();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
-  const [prevArticle, setPrevArticle] = useState<Article | null>(null);
-  const [nextArticle, setNextArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: allArticlesData } = useArticles();
+  const allArticles = allArticlesData?.articles ?? [];
+  const idx = id ? allArticles.findIndex((a: Article) => a.linkId === id) : -1;
+  const prevArticle: Article | null = idx !== -1 ? (allArticles[idx + 1] ?? null) : null;
+  const nextArticle: Article | null = idx !== -1 ? (allArticles[idx - 1] ?? null) : null;
 
   useEffect(() => {
     if (!id) return;
@@ -29,14 +34,6 @@ export default function ArticleDetailPage() {
       })
       .catch(() => setError('שגיאה בטעינת המאמר'))
       .finally(() => setLoading(false));
-
-    getArticles().then(({ articles }) => {
-      const idx = articles.findIndex((a) => a.linkId === id);
-      if (idx !== -1) {
-        setPrevArticle(articles[idx + 1] ?? null); // older (desc order)
-        setNextArticle(articles[idx - 1] ?? null); // newer (desc order)
-      }
-    }).catch(() => {});
   }, [id]);
 
   if (loading) {

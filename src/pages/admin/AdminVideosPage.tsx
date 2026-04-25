@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
@@ -60,6 +62,7 @@ function getThumb(v: AdminVideo): string {
 
 export default function AdminVideosPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [videos, setVideos] = useState<AdminVideo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +161,7 @@ export default function AdminVideosPage() {
         });
         toast.success('השיעור נוסף');
       }
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.videos });
       setDialogOpen(false);
       load();
     } catch {
@@ -174,6 +178,7 @@ export default function AdminVideosPage() {
       await apiFetch(`/api/admin?section=videos&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
       setDeleteTarget(null);
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.videos });
       load();
     } catch {
       toast.error('שגיאה במחיקה');

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { QUERY_KEYS } from '@/hooks/useQueries';
 import ReactMarkdown from 'react-markdown';
 import { ArrowRight, Loader2, Save, Eye, EyeOff, Plus, Check, Pencil, X } from 'lucide-react';
 import { fetchCategories, createCategory, renameCategory, deleteCategory, type Category } from '@/api/categoriesApi';
@@ -36,6 +38,7 @@ export default function ArticleFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const isEdit = !!id;
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -197,6 +200,7 @@ export default function ArticleFormPage() {
         });
         toast.success('המאמר נוסף');
       }
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.articles });
       navigate('/admin/articles');
     } catch {
       toast.error('שגיאה בשמירה');
