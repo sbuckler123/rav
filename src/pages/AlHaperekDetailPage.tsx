@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, X, Share2, CalendarDays, FileDown, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Share2, CalendarDays, FileDown, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -101,36 +101,54 @@ function ImagesBlock({
 }
 
 function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) {
+  const [loaded, setLoaded] = useState(false);
   const label = block.label || 'PDF';
-  const filename = block.url.split('/').pop()?.split('?')[0] ?? 'document.pdf';
+  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(block.url)}&embedded=true`;
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-[#F7F4EE] p-4 sm:p-5">
-      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-50 border border-red-200 rounded-xl flex items-center justify-center flex-shrink-0">
-        <FileDown className="h-6 w-6 text-red-500" />
+    <div className="rounded-xl border border-border overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center gap-3 bg-[#F7F4EE] px-4 py-3">
+        <div className="w-9 h-9 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
+          <FileDown className="h-4 w-4 text-red-500" />
+        </div>
+        <p className="font-semibold text-primary text-sm flex-1 truncate">{label}</p>
+        <div className="flex gap-2 flex-shrink-0">
+          <a
+            href={block.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-primary hover:bg-primary hover:text-white transition-colors min-h-[36px]"
+          >
+            <ExternalLink className="h-3 w-3" />
+            פתח
+          </a>
+          <a
+            href={block.url}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-primary text-xs font-medium hover:bg-secondary/90 transition-colors min-h-[36px]"
+          >
+            <FileDown className="h-3 w-3" />
+            הורד
+          </a>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-primary text-sm sm:text-base truncate">{label}</p>
-        <p className="text-xs text-muted-foreground truncate" dir="ltr">{filename}</p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
-        <a
-          href={block.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-white text-sm font-medium text-primary hover:bg-primary hover:text-white transition-colors min-h-[40px]"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          פתח
-        </a>
-        <a
-          href={block.url}
-          download
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-primary text-sm font-medium hover:bg-secondary/90 transition-colors min-h-[40px]"
-        >
-          <FileDown className="h-3.5 w-3.5" />
-          הורד
-        </a>
+
+      {/* Embedded viewer */}
+      <div className="relative w-full bg-muted/30" style={{ height: '680px' }}>
+        {!loaded && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="text-sm">טוען מסמך...</span>
+          </div>
+        )}
+        <iframe
+          src={viewerUrl}
+          title={label}
+          onLoad={() => setLoaded(true)}
+          className="w-full h-full border-0"
+          allow="fullscreen"
+        />
       </div>
     </div>
   );
