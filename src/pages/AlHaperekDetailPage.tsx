@@ -103,7 +103,6 @@ function ImagesBlock({
 function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) {
   const [loaded, setLoaded] = useState(false);
   const label = block.label || 'PDF';
-  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(block.url)}&embedded=true`;
 
   return (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -134,8 +133,8 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
         </div>
       </div>
 
-      {/* Embedded viewer */}
-      <div className="relative w-full bg-muted/30 h-[60vh] sm:h-[680px]">
+      {/* Embedded viewer — direct URL, native browser PDF renderer */}
+      <div className="relative w-full bg-muted/30 h-[60vh] sm:h-[750px]">
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -143,7 +142,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
           </div>
         )}
         <iframe
-          src={viewerUrl}
+          src={block.url}
           title={label}
           onLoad={() => setLoaded(true)}
           className="w-full h-full border-0"
