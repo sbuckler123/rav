@@ -17,6 +17,7 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   formData.append('api_key', api_key);
   formData.append('timestamp', String(timestamp));
   formData.append('signature', signature);
+  formData.append('type', 'upload');
   if (folder) formData.append('folder', folder);
 
   const res = await fetch(
@@ -44,6 +45,7 @@ export async function uploadToCloudinary(file: File): Promise<string> {
   formData.append('api_key', api_key);
   formData.append('timestamp', String(timestamp));
   formData.append('signature', signature);
+  formData.append('type', 'upload');
   if (folder) formData.append('folder', folder);
 
   const res = await fetch(
