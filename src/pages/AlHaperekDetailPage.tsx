@@ -71,30 +71,30 @@ function ImagesBlock({
   const count = block.urls.length;
   const gridClass =
     count === 1 ? 'grid-cols-1' :
-    count === 2 ? 'grid-cols-2' :
+    count === 2 ? 'grid-cols-1 sm:grid-cols-2' :
     'grid-cols-2 sm:grid-cols-3';
 
   return (
     <figure className="w-full">
-      <div className={`grid ${gridClass} gap-2`}>
+      <div className={`grid ${gridClass} gap-2 sm:gap-3`}>
         {block.urls.map((url, i) => (
           <button
             key={i}
             type="button"
             onClick={() => onOpenLightbox(baseIndex + i)}
-            className="group rounded-xl overflow-hidden border border-border hover:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary transition-colors"
+            className={`group rounded-xl overflow-hidden border border-border hover:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary transition-colors w-full ${count > 1 ? 'aspect-[4/3]' : ''}`}
             aria-label={`פתח תמונה ${i + 1}`}
           >
             <img
               src={url}
               alt={block.caption ?? `תמונה ${i + 1}`}
-              className="w-full h-48 sm:h-56 object-cover group-hover:scale-[1.02] transition-transform duration-200"
+              className={`w-full group-hover:scale-[1.02] transition-transform duration-200 ${count === 1 ? 'h-auto max-h-[600px] object-contain' : 'h-full object-cover'}`}
             />
           </button>
         ))}
       </div>
       {block.caption && (
-        <figcaption className="mt-2 text-sm text-muted-foreground text-center">{block.caption}</figcaption>
+        <figcaption className="mt-3 text-sm text-muted-foreground text-center">{block.caption}</figcaption>
       )}
     </figure>
   );
@@ -135,7 +135,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
       </div>
 
       {/* Embedded viewer */}
-      <div className="relative w-full bg-muted/30" style={{ height: '680px' }}>
+      <div className="relative w-full bg-muted/30 h-[60vh] sm:h-[680px]">
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -174,29 +174,36 @@ function Lightbox({ images, index, onClose }: { images: string[]; index: number;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/90"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
-      <button className="absolute top-4 left-4 text-white p-2 hover:bg-white/20 rounded-full transition-colors" onClick={onClose} aria-label="סגור">
+      {/* Close */}
+      <button className="absolute top-4 left-4 text-white p-2.5 hover:bg-white/20 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={onClose} aria-label="סגור">
         <X className="h-6 w-6" />
       </button>
-      {images.length > 1 && (
-        <button className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/20 rounded-full transition-colors" onClick={e => { e.stopPropagation(); prev(); }} aria-label="תמונה קודמת">
-          <ChevronRight className="h-8 w-8" />
-        </button>
-      )}
-      <div className="max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-        <img src={images[current]} alt={`תמונה ${current + 1}`} className="w-full h-auto max-h-[85vh] object-contain rounded-lg mx-auto" />
-        {images.length > 1 && (
-          <p className="text-white text-center text-sm mt-3 opacity-70">{current + 1} / {images.length}</p>
-        )}
+
+      {/* Image */}
+      <div className="max-w-4xl w-full flex-1 flex items-center justify-center" onClick={e => e.stopPropagation()}>
+        <img
+          src={images[current]}
+          alt={`תמונה ${current + 1}`}
+          className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg mx-auto"
+        />
       </div>
+
+      {/* Counter + arrows row — always visible at bottom */}
       {images.length > 1 && (
-        <button className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/20 rounded-full transition-colors" onClick={e => { e.stopPropagation(); next(); }} aria-label="תמונה הבאה">
-          <ChevronLeft className="h-8 w-8" />
-        </button>
+        <div className="flex items-center gap-6 mt-4 pb-2" onClick={e => e.stopPropagation()}>
+          <button className="text-white p-2.5 hover:bg-white/20 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={prev} aria-label="תמונה קודמת">
+            <ChevronRight className="h-6 w-6" />
+          </button>
+          <span className="text-white text-sm opacity-70 min-w-[48px] text-center">{current + 1} / {images.length}</span>
+          <button className="text-white p-2.5 hover:bg-white/20 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={next} aria-label="תמונה הבאה">
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        </div>
       )}
     </div>
   );
