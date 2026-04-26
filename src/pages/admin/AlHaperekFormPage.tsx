@@ -157,8 +157,9 @@ function PdfEditor({ block, onChange }: { block: Extract<ContentBlock, { type: '
     try {
       const url = await uploadToCloudinaryFile(file);
       onChange({ ...block, url, label: block.label || file.name.replace(/\.pdf$/i, '') });
-    } catch {
-      toast.error('שגיאה בהעלאת קובץ');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'שגיאה בהעלאת קובץ';
+      toast.error(msg);
     } finally {
       setUploading(false);
     }

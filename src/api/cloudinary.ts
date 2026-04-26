@@ -19,14 +19,17 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   formData.append('signature', signature);
   if (folder) formData.append('folder', folder);
 
+  // Use /auto/upload so Cloudinary detects resource_type (raw for PDF, image for images)
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload`,
+    `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
     { method: 'POST', body: formData },
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: { message?: string } })?.error?.message ?? 'Upload failed');
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    const msg = err?.error?.message ?? `Upload failed (${res.status})`;
+    console.error('Cloudinary PDF upload error:', msg, err);
+    throw new Error(msg);
   }
 
   const data = await res.json() as { secure_url: string };
