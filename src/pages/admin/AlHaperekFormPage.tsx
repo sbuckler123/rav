@@ -202,6 +202,8 @@ function PdfEditor({ block, onChange }: { block: Extract<ContentBlock, { type: '
 function BlockRow({
   block, idx, total, editing, onEdit, onCancel,
   onChange, onMove, onDelete,
+  isDragging, isDragOver,
+  onDragStart, onDragOver, onDrop, onDragEnd,
 }: {
   block: ContentBlock;
   idx: number;
@@ -212,15 +214,32 @@ function BlockRow({
   onChange: (b: ContentBlock) => void;
   onMove: (dir: 'up' | 'down') => void;
   onDelete: () => void;
+  isDragging: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
 }) {
   return (
-    <div className={cn(
-      'rounded-xl border bg-white transition-all',
-      editing ? 'border-secondary shadow-sm' : 'border-border hover:border-border/80'
-    )}>
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cn(
+        'rounded-xl border bg-white transition-all',
+        isDragging   && 'opacity-40 scale-[0.99]',
+        isDragOver   && 'border-secondary border-2 bg-secondary/5',
+        !isDragging && !isDragOver && (editing ? 'border-secondary shadow-sm' : 'border-border hover:border-border/80'),
+      )}
+    >
       {/* Block header */}
       <div className="flex items-center gap-2 px-4 py-3">
-        <GripVertical className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
+        <div className="cursor-grab active:cursor-grabbing flex-shrink-0 touch-none">
+          <GripVertical className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+        </div>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {blockIcon(block.type)}
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex-shrink-0">
@@ -297,6 +316,8 @@ export default function AlHaperekFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -348,6 +369,17 @@ export default function AlHaperekFormPage() {
     setBlocks(prev => prev.filter((_, i) => i !== idx));
     if (editingIdx === idx) setEditingIdx(null);
     else if (editingIdx !== null && editingIdx > idx) setEditingIdx(editingIdx - 1);
+  }
+
+  function handleDrop(targetIdx: number) {
+    if (draggedIdx === null || draggedIdx === targetIdx) return;
+    const next = [...blocks];
+    const [moved] = next.splice(draggedIdx, 1);
+    next.splice(targetIdx, 0, moved);
+    setBlocks(next);
+    if (editingIdx === draggedIdx) setEditingIdx(targetIdx);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
   }
 
   async function handleSave() {
@@ -522,6 +554,12 @@ export default function AlHaperekFormPage() {
                   onChange={b => updateBlock(idx, b)}
                   onMove={dir => moveBlock(idx, dir)}
                   onDelete={() => deleteBlock(idx)}
+                  isDragging={draggedIdx === idx}
+                  isDragOver={dragOverIdx === idx && draggedIdx !== idx}
+                  onDragStart={() => setDraggedIdx(idx)}
+                  onDragOver={e => { e.preventDefault(); setDragOverIdx(idx); }}
+                  onDrop={() => handleDrop(idx)}
+                  onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
                 />
               ))}
             </div>
