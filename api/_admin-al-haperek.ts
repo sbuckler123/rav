@@ -64,11 +64,12 @@ async function atUpdate(table: string, id: string, fields: Record<string, unknow
   const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${id}`, {
     method: 'PATCH',
     headers: { ...auth(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fields }),
+    body: JSON.stringify({ fields, typecast: true }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { error?: { message?: string; type?: string } };
     const detail = body?.error?.message ?? body?.error?.type ?? '';
+    console.error('Airtable PATCH error', res.status, detail, JSON.stringify(fields).slice(0, 500));
     throw new Error(`Airtable update ${res.status}${detail ? ': ' + detail : ''}`);
   }
   return res.json();
