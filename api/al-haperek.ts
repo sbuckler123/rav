@@ -6,9 +6,26 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { createHash } from 'crypto';
 
-const PAT     = process.env.AIRTABLE_PAT;
-const BASE_ID = process.env.AIRTABLE_BASE_ID;
+const PAT        = process.env.AIRTABLE_PAT;
+const BASE_ID    = process.env.AIRTABLE_BASE_ID;
+const CLD_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+function cloudinarySignedUrl(rawUrl: string): string {
+  // Extract the path segment after /upload/ and generate a signed delivery URL.
+  // Cloudinary signed delivery: s--{8-char base64url SHA1(pathAfterUpload + secret)}--
+  const match = rawUrl.match(/\/upload\/(.+)$/);
+  if (!match || !CLD_SECRET) return rawUrl;
+  const toSign = match[1]; // e.g. "v1234567890/rav/filename.pdf"
+  const sig = createHash('sha1')
+    .update(toSign + CLD_SECRET)
+    .digest('base64')
+    .replace(/\//g, '_')
+    .replace(/\+/g, '-')
+    .slice(0, 8);
+  return rawUrl.replace('/upload/', `/upload/s--${sig}--/`);
+}
 
 type ContentBlock =
   | { type: 'text'; content: string }
@@ -71,6 +88,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     const reqUrl = new URL(req.url ?? '/', 'https://placeholder');
+
+    // PDF proxy — generate signed Cloudinary delivery URL and redirect
+    const proxyUrl = reqUrl.searchParams.get('proxy');
+    if (proxyUrl) {
+      const signed = cloudinarySignedUrl(decodeURIComponent(proxyUrl));
+      res.writeHead(302, { Location: signed, 'Cache-Control': 'public, max-age=3600' });
+      res.end();
+      return;
+    }
+
     const linkId = reqUrl.searchParams.get('linkId');
 
     const data = await airtableFetch(

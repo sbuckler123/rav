@@ -103,6 +103,7 @@ function ImagesBlock({
 function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) {
   const [loaded, setLoaded] = useState(false);
   const label = block.label || 'PDF';
+  const proxyUrl = `/api/al-haperek?proxy=${encodeURIComponent(block.url)}`;
 
   return (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -114,7 +115,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
         <p className="font-semibold text-primary text-sm flex-1 truncate">{label}</p>
         <div className="flex gap-2 flex-shrink-0">
           <a
-            href={block.url}
+            href={proxyUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-primary hover:bg-primary hover:text-white transition-colors min-h-[36px]"
@@ -123,7 +124,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
             פתח
           </a>
           <a
-            href={block.url}
+            href={proxyUrl}
             download
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-primary text-xs font-medium hover:bg-secondary/90 transition-colors min-h-[36px]"
           >
@@ -133,7 +134,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
         </div>
       </div>
 
-      {/* Embedded viewer — direct URL, native browser PDF renderer */}
+      {/* Embedded viewer */}
       <div className="relative w-full bg-muted/30 h-[60vh] sm:h-[750px]">
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -142,7 +143,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
           </div>
         )}
         <iframe
-          src={block.url}
+          src={proxyUrl}
           title={label}
           onLoad={() => setLoaded(true)}
           className="w-full h-full border-0"
