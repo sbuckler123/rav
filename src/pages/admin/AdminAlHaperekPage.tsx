@@ -25,10 +25,10 @@ function BlockTypeIcons({ blocks }: { blocks: ContentBlock[] }) {
   const types = new Set(blocks.map(b => b.type));
   return (
     <span className="flex items-center gap-1">
-      {types.has('video')  && <Video    className="h-3.5 w-3.5 text-muted-foreground" title="וידאו"  />}
-      {types.has('images') && <Images   className="h-3.5 w-3.5 text-muted-foreground" title="תמונות" />}
-      {types.has('pdf')    && <FileDown className="h-3.5 w-3.5 text-muted-foreground" title="PDF"    />}
-      {types.has('text')   && <FileText className="h-3.5 w-3.5 text-muted-foreground" title="טקסט"  />}
+      {types.has('video')  && <Video    className="h-3.5 w-3.5 text-muted-foreground" aria-label="וידאו"  />}
+      {types.has('images') && <Images   className="h-3.5 w-3.5 text-muted-foreground" aria-label="תמונות" />}
+      {types.has('pdf')    && <FileDown className="h-3.5 w-3.5 text-muted-foreground" aria-label="PDF"    />}
+      {types.has('text')   && <FileText className="h-3.5 w-3.5 text-muted-foreground" aria-label="טקסט"  />}
     </span>
   );
 }
