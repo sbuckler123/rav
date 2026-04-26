@@ -19,9 +19,8 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   formData.append('signature', signature);
   if (folder) formData.append('folder', folder);
 
-  // Use /auto/upload so Cloudinary detects resource_type (raw for PDF, image for images)
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
+    `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload`,
     { method: 'POST', body: formData },
   );
 
