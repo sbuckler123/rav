@@ -52,7 +52,11 @@ async function atCreate(table: string, fields: Record<string, unknown>) {
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, typecast: true }),
   });
-  if (!res.ok) throw new Error(`Airtable create: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string; type?: string } };
+    const detail = body?.error?.message ?? body?.error?.type ?? '';
+    throw new Error(`Airtable create ${res.status}${detail ? ': ' + detail : ''}`);
+  }
   return res.json() as Promise<{ id: string }>;
 }
 
@@ -62,7 +66,11 @@ async function atUpdate(table: string, id: string, fields: Record<string, unknow
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
   });
-  if (!res.ok) throw new Error(`Airtable update: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string; type?: string } };
+    const detail = body?.error?.message ?? body?.error?.type ?? '';
+    throw new Error(`Airtable update ${res.status}${detail ? ': ' + detail : ''}`);
+  }
   return res.json();
 }
 

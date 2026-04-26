@@ -416,8 +416,8 @@ export default function AlHaperekFormPage() {
       }
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.alHaperek });
       navigate('/admin/al-haperek');
-    } catch {
-      toast.error('שגיאה בשמירה');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'שגיאה בשמירה');
     } finally {
       setSaving(false);
     }
