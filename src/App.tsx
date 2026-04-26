@@ -52,7 +52,11 @@ import AdminVideosPage from '@/pages/admin/AdminVideosPage';
 import AdminEventsPage from '@/pages/admin/AdminEventsPage';
 import AdminArticlesPage from '@/pages/admin/AdminArticlesPage';
 import ArticleFormPage from '@/pages/admin/ArticleFormPage';
+import AdminAlHaperekPage from '@/pages/admin/AdminAlHaperekPage';
+import AlHaperekFormPage from '@/pages/admin/AlHaperekFormPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
+import AlHaperekPage from '@/pages/AlHaperekPage';
+import AlHaperekDetailPage from '@/pages/AlHaperekDetailPage';
 import AccessibilityStatementPage from '@/pages/AccessibilityStatementPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import CookiePolicyPage from '@/pages/CookiePolicyPage';
@@ -88,6 +92,9 @@ export default function App() {
                     <Route path="/articles" element={<AdminArticlesPage />} />
                     <Route path="/articles/new" element={<ArticleFormPage />} />
                     <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
+                    <Route path="/al-haperek" element={<AdminAlHaperekPage />} />
+                    <Route path="/al-haperek/new" element={<AlHaperekFormPage />} />
+                    <Route path="/al-haperek/:id/edit" element={<AlHaperekFormPage />} />
                     <Route path="/users" element={<AdminUsersPage />} />
                   </Routes>
                 </AdminLayout>
@@ -116,6 +123,8 @@ export default function App() {
                     <Route path="/shut" element={<QAPage />} />
                     <Route path="/hagut-upsika" element={<ArticlesPage />} />
                     <Route path="/hagut-upsika/:id" element={<ArticleDetailPage />} />
+                    <Route path="/al-haperek" element={<AlHaperekPage />} />
+                    <Route path="/al-haperek/:id" element={<AlHaperekDetailPage />} />
                     <Route path="/accessibility" element={<AccessibilityStatementPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/cookies" element={<CookiePolicyPage />} />

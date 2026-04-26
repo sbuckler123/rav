@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ChevronLeft,
+  Newspaper,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,7 @@ const navItems = [
   { label: 'שיעורי תורה',    path: '/admin/videos',    icon: Video },
   { label: 'יומן פעילות',    path: '/admin/events',    icon: Tv2 },
   { label: 'הגות ופסיקה',    path: '/admin/articles',  icon: BookOpen },
+  { label: 'על הפרק',         path: '/admin/al-haperek', icon: Newspaper },
   { label: 'קטגוריות',        path: '/admin/categories', icon: Tag },
   { label: 'משתמשים',         path: '/admin/users',     icon: Users },
 ];

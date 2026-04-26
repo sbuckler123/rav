@@ -8,6 +8,31 @@ interface SignResponse {
   folder: string | null;
 }
 
+export async function uploadToCloudinaryFile(file: File): Promise<string> {
+  const { timestamp, signature, api_key, cloud_name, folder } =
+    await apiFetch<SignResponse>('/api/admin?section=cloudinary-sign');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('api_key', api_key);
+  formData.append('timestamp', String(timestamp));
+  formData.append('signature', signature);
+  if (folder) formData.append('folder', folder);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload`,
+    { method: 'POST', body: formData },
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: { message?: string } })?.error?.message ?? 'Upload failed');
+  }
+
+  const data = await res.json() as { secure_url: string };
+  return data.secure_url;
+}
+
 export async function uploadToCloudinary(file: File): Promise<string> {
   const { timestamp, signature, api_key, cloud_name, folder } =
     await apiFetch<SignResponse>('/api/admin?section=cloudinary-sign');

@@ -4,6 +4,7 @@ import { getVideos } from '@/api/getVideos';
 import { getEvents } from '@/api/getEvents';
 import { getShiurim } from '@/api/getShiurim';
 import { getPublishedQuestions } from '@/api/getPublishedQuestions';
+import { getAlHaperekList } from '@/api/getAlHaperek';
 
 export const QUERY_KEYS = {
   articles: ['articles'] as const,
@@ -11,6 +12,7 @@ export const QUERY_KEYS = {
   events: ['events'] as const,
   shiurim: ['shiurim'] as const,
   questions: (categoryId?: string) => ['questions', categoryId ?? ''] as const,
+  alHaperek: ['alHaperek'] as const,
 };
 
 export function useArticles() {
@@ -38,6 +40,13 @@ export function useShiurim() {
   return useQuery({
     queryKey: QUERY_KEYS.shiurim,
     queryFn: getShiurim,
+  });
+}
+
+export function useAlHaperek() {
+  return useQuery({
+    queryKey: QUERY_KEYS.alHaperek,
+    queryFn: getAlHaperekList,
   });
 }
 

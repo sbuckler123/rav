@@ -2,6 +2,7 @@ export const NAV_LINKS = [
   { href: '/shiurei-torah', label: 'שיעורי תורה',  desc: 'ארכיון שיעורי וידאו ואודיו' },
   { href: '/hagut-upsika', label: 'הגות ופסיקה',   desc: 'מאמרי הגות, חידושים וביאורים בהלכה, פסקי דין מורחבים' },
   { href: '/shut',          label: 'שו"ת',          desc: 'ארכיון מענה הלכתי לשאלות הציבור' },
+  { href: '/al-haperek',   label: 'על הפרק',       desc: 'עדכונים אקטואליים, מכתבים לציבור, ופסקי השעה' },
   { href: '/luach-iruyim', label: 'לוח אירועים',   desc: 'שיעורים וכנסים מתוכננים' },
   { href: '/yoman-peilut', label: 'יומן פעילות',   desc: 'תיעוד ביקורים, שיעורים ומפגשים ברחבי הארץ' },
   { href: '/odot',          label: 'אודות',          desc: '' },
