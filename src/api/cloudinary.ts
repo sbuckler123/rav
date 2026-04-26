@@ -6,10 +6,11 @@ interface SignResponse {
   api_key: string;
   cloud_name: string;
   folder: string | null;
+  access_mode: string;
 }
 
 export async function uploadToCloudinaryFile(file: File): Promise<string> {
-  const { timestamp, signature, api_key, cloud_name, folder } =
+  const { timestamp, signature, api_key, cloud_name, folder, access_mode } =
     await apiFetch<SignResponse>('/api/admin?section=cloudinary-sign');
 
   const formData = new FormData();
@@ -18,6 +19,7 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   formData.append('timestamp', String(timestamp));
   formData.append('signature', signature);
   formData.append('type', 'upload');
+  formData.append('access_mode', access_mode ?? 'public');
   if (folder) formData.append('folder', folder);
 
   const res = await fetch(

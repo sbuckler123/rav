@@ -22,7 +22,7 @@ export async function handle(_req: IncomingMessage, res: ServerResponse) {
   }
 
   const timestamp = Math.round(Date.now() / 1000);
-  const params: Record<string, string | number> = { timestamp, type: 'upload' };
+  const params: Record<string, string | number> = { access_mode: 'public', timestamp, type: 'upload' };
 
   const folder = process.env.CLOUDINARY_UPLOAD_FOLDER;
   if (folder) params.folder = folder;
@@ -34,5 +34,6 @@ export async function handle(_req: IncomingMessage, res: ServerResponse) {
     api_key:    API_KEY,
     cloud_name: CLOUD_NAME,
     folder:     folder ?? null,
+    access_mode: 'public',
   }));
 }
