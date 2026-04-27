@@ -14,17 +14,19 @@ function sign(params: Record<string, string | number>): string {
   return createHash('sha1').update(toSign).digest('hex');
 }
 
-export async function handle(_req: IncomingMessage, res: ServerResponse) {
+export async function handle(req: IncomingMessage, res: ServerResponse) {
   if (!API_SECRET || !API_KEY || !CLOUD_NAME) {
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Cloudinary server config missing' }));
     return;
   }
 
-  const timestamp = Math.round(Date.now() / 1000);
-  const params: Record<string, string | number> = { access_mode: 'public', timestamp, type: 'upload' };
+  const url         = new URL(req.url ?? '/', 'https://placeholder');
+  const folderParam = url.searchParams.get('folder');
+  const folder      = folderParam ?? process.env.CLOUDINARY_UPLOAD_FOLDER ?? null;
 
-  const folder = process.env.CLOUDINARY_UPLOAD_FOLDER;
+  const timestamp = Math.round(Date.now() / 1000);
+  const params: Record<string, string | number> = { timestamp, type: 'upload' };
   if (folder) params.folder = folder;
 
   res.statusCode = 200;
@@ -33,7 +35,6 @@ export async function handle(_req: IncomingMessage, res: ServerResponse) {
     signature: sign(params),
     api_key:    API_KEY,
     cloud_name: CLOUD_NAME,
-    folder:     folder ?? null,
-    access_mode: 'public',
+    folder,
   }));
 }
