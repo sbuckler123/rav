@@ -128,7 +128,7 @@ export default function AlHaperekPage() {
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 
         {/* Filter bar */}
-        <div className="mb-8 rounded-2xl border border-border/60 bg-[#F7F4EE] p-5 space-y-4">
+        <div className="mb-8 rounded-2xl border border-border/60 bg-[#F7F4EE] p-4 sm:p-5 space-y-4">
           <div className="flex items-center gap-2">
             <div className="w-1 h-5 bg-secondary rounded-full flex-shrink-0" />
             <span className="text-sm font-semibold text-primary">חיפוש וסינון</span>

@@ -118,7 +118,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
             href={proxyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-primary hover:bg-primary hover:text-white transition-colors min-h-[36px]"
+            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-primary hover:bg-primary hover:text-white transition-colors min-h-[44px]"
           >
             <ExternalLink className="h-3 w-3" />
             פתח
@@ -126,7 +126,7 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: 'pdf' }> }) 
           <a
             href={proxyUrl}
             download
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-primary text-xs font-medium hover:bg-secondary/90 transition-colors min-h-[36px]"
+            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg bg-secondary text-primary text-xs font-medium hover:bg-secondary/90 transition-colors min-h-[44px]"
           >
             <FileDown className="h-3 w-3" />
             הורד
@@ -332,7 +332,7 @@ export default function AlHaperekDetailPage() {
         <div className="flex flex-wrap gap-3 mt-10 pt-6 border-t border-border">
           <Button
             variant="outline"
-            size="sm"
+            className="min-h-[44px]"
             onClick={() => {
               if (navigator.share) navigator.share({ title: item.title, url: window.location.href });
               else navigator.clipboard.writeText(window.location.href).then(() => alert('הקישור הועתק!'));
@@ -341,7 +341,7 @@ export default function AlHaperekDetailPage() {
             <Share2 className="h-4 w-4 ml-2" />
             שתף
           </Button>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" className="min-h-[44px]">
             <Link to="/al-haperek">חזרה לרשימה</Link>
           </Button>
         </div>
@@ -349,7 +349,7 @@ export default function AlHaperekDetailPage() {
         {/* Prev / Next navigation */}
         {(prevItem || nextItem) && (
           <nav
-            className="flex items-center justify-between gap-4 mt-8 py-6 px-5 rounded-xl border border-border"
+            className="flex items-center justify-between gap-3 mt-8 p-4 sm:px-5 sm:py-6 rounded-xl border border-border"
             style={{ backgroundColor: '#FAF8F2' }}
             aria-label="ניווט בין פריטים"
           >

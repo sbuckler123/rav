@@ -7,6 +7,7 @@ import AskRabbiSection from '@/components/home/AskRabbiSection';
 import ArticlesSection from '@/components/home/ArticlesSection';
 import EventsSection from '@/components/home/EventsSection';
 import EventsHomeSection from '@/components/home/EventsHomeSection';
+import AlHaperekSection from '@/components/home/AlHaperekSection';
 import FadeIn from '@/components/FadeIn';
 
 export default function HomePage() {
@@ -23,6 +24,9 @@ export default function HomePage() {
       </FadeIn> */}
       <FadeIn>
         <VideosSection />
+      </FadeIn>
+      <FadeIn>
+        <AlHaperekSection />
       </FadeIn>
       <FadeIn>
         <EventsSection />

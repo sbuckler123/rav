@@ -82,8 +82,8 @@ export default function AdminAlHaperekPage() {
           <h1 className="text-xl font-bold text-primary">על הפרק</h1>
           <p className="text-sm text-muted-foreground">{items.length} פריטים</p>
         </div>
-        <Button asChild className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
-          <Link to="/admin/al-haperek/new">
+        <Button asChild className="h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
+          <Link to="/admin/al-haperek/new" className="flex items-center gap-2">
             <Plus className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">פריט חדש</span>
             <span className="sm:hidden">חדש</span>
@@ -131,6 +131,7 @@ export default function AdminAlHaperekPage() {
                   </div>
                 </div>
 
+                <span className={`h-2 w-2 rounded-full flex-shrink-0 sm:hidden ${item.status === 'פורסם' ? 'bg-green-500' : 'bg-yellow-400'}`} />
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded hidden sm:block flex-shrink-0 ${item.status === 'פורסם' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                   {item.status}
                 </span>

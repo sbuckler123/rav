@@ -237,7 +237,7 @@ function BlockRow({
       )}
     >
       {/* Block header */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3">
         <div className="cursor-grab active:cursor-grabbing flex-shrink-0 touch-none">
           <GripVertical className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
         </div>
@@ -434,18 +434,18 @@ export default function AlHaperekFormPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6">
+        <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground flex-shrink-0">
           <Link to="/admin/al-haperek">
             <ArrowRight className="h-4 w-4" />
-            חזרה
+            <span className="hidden sm:inline">חזרה</span>
           </Link>
         </Button>
-        <div className="w-px h-5 bg-border" />
-        <h1 className="text-xl font-bold text-primary flex-1">{isEdit ? 'עריכת פריט' : 'פריט חדש'}</h1>
-        <Button onClick={handleSave} disabled={saving} className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px]">
+        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <h1 className="text-lg sm:text-xl font-bold text-primary flex-1 truncate">{isEdit ? 'עריכת פריט' : 'פריט חדש'}</h1>
+        <Button onClick={handleSave} disabled={saving} className="bg-secondary text-primary hover:bg-secondary/90 gap-2 min-h-[44px] flex-shrink-0">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? 'שומר...' : 'שמור'}
+          <span>{saving ? 'שומר...' : 'שמור'}</span>
         </Button>
       </div>
 
@@ -453,7 +453,7 @@ export default function AlHaperekFormPage() {
 
         {/* ── Metadata sidebar ── */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-border p-5 space-y-4">
+          <div className="bg-white rounded-xl border border-border p-4 sm:p-5 space-y-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">פרטי הפריט</p>
 
             <div className="space-y-1.5">
@@ -523,18 +523,18 @@ export default function AlHaperekFormPage() {
 
         {/* ── Block builder ── */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-border p-5">
+          <div className="bg-white rounded-xl border border-border p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 בלוקי תוכן
                 {blocks.length > 0 && <span className="mr-1.5 text-primary font-bold">({blocks.length})</span>}
               </p>
-              <p className="text-xs text-muted-foreground">הבלוקים מוצגים בסדר זה לגולש</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">הבלוקים מוצגים בסדר זה לגולש</p>
             </div>
 
             {/* Empty state */}
             {blocks.length === 0 && (
-              <div className="rounded-xl border-2 border-dashed border-border py-12 text-center mb-4">
+              <div className="rounded-xl border-2 border-dashed border-border py-8 sm:py-12 text-center mb-4">
                 <GripVertical className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">אין בלוקי תוכן עדיין</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">לחץ "+ הוסף בלוק" להתחיל</p>
@@ -567,7 +567,7 @@ export default function AlHaperekFormPage() {
 
             {/* Add block */}
             {showBlockPicker ? (
-              <div className="rounded-xl border border-dashed border-secondary/50 bg-secondary/5 p-4">
+              <div className="rounded-xl border border-dashed border-secondary/50 bg-secondary/5 p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-semibold text-primary">בחר סוג בלוק</p>
                   <button type="button" onClick={() => setShowBlockPicker(false)} className="text-muted-foreground hover:text-primary">
