@@ -9,6 +9,7 @@ import { getAlHaperekList } from '@/api/getAlHaperek';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
   Clock, ChevronLeft, ArrowLeft, CheckCircle2, XCircle, Newspaper,
+  Video, Tag, Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -282,15 +283,19 @@ export default function AdminDashboard() {
           {/* Quick actions */}
           <div className="bg-white rounded-xl border border-border p-5">
             <h2 className="font-semibold text-primary mb-3">פעולות מהירות</h2>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {[
-                { label: 'הוסף שיעור',       to: '/admin/shiurim',        icon: CalendarDays, color: 'text-secondary'  },
-                { label: 'הוסף אירוע',       to: '/admin/events',         icon: Tv2,          color: 'text-purple-600' },
-                { label: 'הוסף מאמר',        to: '/admin/articles',       icon: BookOpen,     color: 'text-blue-600'   },
-                { label: 'פריט על הפרק חדש', to: '/admin/al-haperek/new', icon: Newspaper,    color: 'text-orange-600' },
+                { label: 'שו"ת',          to: '/admin/questions',    icon: MessageCircleQuestion, color: 'text-primary'   },
+                { label: 'לוח אירועים',  to: '/admin/shiurim',       icon: CalendarDays,          color: 'text-secondary' },
+                { label: 'שיעורי תורה', to: '/admin/videos',        icon: Video,                 color: 'text-primary'   },
+                { label: 'יומן פעילות', to: '/admin/events',        icon: Tv2,                   color: 'text-secondary' },
+                { label: 'הגות ופסיקה', to: '/admin/articles',      icon: BookOpen,              color: 'text-primary'   },
+                { label: 'על הפרק',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary' },
+                { label: 'קטגוריות',     to: '/admin/categories',    icon: Tag,                   color: 'text-primary'   },
+                { label: 'משתמשים',      to: '/admin/users',         icon: Users,                 color: 'text-secondary' },
               ].map(item => (
                 <Link key={item.to} to={item.to}>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2 min-h-[40px] mb-1">
+                  <Button variant="outline" size="sm" className="w-full justify-start gap-2 min-h-[40px]">
                     <item.icon className={cn('h-4 w-4', item.color)} />
                     {item.label}
                   </Button>
