@@ -194,63 +194,72 @@ function Sidebar({
   filtered: AlHaperekItem[];
   resetPage: () => void;
 }) {
+  const [tagsOpen, setTagsOpen] = useState(false);
+
   return (
     <aside className="bg-[#F7F4EE] rounded-2xl border border-border overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/60">
+      {/* Header — desktop only */}
+      <div className="hidden lg:flex items-center gap-2.5 px-5 py-4 border-b border-border/60">
         <SlidersHorizontal className="h-4 w-4 text-secondary flex-shrink-0" />
         <span className="text-sm font-bold text-primary">חיפוש וסינון</span>
       </div>
 
-      {/* Search */}
-      <div className="px-4 py-4 border-b border-border/60">
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="search"
-            value={search}
-            onChange={e => { setSearch(e.target.value); resetPage(); }}
-            placeholder="חיפוש..."
-            className="w-full rounded-xl border border-border bg-white pr-9 pl-8 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-            dir="rtl"
-          />
-          {search && (
-            <button
-              onClick={() => { setSearch(''); resetPage(); }}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
+      {/* Search row — mobile has inline filter toggle */}
+      <div className="px-4 py-3 lg:py-4 border-b border-border/60">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="search"
+              value={search}
+              onChange={e => { setSearch(e.target.value); resetPage(); }}
+              placeholder="חיפוש..."
+              className="w-full rounded-xl border border-border bg-white pr-9 pl-8 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              dir="rtl"
+            />
+            {search && (
+              <button
+                onClick={() => { setSearch(''); resetPage(); }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+          {/* Filter toggle — mobile only */}
+          <button
+            onClick={() => setTagsOpen(o => !o)}
+            className={`lg:hidden flex-shrink-0 h-10 px-3 rounded-xl border bg-white flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              selectedTag || tagsOpen ? 'border-secondary text-secondary' : 'border-border text-muted-foreground'
+            }`}
+            aria-label="פתח סינון"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {selectedTag && <span className="h-1.5 w-1.5 rounded-full bg-secondary" />}
+          </button>
         </div>
       </div>
 
-      {/* Tag filter */}
+      {/* Tag filter — always on desktop, collapsible on mobile */}
       {allTags.length > 0 && (
-        <div className="px-4 py-4 border-b border-border/60">
+        <div className={`px-4 py-4 border-b border-border/60 ${tagsOpen ? '' : 'hidden lg:block'}`}>
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">נושאים</p>
           <div className="space-y-1">
             <button
               onClick={() => { setSelectedTag(''); resetPage(); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-right ${
-                !selectedTag
-                  ? 'bg-primary text-white'
-                  : 'text-foreground hover:bg-white hover:shadow-sm'
+                !selectedTag ? 'bg-primary text-white' : 'text-foreground hover:bg-white hover:shadow-sm'
               }`}
             >
               <span>הכל</span>
-              <span className={`text-xs ${!selectedTag ? 'text-white/60' : 'text-muted-foreground'}`}>
-                {items.length}
-              </span>
+              <span className={`text-xs ${!selectedTag ? 'text-white/60' : 'text-muted-foreground'}`}>{items.length}</span>
             </button>
             {allTags.map(tag => (
               <button
                 key={tag}
                 onClick={() => { setSelectedTag(selectedTag === tag ? '' : tag); resetPage(); }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-right ${
-                  selectedTag === tag
-                    ? 'bg-primary text-white font-medium'
-                    : 'text-foreground hover:bg-white hover:shadow-sm'
+                  selectedTag === tag ? 'bg-primary text-white font-medium' : 'text-foreground hover:bg-white hover:shadow-sm'
                 }`}
               >
                 <span>{tag}</span>
@@ -263,12 +272,10 @@ function Sidebar({
         </div>
       )}
 
-      {/* Result count */}
-      <div className="px-5 py-4">
+      {/* Result count — always on desktop, collapsible on mobile */}
+      <div className={`px-5 py-4 ${tagsOpen ? '' : 'hidden lg:block'}`}>
         <p className="text-sm text-muted-foreground">
-          נמצאו{' '}
-          <span className="font-bold text-primary">{filtered.length}</span>{' '}
-          פריטים
+          נמצאו <span className="font-bold text-primary">{filtered.length}</span> פריטים
         </p>
         {(search || selectedTag) && (
           <button
@@ -319,8 +326,8 @@ export default function AlHaperekPage() {
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8 lg:items-start">
 
-          {/* Sidebar — top on mobile, left column on desktop (col-start-2 in RTL = left) */}
-          <div className="mb-6 lg:mb-0 lg:col-start-2 lg:sticky lg:top-6">
+          {/* Sidebar — top on mobile, left column on desktop */}
+          <div className="mb-6 lg:mb-0 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-6">
             <Sidebar
               search={search} setSearch={setSearch}
               selectedTag={selectedTag} setSelectedTag={setSelectedTag}
@@ -330,7 +337,7 @@ export default function AlHaperekPage() {
           </div>
 
           {/* Main content — right column on desktop */}
-          <div className="lg:col-start-1">
+          <div className="lg:col-start-1 lg:row-start-1">
             {isLoading ? (
               <div className="space-y-6">
                 <div className="space-y-3 pb-8 border-b-2 border-border">
