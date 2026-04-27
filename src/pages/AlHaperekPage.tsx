@@ -11,15 +11,38 @@ import type { AlHaperekItem, ContentBlock } from '@/api/getAlHaperek';
 
 const ITEMS_PER_PAGE = 12;
 
-function blockTypePills(blocks: ContentBlock[]) {
-  const types = new Set(blocks.map(b => b.type));
+// ── Content-type helpers ──────────────────────────────────────────────────────
+
+type BlockType = ContentBlock['type'];
+
+const TYPE_CONFIG: Record<BlockType, {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  bar: string;     // top border color
+  bg: string;      // icon background
+  iconCls: string; // icon color
+}> = {
+  video:  { label: 'וידאו',  Icon: Video,    bar: 'bg-red-500',    bg: 'bg-red-50',    iconCls: 'text-red-500'    },
+  pdf:    { label: 'PDF',    Icon: FileDown, bar: 'bg-orange-500', bg: 'bg-orange-50', iconCls: 'text-orange-500' },
+  images: { label: 'תמונות', Icon: Images,   bar: 'bg-green-500',  bg: 'bg-green-50',  iconCls: 'text-green-500'  },
+  text:   { label: 'טקסט',  Icon: FileText, bar: 'bg-blue-500',   bg: 'bg-blue-50',   iconCls: 'text-blue-500'   },
+};
+
+function primaryType(blocks: ContentBlock[]): BlockType | null {
+  for (const t of ['video', 'pdf', 'images', 'text'] as BlockType[]) {
+    if (blocks.some(b => b.type === t)) return t;
+  }
+  return null;
+}
+
+function ContentTypeBadge({ blocks }: { blocks: ContentBlock[] }) {
+  const t = primaryType(blocks);
+  if (!t) return null;
+  const { label, Icon, bg, iconCls } = TYPE_CONFIG[t];
   return (
-    <div className="flex items-center gap-1.5">
-      {types.has('video')  && <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5"><Video  className="h-3 w-3" />וידאו</span>}
-      {types.has('images') && <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5"><Images className="h-3 w-3" />תמונות</span>}
-      {types.has('pdf')    && <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5"><FileDown className="h-3 w-3" />PDF</span>}
-      {types.has('text')   && <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5"><FileText className="h-3 w-3" />טקסט</span>}
-    </div>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md ${bg} ${iconCls}`}>
+      <Icon className="h-3 w-3" />{label}
+    </span>
   );
 }
 
@@ -30,94 +53,81 @@ function formatDate(raw?: string) {
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-// ── Hero card — first item, full-width editorial ──────────────────────────────
+// ── Featured card — item 0, full-width on primary background ─────────────────
 
-function HeroCard({ item }: { item: AlHaperekItem }) {
+function FeaturedCard({ item }: { item: AlHaperekItem }) {
+  const t = primaryType(item.blocks);
   return (
     <Link to={`/al-haperek/${item.linkId}`} className="block group">
-      <div className="flex flex-col-reverse md:flex-row overflow-hidden rounded-2xl border border-border bg-white hover:shadow-xl transition-all duration-300">
-        {/* Text */}
-        <div className="flex flex-col p-6 sm:p-8 md:flex-1">
-          {item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {item.tags.slice(0, 3).map(t => (
-                <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
-              ))}
-            </div>
+      <div className="bg-primary rounded-2xl p-6 sm:p-8 hover:bg-primary/90 transition-colors duration-300">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {t && (
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide bg-white/15 text-white`}>
+              {(() => { const { Icon, label } = TYPE_CONFIG[t]; return <><Icon className="h-3 w-3" />{label}</>; })()}
+            </span>
           )}
-          <h2 className="font-serif font-bold text-2xl sm:text-3xl leading-snug text-primary group-hover:text-secondary transition-colors mb-3">
-            {item.title}
-          </h2>
-          {item.summary && (
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed line-clamp-3 flex-1 mb-4">
-              {item.summary}
-            </p>
+          {item.tags.slice(0, 3).map(tag => (
+            <Badge key={tag} className="bg-secondary text-primary text-[10px] border-0 font-semibold">{tag}</Badge>
+          ))}
+        </div>
+
+        <h2 className="font-serif font-bold text-2xl sm:text-3xl md:text-4xl leading-snug text-white group-hover:text-secondary transition-colors mb-4">
+          {item.title}
+        </h2>
+
+        {item.summary && (
+          <p className="text-white/65 text-sm sm:text-base leading-relaxed line-clamp-3 mb-6">
+            {item.summary}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/15">
+          {item.date && (
+            <span className="flex items-center gap-1.5 text-sm text-white/50">
+              <CalendarDays className="h-4 w-4" />
+              {formatDate(item.date)}
+            </span>
           )}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-auto">
-            {item.date && (
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4" />
-                {formatDate(item.date)}
-              </span>
-            )}
-            {item.blocks.length > 0 && blockTypePills(item.blocks)}
-          </div>
-          <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-secondary group-hover:gap-3 transition-all duration-200">
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary group-hover:gap-3 transition-all duration-200 mr-auto">
             לקריאה המלאה
             <ArrowLeft className="h-4 w-4" />
           </span>
         </div>
-        {/* Image */}
-        <div className="aspect-[16/9] md:aspect-auto md:w-[55%] flex-shrink-0 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10">
-          {item.coverImage ? (
-            <img
-              src={item.coverImage}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center min-h-[200px]">
-              <FileText className="h-20 w-20 text-primary/10" />
-            </div>
-          )}
-        </div>
       </div>
     </Link>
   );
 }
 
-// ── Secondary card — items 1–3, medium grid ───────────────────────────────────
+// ── Secondary card — items 1–4, two-column grid ───────────────────────────────
 
 function SecondaryCard({ item }: { item: AlHaperekItem }) {
+  const t = primaryType(item.blocks);
+  const barColor = t ? TYPE_CONFIG[t].bar : 'bg-border';
   return (
     <Link to={`/al-haperek/${item.linkId}`} className="block group h-full">
-      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 h-full">
-        <div className="aspect-[4/3] overflow-hidden flex-shrink-0 bg-gradient-to-br from-primary/10 to-secondary/10">
-          {item.coverImage ? (
-            <img
-              src={item.coverImage}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <FileText className="h-8 w-8 text-primary/20" />
+      <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        {/* Colored top bar by content type */}
+        <div className={`h-1 w-full ${barColor}`} />
+        <div className="flex flex-col flex-1 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <ContentTypeBadge blocks={item.blocks} />
+            {item.date && (
+              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.date)}</span>
+            )}
+          </div>
+          {item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {item.tags.slice(0, 2).map(t => (
+                <Badge key={t} variant="secondary" className="text-[10px] px-2 py-0.5">{t}</Badge>
+              ))}
             </div>
           )}
-        </div>
-        <div className="p-4 flex flex-col flex-1">
-          {item.tags.length > 0 && (
-            <span className="text-[10px] font-semibold text-secondary uppercase tracking-wide mb-1.5">
-              {item.tags[0]}
-            </span>
-          )}
-          <h3 className="font-serif font-bold text-sm sm:text-base leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-2 flex-1">
+          <h3 className="font-serif font-bold text-base sm:text-lg leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-2 flex-1">
             {item.title}
           </h3>
-          {item.date && (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-              <CalendarDays className="h-3 w-3" />
-              {formatDate(item.date)}
+          {item.summary && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
+              {item.summary}
             </p>
           )}
         </div>
@@ -126,30 +136,21 @@ function SecondaryCard({ item }: { item: AlHaperekItem }) {
   );
 }
 
-// ── List row — items 4+, compact horizontal ───────────────────────────────────
+// ── List row — items 5+, compact horizontal rows ──────────────────────────────
 
 function ListRow({ item }: { item: AlHaperekItem }) {
+  const t = primaryType(item.blocks);
+  const { bg, iconCls, Icon } = t ? TYPE_CONFIG[t] : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText };
   return (
     <Link to={`/al-haperek/${item.linkId}`} className="block group">
-      <div className="flex items-center gap-4 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 -mx-5 px-5 transition-colors rounded-lg">
-        {/* Thumbnail — visually on the left in RTL */}
-        <div className="w-20 h-14 sm:w-24 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 order-last">
-          {item.coverImage ? (
-            <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <FileText className="h-5 w-5 text-primary/20" />
-            </div>
-          )}
+      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+        {/* Content type icon */}
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${bg}`}>
+          <Icon className={`h-4 w-4 ${iconCls}`} />
         </div>
         {/* Text */}
         <div className="flex-1 min-w-0">
-          {item.tags.length > 0 && (
-            <span className="text-[10px] font-semibold text-secondary uppercase tracking-wide">
-              {item.tags[0]}
-            </span>
-          )}
-          <h3 className="font-serif font-bold text-sm sm:text-base leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-1 mt-0.5">
+          <h3 className="font-serif font-bold text-sm sm:text-base text-primary group-hover:text-secondary transition-colors line-clamp-1">
             {item.title}
           </h3>
           {item.summary && (
@@ -157,8 +158,14 @@ function ListRow({ item }: { item: AlHaperekItem }) {
               {item.summary}
             </p>
           )}
+        </div>
+        {/* Tag + date */}
+        <div className="flex-shrink-0 text-left sm:text-right space-y-0.5">
+          {item.tags.length > 0 && (
+            <p className="text-[10px] font-semibold text-secondary uppercase tracking-wide">{item.tags[0]}</p>
+          )}
           {item.date && (
-            <p className="text-xs text-muted-foreground mt-1">{formatDate(item.date)}</p>
+            <p className="text-xs text-muted-foreground">{formatDate(item.date)}</p>
           )}
         </div>
       </div>
@@ -172,9 +179,9 @@ export default function AlHaperekPage() {
   const { data, isLoading } = useAlHaperek();
   const items: AlHaperekItem[] = data?.items ?? [];
 
-  const [search, setSearch]       = useState('');
+  const [search, setSearch]           = useState('');
   const [selectedTag, setSelectedTag] = useState('');
-  const [page, setPage]           = useState(1);
+  const [page, setPage]               = useState(1);
 
   const allTags = [...new Set(items.flatMap(i => i.tags))].sort();
 
@@ -200,103 +207,117 @@ export default function AlHaperekPage() {
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 
-        {/* Filter bar */}
-        <div className="mb-8 rounded-2xl border border-border/60 bg-[#F7F4EE] p-4 sm:p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-1 h-5 bg-secondary rounded-full flex-shrink-0" />
-            <span className="text-sm font-semibold text-primary">חיפוש וסינון</span>
+        {/* ── Dark filter bar ── */}
+        <div className="mb-8 rounded-2xl bg-primary overflow-hidden">
+          <div className="p-4 sm:p-5">
+            <div className="relative">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
+              <input
+                type="search"
+                value={search}
+                onChange={e => { setSearch(e.target.value); resetPage(); }}
+                placeholder="חיפוש לפי כותרת או תיאור..."
+                className="w-full rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-white/35 pr-11 pl-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-white/30 transition-all min-h-[48px]"
+                dir="rtl"
+              />
+              {search && (
+                <button
+                  onClick={() => { setSearch(''); resetPage(); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-white/15 text-white/50 hover:text-white transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="search"
-              value={search}
-              onChange={e => { setSearch(e.target.value); resetPage(); }}
-              placeholder="חיפוש לפי כותרת או תיאור..."
-              className="w-full rounded-xl border border-border/60 bg-white pr-11 pl-10 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors min-h-[48px]"
-              dir="rtl"
-            />
-            {search && (
-              <button onClick={() => { setSearch(''); resetPage(); }} className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted/50">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+
           {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="px-4 sm:px-5 pb-4 flex flex-wrap gap-2">
               <button
                 onClick={() => { setSelectedTag(''); resetPage(); }}
-                className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[40px] ${!selectedTag ? 'bg-primary text-white border-primary' : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary'}`}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
+                  !selectedTag
+                    ? 'bg-secondary text-primary'
+                    : 'border border-white/25 text-white/65 hover:bg-white/10 hover:text-white'
+                }`}
               >
-                הכל <span className={`mr-1 text-xs ${!selectedTag ? 'text-secondary' : 'text-muted-foreground'}`}>({items.length})</span>
+                הכל
+                <span className="mr-1 text-xs opacity-70">({items.length})</span>
               </button>
               {allTags.map(tag => (
                 <button
                   key={tag}
                   onClick={() => { setSelectedTag(selectedTag === tag ? '' : tag); resetPage(); }}
-                  className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[40px] ${selectedTag === tag ? 'bg-primary text-white border-primary' : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary'}`}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
+                    selectedTag === tag
+                      ? 'bg-secondary text-primary'
+                      : 'border border-white/25 text-white/65 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
                   {tag}
-                  <span className={`mr-1 text-xs ${selectedTag === tag ? 'text-secondary' : 'text-muted-foreground'}`}>
-                    ({items.filter(i => i.tags.includes(tag)).length})
-                  </span>
+                  <span className="mr-1 text-xs opacity-70">({items.filter(i => i.tags.includes(tag)).length})</span>
                 </button>
               ))}
             </div>
           )}
-          <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
-            <span className="text-sm text-muted-foreground">
-              נמצאו <span className="font-bold text-primary">{filtered.length}</span> פריטים
+
+          <div className="px-4 sm:px-5 pb-4 flex items-center justify-between border-t border-white/10 pt-3">
+            <span className="text-sm text-white/50">
+              נמצאו <span className="text-white font-semibold">{filtered.length}</span> פריטים
             </span>
             {(search || selectedTag) && (
-              <button onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+              <button
+                onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
+                className="text-xs text-white/45 hover:text-white/80 flex items-center gap-1 transition-colors"
+              >
                 <X className="h-3 w-3" />נקה סינון
               </button>
             )}
           </div>
         </div>
 
-        {/* Content */}
+        {/* ── Content ── */}
         {isLoading ? (
           <div className="space-y-6">
-            <div className="h-64 sm:h-80 rounded-2xl bg-muted animate-pulse" />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="rounded-xl bg-muted animate-pulse aspect-[4/3]" />
-              ))}
+            <div className="h-56 sm:h-72 rounded-2xl bg-primary/20 animate-pulse" />
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-44 rounded-xl bg-muted animate-pulse" />)}
             </div>
-            <div className="rounded-xl bg-muted animate-pulse h-40" />
+            <div className="rounded-xl bg-muted animate-pulse h-48" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p className="text-lg mb-2">לא נמצאו פריטים</p>
             {(search || selectedTag) && (
-              <button onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }} className="text-sm text-secondary hover:underline">
+              <button
+                onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
+                className="text-sm text-secondary hover:underline"
+              >
                 נקה סינון
               </button>
             )}
           </div>
         ) : (
           <>
-            {/* Hero — first item */}
-            <div className="mb-6 sm:mb-8">
-              <HeroCard item={visible[0]} />
+            {/* Featured */}
+            <div className="mb-6">
+              <FeaturedCard item={visible[0]} />
             </div>
 
-            {/* Secondary grid — items 1–3 */}
+            {/* Secondary grid — items 1–4 */}
             {visible.length > 1 && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-6 sm:mb-8">
-                {visible.slice(1, 4).map(item => (
+              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                {visible.slice(1, 5).map(item => (
                   <SecondaryCard key={item.linkId} item={item} />
                 ))}
               </div>
             )}
 
-            {/* Compact list — items 4+ */}
-            {visible.length > 4 && (
-              <div className="bg-white rounded-xl border border-border px-5 py-2 mb-6 sm:mb-8">
-                {visible.slice(4).map(item => (
+            {/* List — items 5+ */}
+            {visible.length > 5 && (
+              <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
+                {visible.slice(5).map(item => (
                   <ListRow key={item.linkId} item={item} />
                 ))}
               </div>
