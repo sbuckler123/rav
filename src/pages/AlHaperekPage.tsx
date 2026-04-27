@@ -22,10 +22,10 @@ const TYPE_CONFIG: Record<BlockType, {
   bg: string;
   iconCls: string;
 }> = {
-  video:  { label: 'וידאו',  Icon: Video,    bar: 'bg-red-500',    bg: 'bg-red-50',    iconCls: 'text-red-500'    },
-  pdf:    { label: 'PDF',    Icon: FileDown, bar: 'bg-orange-500', bg: 'bg-orange-50', iconCls: 'text-orange-500' },
-  images: { label: 'תמונות', Icon: Images,   bar: 'bg-green-500',  bg: 'bg-green-50',  iconCls: 'text-green-500'  },
-  text:   { label: 'טקסט',  Icon: FileText, bar: 'bg-blue-500',   bg: 'bg-blue-50',   iconCls: 'text-blue-500'   },
+  video:  { label: 'וידאו',  Icon: Video,    bar: 'bg-secondary',      bg: 'bg-secondary/10', iconCls: 'text-secondary-foreground' },
+  pdf:    { label: 'PDF',    Icon: FileDown, bar: 'bg-primary',        bg: 'bg-primary/10',   iconCls: 'text-primary'              },
+  images: { label: 'תמונות', Icon: Images,   bar: 'bg-secondary/70',   bg: 'bg-secondary/10', iconCls: 'text-secondary-foreground' },
+  text:   { label: 'טקסט',  Icon: FileText, bar: 'bg-primary/60',     bg: 'bg-primary/10',   iconCls: 'text-primary'              },
 };
 
 function primaryType(blocks: ContentBlock[]): BlockType | null {
