@@ -1,12 +1,12 @@
 import { apiFetch } from './apiFetch';
 
-interface SignResponse {
+type SignResponse = {
   timestamp: number;
   signature: string;
   api_key: string;
   cloud_name: string;
   folder: string | null;
-}
+};
 
 export async function uploadToCloudinaryFile(file: File): Promise<string> {
   const { timestamp, signature, api_key, cloud_name, folder } =
@@ -17,11 +17,11 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   formData.append('api_key', api_key);
   formData.append('timestamp', String(timestamp));
   formData.append('signature', signature);
-  formData.append('type', 'upload');
+  formData.append('format', 'pdf');
   if (folder) formData.append('folder', folder);
 
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload`,
+    `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
     { method: 'POST', body: formData },
   );
 

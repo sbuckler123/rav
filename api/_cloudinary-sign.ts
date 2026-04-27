@@ -26,10 +26,19 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
   const folder      = folderParam ?? process.env.CLOUDINARY_UPLOAD_FOLDER ?? null;
 
   const timestamp = Math.round(Date.now() / 1000);
-  const params: Record<string, string | number> = { timestamp, type: 'upload' };
+
+  // Params that will be signed AND sent by the client to Cloudinary.
+  // Excluded from signing: file, api_key, signature, resource_type, cloud_name.
+  const params: Record<string, string | number> = { timestamp };
+  if (folderParam === 'pdf') {
+    params.format = 'pdf';
+  } else {
+    params.type = 'upload';
+  }
   if (folder) params.folder = folder;
 
   res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({
     timestamp,
     signature: sign(params),
