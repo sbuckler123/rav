@@ -1,10 +1,42 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CalendarDays, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, CalendarDays, FileText, Video, Images, FileDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAlHaperek } from '@/hooks/useQueries';
-import type { AlHaperekItem } from '@/api/getAlHaperek';
+import type { AlHaperekItem, ContentBlock } from '@/api/getAlHaperek';
+
+type BlockType = ContentBlock['type'];
+
+const TYPE_CONFIG: Record<BlockType, {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  bar: string;
+  bg: string;
+  iconCls: string;
+}> = {
+  video:  { label: 'וידאו',  Icon: Video,    bar: 'bg-red-500',    bg: 'bg-red-50',    iconCls: 'text-red-500'    },
+  pdf:    { label: 'PDF',    Icon: FileDown, bar: 'bg-orange-500', bg: 'bg-orange-50', iconCls: 'text-orange-500' },
+  images: { label: 'תמונות', Icon: Images,   bar: 'bg-green-500',  bg: 'bg-green-50',  iconCls: 'text-green-500'  },
+  text:   { label: 'טקסט',  Icon: FileText, bar: 'bg-blue-500',   bg: 'bg-blue-50',   iconCls: 'text-blue-500'   },
+};
+
+function primaryType(blocks: ContentBlock[]): BlockType | null {
+  for (const t of ['video', 'pdf', 'images', 'text'] as BlockType[]) {
+    if (blocks.some(b => b.type === t)) return t;
+  }
+  return null;
+}
+
+function ContentTypeBadge({ blocks }: { blocks: ContentBlock[] }) {
+  const t = primaryType(blocks);
+  if (!t) return null;
+  const { label, Icon, bg, iconCls } = TYPE_CONFIG[t];
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md ${bg} ${iconCls}`}>
+      <Icon className="h-3 w-3" />{label}
+    </span>
+  );
+}
 
 function formatDate(raw?: string) {
   if (!raw) return '';
@@ -14,59 +46,41 @@ function formatDate(raw?: string) {
 }
 
 function ItemCard({ item }: { item: AlHaperekItem }) {
+  const t = primaryType(item.blocks);
+  const barColor = t ? TYPE_CONFIG[t].bar : 'bg-border';
+
   return (
-    <Card className="flex flex-col overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group border border-border h-full">
-      <div className="w-full aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 flex-shrink-0">
-        {item.coverImage ? (
-          <img
-            src={item.coverImage}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <FileText className="h-10 w-10 text-primary/30" />
+    <Link to={`/al-haperek/${item.linkId}`} className="block group h-full">
+      <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className={`h-1 w-full flex-shrink-0 ${barColor}`} />
+        <div className="flex flex-col flex-1 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <ContentTypeBadge blocks={item.blocks} />
+            {item.date && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                <CalendarDays className="h-3 w-3" />
+                {formatDate(item.date)}
+              </span>
+            )}
           </div>
-        )}
-      </div>
-
-      <CardContent className="flex flex-col flex-1 p-4 sm:p-5">
-        {item.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {item.tags.slice(0, 2).map(t => (
-              <Badge key={t} variant="secondary" className="text-[10px] px-2 py-0.5">{t}</Badge>
-            ))}
-          </div>
-        )}
-
-        <Link to={`/al-haperek/${item.linkId}`}>
-          <h3 className="font-serif font-bold text-base sm:text-lg leading-snug text-primary hover:text-secondary transition-colors line-clamp-2 mb-2">
+          {item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {item.tags.slice(0, 2).map(tag => (
+                <Badge key={tag} variant="secondary" className="text-[10px] px-2 py-0.5">{tag}</Badge>
+              ))}
+            </div>
+          )}
+          <h3 className="font-serif font-bold text-base sm:text-lg leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-2 flex-1">
             {item.title}
           </h3>
-        </Link>
-
-        {item.summary && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-1 mb-3">
-            {item.summary}
-          </p>
-        )}
-
-        <div className="mt-auto space-y-3">
-          {item.date && (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <CalendarDays className="h-3 w-3" />
-              {formatDate(item.date)}
+          {item.summary && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
+              {item.summary}
             </p>
           )}
-          <Link to={`/al-haperek/${item.linkId}`}>
-            <Button size="sm" variant="outline" className="w-full hover:bg-primary hover:text-white transition-colors">
-              לקריאה המלאה
-            </Button>
-          </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Link>
   );
 }
 
@@ -96,7 +110,7 @@ export default function AlHaperekSection() {
         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3].map(i => (
-              <div key={i} className="rounded-xl bg-muted animate-pulse aspect-[4/3]" />
+              <div key={i} className="rounded-xl bg-muted animate-pulse h-44" />
             ))}
           </div>
         ) : (
