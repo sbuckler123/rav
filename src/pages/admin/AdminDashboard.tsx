@@ -8,7 +8,7 @@ import { getEvents } from '@/api/getEvents';
 import { getAlHaperekList } from '@/api/getAlHaperek';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
-  Clock, ChevronLeft, ArrowLeft, CheckCircle2, XCircle, Newspaper,
+  Clock, ChevronLeft, ArrowLeft, Newspaper,
   Video, Tag, Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -55,17 +55,20 @@ function StatCard({
   icon: any; iconBg: string; iconColor: string; to: string;
 }) {
   return (
-    <Link to={to}>
-      <div className="bg-white rounded-xl border border-border p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
-        <div className="flex items-start justify-between mb-4">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', iconBg)}>
-            <Icon className={cn('h-5 w-5', iconColor)} />
+    <Link to={to} className="block h-full">
+      <div className="h-full bg-white rounded-xl border border-border p-4 sm:p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group flex flex-col">
+        <div className="flex items-start justify-between mb-3">
+          <div className={cn('w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0', iconBg)}>
+            <Icon className={cn('h-4 w-4 sm:h-5 sm:w-5', iconColor)} />
           </div>
-          <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         </div>
-        <p className="text-2xl sm:text-3xl font-bold text-primary">{value}</p>
-        <p className="text-sm font-medium text-primary mt-0.5">{label}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+        <div className="mt-auto">
+          <p className="text-2xl sm:text-3xl font-bold text-primary">{value}</p>
+          <p className="text-sm font-medium text-primary mt-0.5">{label}</p>
+          {/* reserve space so cards without sub don't shrink */}
+          <p className="text-xs text-muted-foreground mt-0.5 min-h-[1rem]">{sub ?? ''}</p>
+        </div>
       </div>
     </Link>
   );
@@ -129,27 +132,27 @@ export default function AdminDashboard() {
   const greeting = hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">{greeting}, {user?.name} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {now.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-primary">{greeting}, {user?.name} 👋</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {now.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
       </div>
 
       {/* Main stat cards */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white rounded-xl border border-border p-5 h-32 animate-pulse bg-muted" />
+        /* 5 skeletons, last spans 2 cols on 2-col mobile */
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="bg-white rounded-xl border border-border p-4 sm:p-5 h-28 sm:h-32 animate-pulse bg-muted" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        /* last card spans 2 cols when grid is 2-col so it doesn't look orphaned */
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
           <StatCard
             label='שו"ת'
             value={stats.totalQuestions}
@@ -165,47 +168,47 @@ export default function AdminDashboard() {
             sub={`${stats.upcomingShiurim} שיעורים קרובים`}
             icon={CalendarDays}
             iconBg="bg-secondary/10"
-            iconColor="text-secondary"
+            iconColor="text-secondary-foreground"
             to="/admin/shiurim"
           />
           <StatCard
             label="הגות ופסיקה"
             value={stats.totalArticles}
             icon={BookOpen}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
             to="/admin/articles"
           />
           <StatCard
             label="יומן פעילות"
             value={stats.totalEvents}
             icon={Tv2}
-            iconBg="bg-purple-50"
-            iconColor="text-purple-600"
+            iconBg="bg-secondary/10"
+            iconColor="text-secondary-foreground"
             to="/admin/events"
           />
           <StatCard
             label="על הפרק"
             value={stats.totalAlHaperek}
             icon={Newspaper}
-            iconBg="bg-orange-50"
-            iconColor="text-orange-600"
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
             to="/admin/al-haperek"
           />
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-5 sm:gap-6">
 
         {/* Recent questions */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h2 className="font-semibold text-primary flex items-center gap-2">
-              <MessageCircleQuestion className="h-4 w-4 text-secondary" />
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border">
+            <h2 className="font-semibold text-primary flex items-center gap-2 text-sm sm:text-base">
+              <MessageCircleQuestion className="h-4 w-4 text-secondary flex-shrink-0" />
               שאלות אחרונות
             </h2>
             <Link to="/admin/questions">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground min-h-[36px]">
                 לכל השאלות
                 <ArrowLeft className="h-3.5 w-3.5" />
               </Button>
@@ -215,7 +218,7 @@ export default function AdminDashboard() {
           {loading ? (
             <div className="divide-y divide-border">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-14 px-5 flex items-center">
+                <div key={i} className="h-14 px-4 sm:px-5 flex items-center">
                   <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
                 </div>
               ))}
@@ -228,7 +231,7 @@ export default function AdminDashboard() {
                 <Link
                   key={q.id}
                   to={`/admin/questions/${q.id}`}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-muted/40 transition-colors group"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-muted/40 transition-colors group min-h-[56px]"
                 >
                   <div className={cn(
                     'w-2 h-2 rounded-full flex-shrink-0',
@@ -256,9 +259,9 @@ export default function AdminDashboard() {
         <div className="space-y-4">
 
           {/* Questions breakdown */}
-          <div className="bg-white rounded-xl border border-border p-5">
-            <h2 className="font-semibold text-primary mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-secondary" />
+          <div className="bg-white rounded-xl border border-border p-4 sm:p-5">
+            <h2 className="font-semibold text-primary mb-3 flex items-center gap-2 text-sm sm:text-base">
+              <Clock className="h-4 w-4 text-secondary flex-shrink-0" />
               סטטוס שאלות
             </h2>
             {loading ? (
@@ -273,7 +276,7 @@ export default function AdminDashboard() {
               </>
             )}
             <Link to="/admin/questions?status=ממתין" className="mt-3 block">
-              <Button size="sm" className="w-full bg-secondary text-primary hover:bg-secondary/90 gap-2 mt-2">
+              <Button size="sm" className="w-full bg-secondary text-primary hover:bg-secondary/90 gap-2 mt-2 min-h-[40px]">
                 <MessageCircleQuestion className="h-4 w-4" />
                 ענה על שאלות ממתינות
               </Button>
@@ -281,23 +284,24 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick actions */}
-          <div className="bg-white rounded-xl border border-border p-5">
-            <h2 className="font-semibold text-primary mb-3">פעולות מהירות</h2>
-            <div className="space-y-1.5">
+          <div className="bg-white rounded-xl border border-border p-4 sm:p-5">
+            <h2 className="font-semibold text-primary mb-3 text-sm sm:text-base">פעולות מהירות</h2>
+            {/* 2 columns on mobile/tablet, 1 column when in the sidebar column on desktop */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5">
               {[
-                { label: 'שו"ת',          to: '/admin/questions',    icon: MessageCircleQuestion, color: 'text-primary'   },
-                { label: 'לוח אירועים',  to: '/admin/shiurim',       icon: CalendarDays,          color: 'text-secondary' },
-                { label: 'שיעורי תורה', to: '/admin/videos',        icon: Video,                 color: 'text-primary'   },
-                { label: 'יומן פעילות', to: '/admin/events',        icon: Tv2,                   color: 'text-secondary' },
-                { label: 'הגות ופסיקה', to: '/admin/articles',      icon: BookOpen,              color: 'text-primary'   },
-                { label: 'על הפרק',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary' },
-                { label: 'קטגוריות',     to: '/admin/categories',    icon: Tag,                   color: 'text-primary'   },
-                { label: 'משתמשים',      to: '/admin/users',         icon: Users,                 color: 'text-secondary' },
+                { label: 'שו"ת',          to: '/admin/questions',    icon: MessageCircleQuestion, color: 'text-primary'            },
+                { label: 'לוח אירועים',  to: '/admin/shiurim',       icon: CalendarDays,          color: 'text-secondary-foreground'},
+                { label: 'שיעורי תורה', to: '/admin/videos',        icon: Video,                 color: 'text-primary'            },
+                { label: 'יומן פעילות', to: '/admin/events',        icon: Tv2,                   color: 'text-secondary-foreground'},
+                { label: 'הגות ופסיקה', to: '/admin/articles',      icon: BookOpen,              color: 'text-primary'            },
+                { label: 'על הפרק',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary-foreground'},
+                { label: 'קטגוריות',     to: '/admin/categories',    icon: Tag,                   color: 'text-primary'            },
+                { label: 'משתמשים',      to: '/admin/users',         icon: Users,                 color: 'text-secondary-foreground'},
               ].map(item => (
                 <Link key={item.to} to={item.to}>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2 min-h-[40px]">
-                    <item.icon className={cn('h-4 w-4', item.color)} />
-                    {item.label}
+                  <Button variant="outline" size="sm" className="w-full justify-start gap-2 min-h-[40px] text-xs sm:text-sm">
+                    <item.icon className={cn('h-4 w-4 flex-shrink-0', item.color)} />
+                    <span className="truncate">{item.label}</span>
                   </Button>
                 </Link>
               ))}
