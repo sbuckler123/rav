@@ -5,9 +5,10 @@ import { getAllQuestions } from '@/api/adminQuestionsApi';
 import { getShiurim } from '@/api/getShiurim';
 import { getArticles } from '@/api/getArticles';
 import { getEvents } from '@/api/getEvents';
+import { getAlHaperekList } from '@/api/getAlHaperek';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
-  Clock, ChevronLeft, ArrowLeft, CheckCircle2, XCircle,
+  Clock, ChevronLeft, ArrowLeft, CheckCircle2, XCircle, Newspaper,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface Stats {
   upcomingShiurim: number;
   totalArticles: number;
   totalEvents: number;
+  totalAlHaperek: number;
 }
 
 interface RecentQuestion {
@@ -89,8 +91,9 @@ export default function AdminDashboard() {
       getShiurim(),
       getArticles(),
       getEvents(),
+      getAlHaperekList(),
     ])
-      .then(([{ questions }, { shiurim }, { articles }, { events }]) => {
+      .then(([{ questions }, { shiurim }, { articles }, { events }, { items: alHaperekItems }]) => {
         const now = new Date();
         const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= now);
 
@@ -103,6 +106,7 @@ export default function AdminDashboard() {
           upcomingShiurim: upcoming.length,
           totalArticles: articles.length,
           totalEvents: events.length,
+          totalAlHaperek: alHaperekItems.length,
         });
 
         setRecentQuestions(
@@ -144,7 +148,7 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
           <StatCard
             label='שו"ת'
             value={stats.totalQuestions}
@@ -178,6 +182,14 @@ export default function AdminDashboard() {
             iconBg="bg-purple-50"
             iconColor="text-purple-600"
             to="/admin/events"
+          />
+          <StatCard
+            label="על הפרק"
+            value={stats.totalAlHaperek}
+            icon={Newspaper}
+            iconBg="bg-orange-50"
+            iconColor="text-orange-600"
+            to="/admin/al-haperek"
           />
         </div>
       )}
@@ -272,9 +284,10 @@ export default function AdminDashboard() {
             <h2 className="font-semibold text-primary mb-3">פעולות מהירות</h2>
             <div className="space-y-2">
               {[
-                { label: 'הוסף שיעור',   to: '/admin/shiurim',   icon: CalendarDays, color: 'text-secondary' },
-                { label: 'הוסף אירוע',   to: '/admin/events',    icon: Tv2,          color: 'text-purple-600' },
-                { label: 'הוסף מאמר',    to: '/admin/articles',  icon: BookOpen,     color: 'text-blue-600' },
+                { label: 'הוסף שיעור',       to: '/admin/shiurim',        icon: CalendarDays, color: 'text-secondary'  },
+                { label: 'הוסף אירוע',       to: '/admin/events',         icon: Tv2,          color: 'text-purple-600' },
+                { label: 'הוסף מאמר',        to: '/admin/articles',       icon: BookOpen,     color: 'text-blue-600'   },
+                { label: 'פריט על הפרק חדש', to: '/admin/al-haperek/new', icon: Newspaper,    color: 'text-orange-600' },
               ].map(item => (
                 <Link key={item.to} to={item.to}>
                   <Button variant="outline" size="sm" className="w-full justify-start gap-2 min-h-[40px] mb-1">
