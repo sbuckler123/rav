@@ -35,7 +35,7 @@ export default function Header() {
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-3 min-w-0 relative z-10"
+              className="flex items-center gap-3 min-w-0 relative z-10 focus:outline-none focus-visible:ring-1 focus-visible:ring-secondary/60 rounded-sm"
               aria-label="דף הבית - הרב קלמן מאיר בר"
               onClick={scrollTop}
             >
@@ -108,7 +108,7 @@ export default function Header() {
                 key={link.href}
                 to={link.href}
                 onClick={scrollTop}
-                className={`group relative text-base xl:text-lg transition-colors pb-1 whitespace-nowrap ${
+                className={`group relative text-base xl:text-lg transition-colors pb-1 whitespace-nowrap focus:outline-none focus-visible:ring-1 focus-visible:ring-secondary/60 rounded-sm ${
                   isActive(link.href)
                     ? 'text-secondary font-semibold after:absolute after:bottom-0 after:right-0 after:left-0 after:h-0.5 after:bg-secondary after:rounded-full'
                     : 'hover:text-secondary'
@@ -149,7 +149,7 @@ export default function Header() {
                   <Link
                     key={link.href}
                     to={link.href}
-                    className={`flex items-center gap-3 py-3 px-3 rounded-lg transition-colors min-h-[56px] ${
+                    className={`flex items-center gap-3 py-3 px-3 rounded-lg transition-colors min-h-[56px] focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40 ${
                       isActive(link.href)
                         ? 'text-secondary font-semibold bg-white/10'
                         : 'hover:text-secondary hover:bg-white/5'
@@ -175,7 +175,7 @@ export default function Header() {
                 <Link
                   to="/shaal-et-harav"
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg bg-secondary text-primary hover:bg-secondary/90 transition-colors text-base font-semibold min-h-[48px]"
+                  className="flex items-center gap-3 py-3 px-3 rounded-lg bg-secondary text-primary hover:bg-secondary/90 transition-colors text-base font-semibold min-h-[48px] focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
                 >
                   <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">שאל את הרב</span>
@@ -183,7 +183,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => { setNewsletterOpen(true); setIsMenuOpen(false); }}
-                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px] w-full text-right"
+                  className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-white/5 hover:text-secondary transition-colors text-base min-h-[48px] w-full text-right focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
                 >
                   <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">הצטרפות לניוזלטר</span>
