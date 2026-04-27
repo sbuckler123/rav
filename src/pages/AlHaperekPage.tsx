@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, X, FileText, Video, Images, FileDown, CalendarDays, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, X, FileText, Video, Images, FileDown, CalendarDays, ChevronLeft, ChevronRight, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SEO from '@/components/SEO';
@@ -18,9 +18,9 @@ type BlockType = ContentBlock['type'];
 const TYPE_CONFIG: Record<BlockType, {
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
-  bar: string;     // top border color
-  bg: string;      // icon background
-  iconCls: string; // icon color
+  bar: string;
+  bg: string;
+  iconCls: string;
 }> = {
   video:  { label: 'וידאו',  Icon: Video,    bar: 'bg-red-500',    bg: 'bg-red-50',    iconCls: 'text-red-500'    },
   pdf:    { label: 'PDF',    Icon: FileDown, bar: 'bg-orange-500', bg: 'bg-orange-50', iconCls: 'text-orange-500' },
@@ -53,46 +53,52 @@ function formatDate(raw?: string) {
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-// ── Featured card — item 0, full-width on primary background ─────────────────
+// ── Featured card — large typographic treatment, no box ──────────────────────
 
 function FeaturedCard({ item }: { item: AlHaperekItem }) {
-  const t = primaryType(item.blocks);
   return (
-    <Link to={`/al-haperek/${item.linkId}`} className="block group">
-      <div className="bg-primary rounded-2xl p-6 sm:p-8 hover:bg-primary/90 transition-colors duration-300">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {t && (
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide bg-white/15 text-white`}>
-              {(() => { const { Icon, label } = TYPE_CONFIG[t]; return <><Icon className="h-3 w-3" />{label}</>; })()}
-            </span>
-          )}
-          {item.tags.slice(0, 3).map(tag => (
-            <Badge key={tag} className="bg-secondary text-primary text-[10px] border-0 font-semibold">{tag}</Badge>
-          ))}
-        </div>
+    <Link to={`/al-haperek/${item.linkId}`} className="block group mb-8 pb-8 border-b-2 border-border">
+      {/* Eyebrow */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-6 h-0.5 bg-secondary flex-shrink-0" />
+        <span className="text-[11px] font-bold text-secondary uppercase tracking-[0.18em] flex-shrink-0">
+          העדכון האחרון
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
-        <h2 className="font-serif font-bold text-2xl sm:text-3xl md:text-4xl leading-snug text-white group-hover:text-secondary transition-colors mb-4">
-          {item.title}
-        </h2>
+      {/* Type + tags */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <ContentTypeBadge blocks={item.blocks} />
+        {item.tags.slice(0, 3).map(tag => (
+          <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+        ))}
+      </div>
 
-        {item.summary && (
-          <p className="text-white/65 text-sm sm:text-base leading-relaxed line-clamp-3 mb-6">
-            {item.summary}
-          </p>
-        )}
+      {/* Title */}
+      <h2 className="font-serif font-bold text-3xl sm:text-4xl leading-tight text-primary group-hover:text-secondary transition-colors duration-200 mb-4">
+        {item.title}
+      </h2>
 
-        <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/15">
-          {item.date && (
-            <span className="flex items-center gap-1.5 text-sm text-white/50">
-              <CalendarDays className="h-4 w-4" />
-              {formatDate(item.date)}
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary group-hover:gap-3 transition-all duration-200 mr-auto">
-            לקריאה המלאה
-            <ArrowLeft className="h-4 w-4" />
+      {/* Summary with accent border */}
+      {item.summary && (
+        <p className="text-base text-foreground/60 leading-relaxed line-clamp-3 border-r-[3px] border-secondary/40 pr-4 mb-5">
+          {item.summary}
+        </p>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-4">
+        {item.date && (
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {formatDate(item.date)}
           </span>
-        </div>
+        )}
+        <span className="text-sm font-semibold text-secondary inline-flex items-center gap-1.5 group-hover:gap-3 transition-all duration-200 mr-auto">
+          לקריאה המלאה
+          <ArrowLeft className="h-4 w-4" />
+        </span>
       </div>
     </Link>
   );
@@ -106,7 +112,6 @@ function SecondaryCard({ item }: { item: AlHaperekItem }) {
   return (
     <Link to={`/al-haperek/${item.linkId}`} className="block group h-full">
       <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-        {/* Colored top bar by content type */}
         <div className={`h-1 w-full ${barColor}`} />
         <div className="flex flex-col flex-1 p-4 sm:p-5">
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -136,19 +141,19 @@ function SecondaryCard({ item }: { item: AlHaperekItem }) {
   );
 }
 
-// ── List row — items 5+, compact horizontal rows ──────────────────────────────
+// ── List row — items 5+, compact rows ────────────────────────────────────────
 
 function ListRow({ item }: { item: AlHaperekItem }) {
   const t = primaryType(item.blocks);
-  const { bg, iconCls, Icon } = t ? TYPE_CONFIG[t] : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText };
+  const { bg, iconCls, Icon } = t
+    ? TYPE_CONFIG[t]
+    : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText };
   return (
     <Link to={`/al-haperek/${item.linkId}`} className="block group">
       <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-        {/* Content type icon */}
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${bg}`}>
           <Icon className={`h-4 w-4 ${iconCls}`} />
         </div>
-        {/* Text */}
         <div className="flex-1 min-w-0">
           <h3 className="font-serif font-bold text-sm sm:text-base text-primary group-hover:text-secondary transition-colors line-clamp-1">
             {item.title}
@@ -159,8 +164,7 @@ function ListRow({ item }: { item: AlHaperekItem }) {
             </p>
           )}
         </div>
-        {/* Tag + date */}
-        <div className="flex-shrink-0 text-left sm:text-right space-y-0.5">
+        <div className="flex-shrink-0 space-y-0.5 text-left">
           {item.tags.length > 0 && (
             <p className="text-[10px] font-semibold text-secondary uppercase tracking-wide">{item.tags[0]}</p>
           )}
@@ -170,6 +174,113 @@ function ListRow({ item }: { item: AlHaperekItem }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+
+function Sidebar({
+  search, setSearch,
+  selectedTag, setSelectedTag,
+  allTags, items, filtered,
+  resetPage,
+}: {
+  search: string;
+  setSearch: (v: string) => void;
+  selectedTag: string;
+  setSelectedTag: (v: string) => void;
+  allTags: string[];
+  items: AlHaperekItem[];
+  filtered: AlHaperekItem[];
+  resetPage: () => void;
+}) {
+  return (
+    <aside className="bg-[#F7F4EE] rounded-2xl border border-border overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/60">
+        <SlidersHorizontal className="h-4 w-4 text-secondary flex-shrink-0" />
+        <span className="text-sm font-bold text-primary">חיפוש וסינון</span>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 py-4 border-b border-border/60">
+        <div className="relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="search"
+            value={search}
+            onChange={e => { setSearch(e.target.value); resetPage(); }}
+            placeholder="חיפוש..."
+            className="w-full rounded-xl border border-border bg-white pr-9 pl-8 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            dir="rtl"
+          />
+          {search && (
+            <button
+              onClick={() => { setSearch(''); resetPage(); }}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tag filter */}
+      {allTags.length > 0 && (
+        <div className="px-4 py-4 border-b border-border/60">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">נושאים</p>
+          <div className="space-y-1">
+            <button
+              onClick={() => { setSelectedTag(''); resetPage(); }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-right ${
+                !selectedTag
+                  ? 'bg-primary text-white'
+                  : 'text-foreground hover:bg-white hover:shadow-sm'
+              }`}
+            >
+              <span>הכל</span>
+              <span className={`text-xs ${!selectedTag ? 'text-white/60' : 'text-muted-foreground'}`}>
+                {items.length}
+              </span>
+            </button>
+            {allTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => { setSelectedTag(selectedTag === tag ? '' : tag); resetPage(); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors text-right ${
+                  selectedTag === tag
+                    ? 'bg-primary text-white font-medium'
+                    : 'text-foreground hover:bg-white hover:shadow-sm'
+                }`}
+              >
+                <span>{tag}</span>
+                <span className={`text-xs ${selectedTag === tag ? 'text-white/60' : 'text-muted-foreground'}`}>
+                  {items.filter(i => i.tags.includes(tag)).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Result count */}
+      <div className="px-5 py-4">
+        <p className="text-sm text-muted-foreground">
+          נמצאו{' '}
+          <span className="font-bold text-primary">{filtered.length}</span>{' '}
+          פריטים
+        </p>
+        {(search || selectedTag) && (
+          <button
+            onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
+            className="mt-2 text-xs text-secondary hover:underline flex items-center gap-1"
+          >
+            <X className="h-3 w-3" />
+            נקה סינון
+          </button>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -206,154 +317,103 @@ export default function AlHaperekPage() {
       <PageHeader title="על הפרק" subtitle={PAGE_DESC['/al-haperek']} />
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
+        <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8 lg:items-start">
 
-        {/* ── Dark filter bar ── */}
-        <div className="mb-8 rounded-2xl bg-primary overflow-hidden">
-          <div className="p-4 sm:p-5">
-            <div className="relative">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
-              <input
-                type="search"
-                value={search}
-                onChange={e => { setSearch(e.target.value); resetPage(); }}
-                placeholder="חיפוש לפי כותרת או תיאור..."
-                className="w-full rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-white/35 pr-11 pl-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-white/30 transition-all min-h-[48px]"
-                dir="rtl"
-              />
-              {search && (
-                <button
-                  onClick={() => { setSearch(''); resetPage(); }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-white/15 text-white/50 hover:text-white transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+          {/* Sidebar — top on mobile, left column on desktop (col-start-2 in RTL = left) */}
+          <div className="mb-6 lg:mb-0 lg:col-start-2 lg:sticky lg:top-6">
+            <Sidebar
+              search={search} setSearch={setSearch}
+              selectedTag={selectedTag} setSelectedTag={setSelectedTag}
+              allTags={allTags} items={items} filtered={filtered}
+              resetPage={resetPage}
+            />
           </div>
 
-          {allTags.length > 0 && (
-            <div className="px-4 sm:px-5 pb-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => { setSelectedTag(''); resetPage(); }}
-                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
-                  !selectedTag
-                    ? 'bg-secondary text-primary'
-                    : 'border border-white/25 text-white/65 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                הכל
-                <span className="mr-1 text-xs opacity-70">({items.length})</span>
-              </button>
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => { setSelectedTag(selectedTag === tag ? '' : tag); resetPage(); }}
-                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
-                    selectedTag === tag
-                      ? 'bg-secondary text-primary'
-                      : 'border border-white/25 text-white/65 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {tag}
-                  <span className="mr-1 text-xs opacity-70">({items.filter(i => i.tags.includes(tag)).length})</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Main content — right column on desktop */}
+          <div className="lg:col-start-1">
+            {isLoading ? (
+              <div className="space-y-6">
+                <div className="space-y-3 pb-8 border-b-2 border-border">
+                  <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-10 w-3/4 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-44 rounded-xl bg-muted animate-pulse" />)}
+                </div>
+                <div className="rounded-xl bg-muted animate-pulse h-40" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p className="text-lg mb-2">לא נמצאו פריטים</p>
+                {(search || selectedTag) && (
+                  <button
+                    onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
+                    className="text-sm text-secondary hover:underline"
+                  >
+                    נקה סינון
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Featured */}
+                <FeaturedCard item={visible[0]} />
 
-          <div className="px-4 sm:px-5 pb-4 flex items-center justify-between border-t border-white/10 pt-3">
-            <span className="text-sm text-white/50">
-              נמצאו <span className="text-white font-semibold">{filtered.length}</span> פריטים
-            </span>
-            {(search || selectedTag) && (
-              <button
-                onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
-                className="text-xs text-white/45 hover:text-white/80 flex items-center gap-1 transition-colors"
-              >
-                <X className="h-3 w-3" />נקה סינון
-              </button>
+                {/* Secondary grid — items 1–4 */}
+                {visible.length > 1 && (
+                  <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                    {visible.slice(1, 5).map(item => (
+                      <SecondaryCard key={item.linkId} item={item} />
+                    ))}
+                  </div>
+                )}
+
+                {/* List — items 5+ */}
+                {visible.length > 5 && (
+                  <div className="bg-white rounded-xl border border-border overflow-hidden mb-8">
+                    {visible.slice(5).map(item => (
+                      <ListRow key={item.linkId} item={item} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <nav className="flex justify-center items-center gap-2 mt-4 flex-wrap" aria-label="ניווט בין דפים">
+                    <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page <= 1} onClick={() => setPage(p => p - 1)} aria-label="דף קודם">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                      .reduce<(number | '...')[]>((acc, n, i, arr) => {
+                        if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
+                        acc.push(n);
+                        return acc;
+                      }, [])
+                      .map((n, i) =>
+                        n === '...' ? (
+                          <span key={`e${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                        ) : (
+                          <Button key={n} variant={n === page ? 'default' : 'outline'} onClick={() => setPage(n as number)}
+                            className={`rounded-full min-h-[44px] min-w-[44px] w-11 h-11 ${n === page ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`}
+                            aria-label={`דף ${n}`} aria-current={n === page ? 'page' : undefined}>
+                            {n}
+                          </Button>
+                        )
+                      )}
+                    <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} aria-label="דף הבא">
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </nav>
+                )}
+              </>
             )}
           </div>
+
         </div>
-
-        {/* ── Content ── */}
-        {isLoading ? (
-          <div className="space-y-6">
-            <div className="h-56 sm:h-72 rounded-2xl bg-primary/20 animate-pulse" />
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-44 rounded-xl bg-muted animate-pulse" />)}
-            </div>
-            <div className="rounded-xl bg-muted animate-pulse h-48" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p className="text-lg mb-2">לא נמצאו פריטים</p>
-            {(search || selectedTag) && (
-              <button
-                onClick={() => { setSearch(''); setSelectedTag(''); resetPage(); }}
-                className="text-sm text-secondary hover:underline"
-              >
-                נקה סינון
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Featured */}
-            <div className="mb-6">
-              <FeaturedCard item={visible[0]} />
-            </div>
-
-            {/* Secondary grid — items 1–4 */}
-            {visible.length > 1 && (
-              <div className="grid sm:grid-cols-2 gap-4 mb-6">
-                {visible.slice(1, 5).map(item => (
-                  <SecondaryCard key={item.linkId} item={item} />
-                ))}
-              </div>
-            )}
-
-            {/* List — items 5+ */}
-            {visible.length > 5 && (
-              <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
-                {visible.slice(5).map(item => (
-                  <ListRow key={item.linkId} item={item} />
-                ))}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <nav className="flex justify-center items-center gap-2 mt-6 flex-wrap" aria-label="ניווט בין דפים">
-                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page <= 1} onClick={() => setPage(p => p - 1)} aria-label="דף קודם">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
-                  .reduce<(number | '...')[]>((acc, n, i, arr) => {
-                    if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
-                    acc.push(n);
-                    return acc;
-                  }, [])
-                  .map((n, i) =>
-                    n === '...' ? (
-                      <span key={`e${i}`} className="px-1 text-muted-foreground text-sm">…</span>
-                    ) : (
-                      <Button key={n} variant={n === page ? 'default' : 'outline'} onClick={() => setPage(n as number)}
-                        className={`rounded-full min-h-[44px] min-w-[44px] w-11 h-11 ${n === page ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`}
-                        aria-label={`דף ${n}`} aria-current={n === page ? 'page' : undefined}>
-                        {n}
-                      </Button>
-                    )
-                  )}
-                <Button variant="outline" size="icon" className="rounded-full min-h-[44px] min-w-[44px]" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} aria-label="דף הבא">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </nav>
-            )}
-          </>
-        )}
       </main>
     </div>
   );
