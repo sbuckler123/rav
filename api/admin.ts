@@ -18,6 +18,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { requireAuth } from './_verifyAuth';
+import { captureServerError } from './_sentry';
 import { handle as handleQuestions }      from './_admin-questions';
 import { handle as handleArticles }       from './_admin-articles';
 import { handle as handleEvents }         from './_admin-events';
@@ -30,10 +31,11 @@ import { handle as handleAlHaperek }      from './_admin-al-haperek';
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
 
+  let section: string | null = null;
   try {
-    const url     = new URL(req.url ?? '/', 'https://placeholder');
-    const section = url.searchParams.get('section');
-    const type    = url.searchParams.get('type');
+    const url = new URL(req.url ?? '/', 'https://placeholder');
+    section   = url.searchParams.get('section');
+    const type = url.searchParams.get('type');
 
     // The public follow-up reply bypasses auth (submitted by question askers)
     const isPublicReply =
@@ -57,10 +59,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         res.end(JSON.stringify({ error: 'Unknown section' }));
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    captureServerError(err, { handler: 'admin', section: section ?? 'unknown', method: req.method ?? '' });
     if (!res.headersSent) {
       res.statusCode = 500;
-      res.end(JSON.stringify({ error: msg }));
+      res.end(JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }));
     }
   }
 }

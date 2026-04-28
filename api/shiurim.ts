@@ -6,6 +6,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -84,7 +85,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     res.statusCode = 200;
     res.end(JSON.stringify(shiurim));
-  } catch {
+  } catch (err) {
+    captureServerError(err, { handler: 'shiurim', method: req.method ?? '', url: req.url ?? '' });
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Failed to fetch shiurim' }));
   }

@@ -7,6 +7,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { captureServerError } from './_sentry';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -180,6 +181,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.end(JSON.stringify(toEventList(eventsData, galleryMap)));
     }
   } catch (err) {
+    captureServerError(err, { handler: 'events', method: req.method ?? '', url: req.url ?? '' });
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Failed to fetch events' }));
   }

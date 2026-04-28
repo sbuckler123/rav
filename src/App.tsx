@@ -37,6 +37,7 @@ import ArticleDetailPage from '@/pages/ArticleDetailPage';
 import { Toaster } from '@/components/ui/sonner';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieBanner from '@/components/CookieBanner';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Admin
 import { AuthProvider } from '@/auth/AuthContext';
@@ -79,6 +80,7 @@ export default function App() {
           <Route
             path="/admin/*"
             element={
+              <ErrorBoundary>
               <ProtectedRoute>
                 <AdminLayout>
                   <Routes>
@@ -99,6 +101,7 @@ export default function App() {
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>
+              </ErrorBoundary>
             }
           />
 
@@ -106,6 +109,7 @@ export default function App() {
           <Route
             path="/*"
             element={
+              <ErrorBoundary>
               <div className="min-h-screen flex flex-col" dir="rtl">
                 <Header />
                 <AccessibilityWidget />
@@ -133,6 +137,7 @@ export default function App() {
                 </main>
                 <Footer />
               </div>
+              </ErrorBoundary>
             }
           />
 

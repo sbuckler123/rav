@@ -11,6 +11,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { createVerify, createPublicKey } from 'node:crypto';
+import { captureServerError } from './_sentry';
 
 // ─── JWKS cache (refreshed every 5 minutes) ──────────────────────────────────
 
@@ -84,6 +85,10 @@ export async function requireAuth(req: IncomingMessage, res: ServerResponse): Pr
     return true;
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
+    // Expired tokens are expected — only log unexpected failures
+    if (detail !== 'Token expired') {
+      captureServerError(err, { type: 'auth_failure', detail });
+    }
     res.statusCode = 401;
     res.end(JSON.stringify({ error: 'Unauthorized', detail }));
     return false;

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { registerTokenGetter, getBearerToken } from '@/api/tokenStore';
+import { setSentryUser } from '@/lib/sentry';
 
 export interface AdminUser {
   id: string;
@@ -46,6 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((data) => setAirtableUser(data ?? null))
       .catch(() => setAirtableUser(null));
   }, [isLoaded, isSignedIn, clerkUser]);
+
+  useEffect(() => {
+    setSentryUser(airtableUser);
+  }, [airtableUser]);
 
   const logout = () => signOut();
 

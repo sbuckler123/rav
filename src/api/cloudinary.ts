@@ -1,4 +1,5 @@
 import { apiFetch } from './apiFetch';
+import { captureUploadError } from '@/lib/sentry';
 
 type SignResponse = {
   timestamp: number;
@@ -28,8 +29,9 @@ export async function uploadToCloudinaryFile(file: File): Promise<string> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
     const msg = err?.error?.message ?? `Upload failed (${res.status})`;
-    console.error('Cloudinary PDF upload error:', msg, err);
-    throw new Error(msg);
+    const error = new Error(msg);
+    captureUploadError(error, { fileType: 'pdf', fileName: file.name, fileSize: file.size, detail: err });
+    throw error;
   }
 
   const data = await res.json() as { secure_url: string };
@@ -54,8 +56,11 @@ export async function uploadToCloudinary(file: File): Promise<string> {
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: { message?: string } })?.error?.message ?? 'Upload failed');
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    const msg = err?.error?.message ?? `Upload failed (${res.status})`;
+    const error = new Error(msg);
+    captureUploadError(error, { fileType: 'image', fileName: file.name, fileSize: file.size, detail: err });
+    throw error;
   }
 
   const data = await res.json() as { secure_url: string };
