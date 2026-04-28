@@ -301,7 +301,7 @@ export default function AdminEventsPage() {
           className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0"
         >
           <Plus className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">אירוע חדש</span>
+          <span className="hidden sm:inline">פעילות חדשה</span>
           <span className="sm:hidden">חדש</span>
         </Button>
       </div>
@@ -394,8 +394,8 @@ export default function AdminEventsPage() {
         <DialogContent className="relative max-w-lg">
           <DialogClose onClose={() => setDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>{editing ? 'עריכת אירוע' : 'אירוע חדש'}</DialogTitle>
-            <DialogDescription>{editing ? 'עדכן את פרטי האירוע' : 'הוסף אירוע חדש'}</DialogDescription>
+            <DialogTitle>{editing ? 'עריכת פעילות' : 'פעילות חדשה'}</DialogTitle>
+            <DialogDescription>{editing ? 'עדכן את פרטי הפעילות' : 'הוסף פעילות חדשה ליומן'}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pl-1">

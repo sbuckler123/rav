@@ -204,7 +204,7 @@ export default function AdminVideosPage() {
         </div>
         <Button onClick={openAdd} className="inline-flex items-center gap-2 h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
           <Plus className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">שיעור חדש</span>
+          <span className="hidden sm:inline">שיעור תורה חדש</span>
           <span className="sm:hidden">חדש</span>
         </Button>
       </div>
@@ -277,8 +277,8 @@ export default function AdminVideosPage() {
         <DialogContent className="relative max-w-lg">
           <DialogClose onClose={() => setDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>{editing ? 'עריכת שיעור וידאו' : 'שיעור וידאו חדש'}</DialogTitle>
-            <DialogDescription>{editing ? 'עדכן את פרטי השיעור' : 'הוסף שיעור וידאו חדש'}</DialogDescription>
+            <DialogTitle>{editing ? 'עריכת שיעור תורה' : 'שיעור תורה חדש'}</DialogTitle>
+            <DialogDescription>{editing ? 'עדכן את פרטי השיעור' : 'הוסף שיעור תורה חדש'}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 max-h-[65vh] overflow-y-auto ps-1">
