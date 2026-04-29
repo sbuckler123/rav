@@ -59,6 +59,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   try {
+    throw new Error('test sentry backend — remove after confirming');
     const [shiurimData, catsData] = await Promise.all([
       airtableFetch('שיעורים', {}, [{ field: 'תאריך', direction: 'asc' }]),
       airtableFetch('קטגוריות', {}),
