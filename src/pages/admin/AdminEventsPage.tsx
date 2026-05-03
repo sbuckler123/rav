@@ -16,6 +16,15 @@ import {
 } from '@/components/ui/dialog';
 import { getEventTypeStyle } from '@/lib/yoman';
 
+function formatDateDisplay(iso: string): string {
+  if (!iso) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    const [y, m, d] = iso.split('-');
+    return `${d}.${m}.${y}`;
+  }
+  return iso;
+}
+
 interface AdminEvent {
   id: string;
   title: string;
@@ -348,7 +357,7 @@ export default function AdminEventsPage() {
                     <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground mt-0.5">
                       {e.dateLocale && (
                         <span className="flex items-center gap-1">
-                          <CalendarDays className="h-3 w-3" />{e.dateLocale}
+                          <CalendarDays className="h-3 w-3" />{formatDateDisplay(e.dateLocale)}
                         </span>
                       )}
                       {e.location && (
@@ -457,9 +466,13 @@ export default function AdminEventsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>תאריך לועזי</Label>
-                <Input value={form.dateLocale} onChange={e => field('dateLocale', e.target.value)}
-                  placeholder="למשל: 15.03.2025"
-                  className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
+                <input
+                  type="date"
+                  value={form.dateLocale}
+                  onChange={e => field('dateLocale', e.target.value)}
+                  dir="ltr"
+                  className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>תאריך עברי</Label>

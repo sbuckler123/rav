@@ -282,7 +282,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         title:         extractField(f['כותרת']),
         eventType:     extractField(f['סוג אירוע']),
         dateHebrew:    extractField(f['תאריך עברי']),
-        dateLocale:    fromIsoDate(f['תאריך לועזי'] as string | undefined),
+        dateLocale:    extractField(f['תאריך לועזי']),
         location:      extractField(f['מיקום']),
         excerpt:       extractField(f['תקציר קצר']),
         linkId:        extractField(f['מזהה קישור']) || extractField(f['מזהה URL']),
