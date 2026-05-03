@@ -13,9 +13,33 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+/** Accept DD.MM.YYYY or YYYY-MM-DD; always return YYYY-MM-DD for Airtable date fields. */
+function toIsoDate(raw: string | undefined): string | undefined {
+  if (!raw?.trim()) return undefined;
+  const s = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const parts = s.split('.');
+  if (parts.length === 3) {
+    const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    if (!isNaN(Date.parse(iso))) return iso;
+  }
+  return undefined;
+}
+
+/** Format a YYYY-MM-DD string from Airtable to DD.MM.YYYY for display. */
+function fromIsoDate(raw: string | undefined): string {
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-');
+    return `${d}.${m}.${y}`;
+  }
+  return raw;
+}
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -52,7 +76,10 @@ async function atCreate(table: string, fields: Record<string, unknown>) {
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, typecast: true }),
   });
-  if (!res.ok) throw new Error(`Airtable create ${table}: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(`Airtable create ${table}: ${res.status} — ${body?.error?.message ?? JSON.stringify(body)}`);
+  }
   return res.json() as Promise<{ id: string }>;
 }
 
@@ -62,7 +89,10 @@ async function atUpdate(table: string, id: string, fields: Record<string, unknow
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, typecast: true }),
   });
-  if (!res.ok) throw new Error(`Airtable update ${table}: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(`Airtable update ${table}: ${res.status} — ${body?.error?.message ?? JSON.stringify(body)}`);
+  }
   return res.json();
 }
 
@@ -70,7 +100,10 @@ async function atDelete(table: string, id: string) {
   const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${id}`, {
     method: 'DELETE', headers: auth(),
   });
-  if (!res.ok) throw new Error(`Airtable delete ${table}: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(`Airtable delete ${table}: ${res.status} — ${body?.error?.message ?? JSON.stringify(body)}`);
+  }
   return res.json();
 }
 
@@ -181,7 +214,8 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (body.title?.trim())      fields['כותרת']        = body.title.trim();
       if (body.eventType?.trim())  fields['סוג אירוע']    = body.eventType.trim();
       if (body.dateHebrew?.trim()) fields['תאריך עברי']   = body.dateHebrew.trim();
-      if (body.dateLocale?.trim()) fields['תאריך לועזי']  = body.dateLocale.trim();
+      const patchDate = toIsoDate(body.dateLocale);
+      if (patchDate)               fields['תאריך לועזי']  = patchDate;
       if (body.location?.trim())   fields['מיקום']         = body.location.trim();
       if (body.excerpt?.trim())    fields['תקציר קצר']    = body.excerpt.trim();
       if (body.userId)             fields['עודכן על ידי'] = [body.userId];
@@ -200,7 +234,8 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       const fields: Record<string, unknown> = { 'כותרת': body.title.trim() };
       if (body.eventType?.trim())  fields['סוג אירוע']    = body.eventType.trim();
       if (body.dateHebrew?.trim()) fields['תאריך עברי']   = body.dateHebrew.trim();
-      if (body.dateLocale?.trim()) fields['תאריך לועזי']  = body.dateLocale.trim();
+      const createDate = toIsoDate(body.dateLocale);
+      if (createDate)              fields['תאריך לועזי']  = createDate;
       if (body.location?.trim())   fields['מיקום']         = body.location.trim();
       if (body.excerpt?.trim())    fields['תקציר קצר']    = body.excerpt.trim();
       if (body.userId) { fields['נוצר על ידי'] = [body.userId]; fields['עודכן על ידי'] = [body.userId]; }
@@ -247,7 +282,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         title:         extractField(f['כותרת']),
         eventType:     extractField(f['סוג אירוע']),
         dateHebrew:    extractField(f['תאריך עברי']),
-        dateLocale:    extractField(f['תאריך לועזי']),
+        dateLocale:    fromIsoDate(f['תאריך לועזי'] as string | undefined),
         location:      extractField(f['מיקום']),
         excerpt:       extractField(f['תקציר קצר']),
         linkId:        extractField(f['מזהה קישור']) || extractField(f['מזהה URL']),
@@ -260,6 +295,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     res.statusCode = 200; res.end(JSON.stringify(events));
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    captureServerError(err, { handler: 'events', method: req.method ?? '', url: req.url ?? '' });
     res.statusCode = 500; res.end(JSON.stringify({ error: msg }));
   }
 }
