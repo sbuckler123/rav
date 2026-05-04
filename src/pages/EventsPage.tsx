@@ -41,11 +41,17 @@ function groupByMonth(events: EventItem[]): { key: string; label: string; events
       return b.localeCompare(a);
     })
     .map(([key, evts]) => {
-      if (key === 'no-date') return { key, label: 'ללא תאריך', events: evts };
+      // Sort events within each month: newest first
+      const sorted = [...evts].sort((a, b) => {
+        if (!a.dateLocale) return 1;
+        if (!b.dateLocale) return -1;
+        return b.dateLocale.localeCompare(a.dateLocale);
+      });
+      if (key === 'no-date') return { key, label: 'ללא תאריך', events: sorted };
       const [year, month] = key.split('-');
       const label = new Date(Number(year), Number(month) - 1, 1)
         .toLocaleString('he-IL', { month: 'long', year: 'numeric' });
-      return { key, label, events: evts };
+      return { key, label, events: sorted };
     });
 }
 
@@ -238,6 +244,12 @@ export default function EventsPage() {
       );
     }
     if (typeFilter !== 'all') list = list.filter(e => e.eventType === typeFilter);
+    // Always newest first regardless of API order
+    list.sort((a, b) => {
+      if (!a.dateLocale) return 1;
+      if (!b.dateLocale) return -1;
+      return b.dateLocale.localeCompare(a.dateLocale);
+    });
     return list;
   }, [events, searchQuery, typeFilter]);
 
