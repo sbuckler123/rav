@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { fetchSettings } from './_settings';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;

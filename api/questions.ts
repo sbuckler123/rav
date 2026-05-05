@@ -107,7 +107,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           askerName:       String(name),
           questionContent: String(question),
           referenceId:     String(record.fields?.['מזהה שאלה'] ?? ''),
-        }).catch(() => {});
+        }).catch((err) => {
+          captureServerError(err, {
+            handler:     'questions-email',
+            referenceId: String(record.fields?.['מזהה שאלה'] ?? ''),
+          });
+        });
       }
 
       res.statusCode = 200;
