@@ -9,6 +9,8 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
+import { fetchSettings } from './_settings';
+import { sendNewQuestionEmail } from './_email';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -93,7 +95,21 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       };
       if (categoryId) fields['קטגוריה'] = [categoryId];
 
-      const record = await airtableCreate('שאלות', fields);
+      const [record, settings] = await Promise.all([
+        airtableCreate('שאלות', fields),
+        fetchSettings(),
+      ]);
+
+      if (settings.notifyEnabled && settings.notifyEmail && settings.notifyFromEmail) {
+        await sendNewQuestionEmail({
+          toEmail:         settings.notifyEmail,
+          fromEmail:       settings.notifyFromEmail,
+          askerName:       String(name),
+          questionContent: String(question),
+          referenceId:     String(record.fields?.['מזהה שאלה'] ?? ''),
+        }).catch(() => {});
+      }
+
       res.statusCode = 200;
       res.end(JSON.stringify({
         success: true,

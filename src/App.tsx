@@ -56,6 +56,7 @@ import ArticleFormPage from '@/pages/admin/ArticleFormPage';
 import AdminAlHaperekPage from '@/pages/admin/AdminAlHaperekPage';
 import AlHaperekFormPage from '@/pages/admin/AlHaperekFormPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
 import AlHaperekPage from '@/pages/AlHaperekPage';
 import AlHaperekDetailPage from '@/pages/AlHaperekDetailPage';
 import AccessibilityStatementPage from '@/pages/AccessibilityStatementPage';
@@ -98,6 +99,7 @@ export default function App() {
                     <Route path="/al-haperek/new" element={<AlHaperekFormPage />} />
                     <Route path="/al-haperek/:id/edit" element={<AlHaperekFormPage />} />
                     <Route path="/users" element={<AdminUsersPage />} />
+                    <Route path="/settings" element={<AdminSettingsPage />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>

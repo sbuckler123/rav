@@ -30,6 +30,7 @@
     "react-helmet-async": "^3.0.0",
     "react-markdown": "^8.0.7",
     "react-router-dom": "^6.27.0",
+    "resend": "^6.12.2",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8"

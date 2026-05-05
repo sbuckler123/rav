@@ -16,6 +16,7 @@ import {
   X,
   ChevronLeft,
   Newspaper,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ const navItems = [
   { label: 'על הפרק',         path: '/admin/al-haperek', icon: Newspaper },
   { label: 'קטגוריות',        path: '/admin/categories', icon: Tag },
   { label: 'משתמשים',         path: '/admin/users',     icon: Users },
+  { label: 'הגדרות',          path: '/admin/settings',  icon: Settings },
 ];
 
 const roleLabel: Record<string, string> = {

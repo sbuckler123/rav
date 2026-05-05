@@ -27,6 +27,7 @@ import { handle as handleVideos }         from './_admin-videos';
 import { handle as handleUsers }          from './_users';
 import { handle as handleCloudinarySign } from './_cloudinary-sign';
 import { handle as handleAlHaperek }      from './_admin-al-haperek';
+import { handle as handleSettings }       from './_admin-settings';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
@@ -54,6 +55,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       case 'users':           return await handleUsers(req, res);
       case 'cloudinary-sign': return await handleCloudinarySign(req, res);
       case 'al-haperek':     return await handleAlHaperek(req, res);
+      case 'settings':       return await handleSettings(req, res);
       default:
         res.statusCode = 400;
         res.end(JSON.stringify({ error: 'Unknown section' }));
