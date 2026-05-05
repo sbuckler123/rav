@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
-import { QUERY_KEYS } from '@/hooks/useQueries';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { CalendarDays, Plus, Pencil, Trash2, Loader2, Search, Clock, MapPin } from 'lucide-react';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
@@ -47,9 +47,6 @@ const EMPTY_FORM: FormState = {
 export default function AdminShiurimPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [shiurim, setShiurim] = useState<Shiur[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -62,18 +59,23 @@ export default function AdminShiurimPage() {
   const [deleteTarget, setDeleteTarget] = useState<Shiur | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
-    setLoading(true);
-    Promise.all([
-      apiFetch<Shiur[]>('/api/admin?section=shiurim'),
-      fetchCategories('שיעורים'),
-    ])
-      .then(([data, cats]) => { setShiurim(data); setCategories(cats); })
-      .catch(() => toast.error('שגיאה בטעינת שיעורים'))
-      .finally(() => setLoading(false));
-  }
+  const shiurimQuery = useQuery<Shiur[]>({
+    queryKey: ADMIN_QUERY_KEYS.shiurim,
+    queryFn: () => apiFetch<Shiur[]>('/api/admin?section=shiurim'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שיעורים'),
+    queryFn: () => fetchCategories('שיעורים'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const shiurim = shiurimQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const loading = shiurimQuery.isLoading || categoriesQuery.isLoading;
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (shiurimQuery.error || categoriesQuery.error) toast.error('שגיאה בטעינת שיעורים');
+  }, [shiurimQuery.error, categoriesQuery.error]);
 
   function field(key: keyof FormState, val: string) {
     setForm(f => ({ ...f, [key]: val }));
@@ -111,7 +113,10 @@ export default function AdminShiurimPage() {
 
       if (addingCategory && newCategoryName.trim()) {
         const created = await createCategory(['שיעורים'], newCategoryName.trim());
-        setCategories(prev => [...prev, created]);
+        queryClient.setQueryData<Category[]>(
+          ADMIN_QUERY_KEYS.categoriesByTable('שיעורים'),
+          prev => [...(prev ?? []), created],
+        );
         categoryId = created.id;
       }
 
@@ -132,7 +137,6 @@ export default function AdminShiurimPage() {
           body: JSON.stringify(body),
         });
         toast.success('השיעור עודכן');
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       } else {
         await apiFetch('/api/admin?section=shiurim', {
           method: 'POST',
@@ -140,10 +144,10 @@ export default function AdminShiurimPage() {
           body: JSON.stringify(body),
         });
         toast.success('השיעור נוסף');
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       }
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.shiurim });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       setDialogOpen(false);
-      load();
     } catch {
       toast.error('שגיאה בשמירה');
     } finally {
@@ -157,9 +161,9 @@ export default function AdminShiurimPage() {
     try {
       await apiFetch(`/api/admin?section=shiurim&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.shiurim });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.shiurim });
       setDeleteTarget(null);
-      load();
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

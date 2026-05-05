@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS } from '@/hooks/useQueries';
 import { Users, Plus, Pencil, Trash2, Loader2, Search, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -53,8 +55,8 @@ function statusBadge(status: string) {
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const isAdmin = currentUser?.role === 'מנהל';
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -65,8 +67,21 @@ export default function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const usersQuery = useQuery<AdminUser[]>({
+    queryKey: ADMIN_QUERY_KEYS.users,
+    queryFn: () => apiFetch<AdminUser[]>('/api/admin?section=users'),
+    ...ADMIN_QUERY_OPTIONS,
+    enabled: isAdmin,
+  });
+  const users = usersQuery.data ?? [];
+  const loading = usersQuery.isLoading;
+
+  useEffect(() => {
+    if (usersQuery.error) toast.error('שגיאה בטעינת משתמשים');
+  }, [usersQuery.error]);
+
   // Guard — only מנהל can access
-  if (currentUser?.role !== 'מנהל') {
+  if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
@@ -77,16 +92,6 @@ export default function AdminUsersPage() {
       </div>
     );
   }
-
-  function load() {
-    setLoading(true);
-    apiFetch<AdminUser[]>('/api/admin?section=users')
-      .then(setUsers)
-      .catch(() => toast.error('שגיאה בטעינת משתמשים'))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => { load(); }, []);
 
   function openAdd() {
     setEditing(null);
@@ -139,7 +144,7 @@ export default function AdminUsersPage() {
         toast.success('המשתמש נוסף בהצלחה');
       }
       setDialogOpen(false);
-      load();
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.users });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'שגיאה בשמירה';
       toast.error(msg);
@@ -160,7 +165,7 @@ export default function AdminUsersPage() {
       await apiFetch(`/api/admin?section=users&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('המשתמש נמחק');
       setDeleteTarget(null);
-      load();
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.users });
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

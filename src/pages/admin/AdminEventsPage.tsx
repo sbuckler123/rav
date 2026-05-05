@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
-import { QUERY_KEYS } from '@/hooks/useQueries';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { Tv2, Plus, Pencil, Trash2, Loader2, Search, MapPin, CalendarDays, Images, Check, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import ImageUpload from '@/components/admin/ImageUpload';
@@ -65,8 +65,6 @@ const EMPTY_GALLERY_FORM = { url: '', caption: '', order: '' };
 export default function AdminEventsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [events, setEvents] = useState<AdminEvent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,18 +85,33 @@ export default function AdminEventsPage() {
   // Pending images for new event (not yet saved)
   const [pendingImages, setPendingImages] = useState<typeof EMPTY_GALLERY_FORM[]>([]);
 
-  const [eventTypeChoices, setEventTypeChoices] = useState<string[]>([]);
   const [addingEventType, setAddingEventType] = useState(false);
 
-  function load() {
-    setLoading(true);
-    apiFetch<AdminEvent[]>('/api/admin?section=events')
-      .then(setEvents)
-      .catch(() => toast.error('שגיאה בטעינת אירועים'))
-      .finally(() => setLoading(false));
-  }
+  const eventsQuery = useQuery<AdminEvent[]>({
+    queryKey: ADMIN_QUERY_KEYS.events,
+    queryFn: () => apiFetch<AdminEvent[]>('/api/admin?section=events'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const events = eventsQuery.data ?? [];
+  const loading = eventsQuery.isLoading;
 
-  useEffect(() => { load(); }, []);
+  const eventTypeQuery = useQuery<string[]>({
+    queryKey: ADMIN_QUERY_KEYS.eventTypeChoices,
+    queryFn: () => apiFetch<string[]>('/api/admin?section=events&type=fieldChoices'),
+    ...ADMIN_QUERY_OPTIONS,
+    enabled: dialogOpen,
+  });
+  const eventTypeChoices = eventTypeQuery.data ?? [];
+
+  useEffect(() => {
+    if (eventsQuery.error) toast.error('שגיאה בטעינת אירועים');
+  }, [eventsQuery.error]);
+
+  function patchEventInCache(id: string, patch: Partial<AdminEvent>) {
+    queryClient.setQueryData<AdminEvent[]>(ADMIN_QUERY_KEYS.events, prev =>
+      (prev ?? []).map(e => e.id === id ? { ...e, ...patch } : e),
+    );
+  }
 
   async function loadGallery(ids: string[]) {
     if (!ids.length) { setGallery([]); return; }
@@ -115,9 +128,6 @@ export default function AdminEventsPage() {
 
   function openDialog() {
     setAddingEventType(false);
-    apiFetch<string[]>('/api/admin?section=events&type=fieldChoices')
-      .then(setEventTypeChoices)
-      .catch(() => {});
   }
 
   function openAdd() {
@@ -179,7 +189,6 @@ export default function AdminEventsPage() {
           body: JSON.stringify({ ...form, userId: user?.id }),
         });
         toast.success('האירוע עודכן');
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       } else {
         await apiFetch('/api/admin?section=events', {
           method: 'POST',
@@ -191,10 +200,10 @@ export default function AdminEventsPage() {
           }),
         });
         toast.success('האירוע נוסף');
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       }
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.events });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       setDialogOpen(false);
-      load();
     } catch {
       toast.error('שגיאה בשמירה');
     } finally {
@@ -219,7 +228,7 @@ export default function AdminEventsPage() {
       });
       const updated = { ...editing, galleryIds: result.galleryIds };
       setEditing(updated);
-      setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
+      patchEventInCache(editing.id, { galleryIds: result.galleryIds });
       setNewGallery(EMPTY_GALLERY_FORM);
       loadGallery(result.galleryIds);
       toast.success('התמונה נוספה');
@@ -264,7 +273,7 @@ export default function AdminEventsPage() {
       const newIds = result.galleryIds ?? editing.galleryIds.filter(id => id !== itemId);
       const updated = { ...editing, galleryIds: newIds };
       setEditing(updated);
-      setEvents(evs => evs.map(e => e.id === editing.id ? updated : e));
+      patchEventInCache(editing.id, { galleryIds: newIds });
       loadGallery(newIds);
       toast.success('התמונה נמחקה');
     } catch {
@@ -280,9 +289,9 @@ export default function AdminEventsPage() {
     try {
       await apiFetch(`/api/admin?section=events&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('האירוע נמחק');
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.events });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events });
       setDeleteTarget(null);
-      load();
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

@@ -22,8 +22,8 @@ import {
   getWriterTypeChoices,
   type AdminQuestion,
 } from '@/api/adminQuestionsApi';
-import { useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/hooks/useQueries';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { getCategories } from '@/api/getCategories';
 import { cn, formatAdminDate } from '@/lib/utils';
 
@@ -46,13 +46,9 @@ export default function QuestionDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [question, setQuestion] = useState<AdminQuestion | null>(null);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
   const [replyTitle, setReplyTitle] = useState('');
   const [replyWriterType, setReplyWriterType] = useState('');
-  const [writerTypeOptions, setWriterTypeOptions] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -68,27 +64,35 @@ export default function QuestionDetailPage() {
   // Delete confirmation
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  function reload() {
-    setLoading(true);
-    Promise.all([getAllQuestions(), getCategories()])
-      .then(([{ questions }, { categories }]) => {
-        setQuestion(questions.find(q => q.id === id) ?? null);
-        setCategories(categories);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }
+  const questionsQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.questions,
+    queryFn: async () => (await getAllQuestions()).questions,
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שאלות'),
+    queryFn: async () => (await getCategories()).categories,
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const writerTypesQuery = useQuery<string[]>({
+    queryKey: ADMIN_QUERY_KEYS.writerTypeChoices,
+    queryFn: getWriterTypeChoices,
+    ...ADMIN_QUERY_OPTIONS,
+  });
 
-  useEffect(() => { reload(); }, [id]);
+  const questions: AdminQuestion[] = questionsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const writerTypeOptions = writerTypesQuery.data ?? [];
+  const question = questions.find(q => q.id === id) ?? null;
+  const loading = questionsQuery.isLoading || categoriesQuery.isLoading;
 
   useEffect(() => {
-    getWriterTypeChoices()
-      .then(choices => {
-        setWriterTypeOptions(choices);
-        if (choices.length > 0) setReplyWriterType(choices[0]);
-      })
-      .catch(() => {});
-  }, []);
+    if (writerTypeOptions.length > 0 && !replyWriterType) setReplyWriterType(writerTypeOptions[0]);
+  }, [writerTypeOptions, replyWriterType]);
+
+  function reload() {
+    void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.questions });
+  }
 
   const categoryName = question?.category
     ? (categories.find(c => c.id === question.category)?.name ?? '')
@@ -155,7 +159,9 @@ export default function QuestionDetailPage() {
     setActionLoading('status');
     try {
       await updateQuestion(id, { 'סטטוס': newStatus });
-      setQuestion(q => q ? { ...q, status: newStatus } : q);
+      queryClient.setQueryData<AdminQuestion[]>(ADMIN_QUERY_KEYS.questions, prev =>
+        (prev ?? []).map(q => q.id === id ? { ...q, status: newStatus } : q),
+      );
       toast.success('הסטטוס עודכן');
     } catch {
       toast.error('שגיאה בעדכון הסטטוס');

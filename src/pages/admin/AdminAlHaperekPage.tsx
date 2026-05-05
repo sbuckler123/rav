@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
-import { QUERY_KEYS } from '@/hooks/useQueries';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { Newspaper, Plus, Pencil, Trash2, Loader2, Search, CalendarDays, Video, Images, FileDown, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,21 +35,21 @@ function BlockTypeIcons({ blocks }: { blocks: ContentBlock[] }) {
 
 export default function AdminAlHaperekPage() {
   const queryClient = useQueryClient();
-  const [items, setItems] = useState<AdminItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<AdminItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
-    setLoading(true);
-    apiFetch<AdminItem[]>('/api/admin?section=al-haperek')
-      .then(setItems)
-      .catch(() => toast.error('שגיאה בטעינת הנתונים'))
-      .finally(() => setLoading(false));
-  }
+  const itemsQuery = useQuery<AdminItem[]>({
+    queryKey: ADMIN_QUERY_KEYS.alHaperek,
+    queryFn: () => apiFetch<AdminItem[]>('/api/admin?section=al-haperek'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const items = itemsQuery.data ?? [];
+  const loading = itemsQuery.isLoading;
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (itemsQuery.error) toast.error('שגיאה בטעינת הנתונים');
+  }, [itemsQuery.error]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -57,9 +57,9 @@ export default function AdminAlHaperekPage() {
     try {
       await apiFetch(`/api/admin?section=al-haperek&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('הפריט נמחק');
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.alHaperek });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.alHaperek });
       setDeleteTarget(null);
-      load();
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

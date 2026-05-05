@@ -15,6 +15,30 @@ export const QUERY_KEYS = {
   alHaperek: ['alHaperek'] as const,
 };
 
+export const ADMIN_QUERY_KEYS = {
+  articles:          ['admin', 'articles']          as const,
+  videos:            ['admin', 'videos']            as const,
+  events:            ['admin', 'events']            as const,
+  shiurim:           ['admin', 'shiurim']           as const,
+  alHaperek:         ['admin', 'al-haperek']        as const,
+  questions:         ['admin', 'questions']         as const,
+  users:             ['admin', 'users']             as const,
+  settings:          ['admin', 'settings']          as const,
+  categoriesAdmin:   ['admin', 'categories']        as const,
+  writerTypeChoices: ['admin', 'writerTypeChoices'] as const,
+  eventTypeChoices:  ['admin', 'eventTypeChoices']  as const,
+  categoriesByTable: (forTable: string) => ['categories', forTable] as const,
+};
+
+// Admin is the only writer to admin data, so freshness is driven entirely by
+// invalidate-on-mutation. No need for time-based revalidation or refetch on focus.
+export const ADMIN_QUERY_OPTIONS = {
+  staleTime: Infinity,
+  gcTime: 30 * 60_000,
+  refetchOnWindowFocus: false,
+  retry: 1,
+} as const;
+
 export function useArticles() {
   return useQuery({
     queryKey: QUERY_KEYS.articles,

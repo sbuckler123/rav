@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import { getAllQuestions, createQuestion, submitReply, getWriterTypeChoices, type AdminQuestion } from '@/api/adminQuestionsApi';
 import { getCategories } from '@/api/getCategories';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,38 +47,40 @@ const EMPTY_FORM = {
 
 export default function QuestionsPage() {
   const navigate = useNavigate();
-  const [questions, setQuestions] = useState<AdminQuestion[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [writerTypeOptions, setWriterTypeOptions] = useState<string[]>([]);
 
-  function loadData() {
-    setLoading(true);
-    Promise.all([getAllQuestions(), getCategories()])
-      .then(([{ questions }, { categories }]) => {
-        setQuestions(questions);
-        setCategories(categories);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => { loadData(); }, []);
+  const questionsQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.questions,
+    queryFn: async () => (await getAllQuestions()).questions,
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שאלות'),
+    queryFn: async () => (await getCategories()).categories,
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const writerTypesQuery = useQuery<string[]>({
+    queryKey: ADMIN_QUERY_KEYS.writerTypeChoices,
+    queryFn: getWriterTypeChoices,
+    ...ADMIN_QUERY_OPTIONS,
+    enabled: showDialog,
+  });
+  const questions: AdminQuestion[] = questionsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const writerTypeOptions = writerTypesQuery.data ?? [];
+  const loading = questionsQuery.isLoading || categoriesQuery.isLoading;
 
   useEffect(() => {
-    getWriterTypeChoices()
-      .then(choices => {
-        setWriterTypeOptions(choices);
-        if (choices.length > 0) setForm(f => ({ ...f, answerWriterType: choices[0] }));
-      })
-      .catch(() => {});
-  }, []);
+    if (writerTypeOptions.length > 0) {
+      setForm(f => ({ ...f, answerWriterType: writerTypeOptions[0] }));
+    }
+  }, [writerTypeOptions]);
 
   const getCategoryName = (id?: string) =>
     id ? (categories.find(c => c.id === id)?.name ?? '') : '';
@@ -111,6 +115,8 @@ export default function QuestionsPage() {
       toast.success('השאלה נוצרה בהצלחה');
       setShowDialog(false);
       setForm(EMPTY_FORM);
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.questions });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.questions() });
       navigate(`/admin/questions/${id}`);
     } catch {
       toast.error('שגיאה ביצירת השאלה');

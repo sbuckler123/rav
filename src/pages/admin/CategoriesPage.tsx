@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS } from '@/hooks/useQueries';
 import { Tag, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,8 +25,7 @@ const STATUS_OPTIONS = ['פעיל', 'לא פעיל'];
 const TABLE_OPTIONS  = ['מאמרים', 'שיעורים', 'שיעורי וידאו', 'אירועים', 'שאלות'];
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,15 +38,23 @@ export default function CategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
-    setLoading(true);
-    apiFetch<Category[]>('/api/categories?admin=true')
-      .then(setCategories)
-      .catch(() => toast.error('שגיאה בטעינת קטגוריות'))
-      .finally(() => setLoading(false));
-  }
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ADMIN_QUERY_KEYS.categoriesAdmin,
+    queryFn: () => apiFetch<Category[]>('/api/categories?admin=true'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const categories = categoriesQuery.data ?? [];
+  const loading = categoriesQuery.isLoading;
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (categoriesQuery.error) toast.error('שגיאה בטעינת קטגוריות');
+  }, [categoriesQuery.error]);
+
+  function invalidateCategories() {
+    void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.categoriesAdmin });
+    // per-table category queries are stored under ['categories', forTable]
+    void queryClient.invalidateQueries({ queryKey: ['categories'] });
+  }
 
   function openAdd() {
     setEditing(null);
@@ -89,7 +98,7 @@ export default function CategoriesPage() {
         toast.success('הקטגוריה נוספה');
       }
       setDialogOpen(false);
-      load();
+      invalidateCategories();
     } catch {
       toast.error('שגיאה בשמירה');
     } finally {
@@ -104,7 +113,7 @@ export default function CategoriesPage() {
       await apiFetch(`/api/categories?id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('הקטגוריה נמחקה');
       setDeleteTarget(null);
-      load();
+      invalidateCategories();
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS } from '@/hooks/useQueries';
 import { Settings, Bell, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,16 +21,24 @@ const DEFAULT: NotificationSettings = {
 };
 
 export default function AdminSettingsPage() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving]   = useState(false);
-  const [form, setForm]       = useState<NotificationSettings>(DEFAULT);
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm]     = useState<NotificationSettings>(DEFAULT);
+
+  const settingsQuery = useQuery<NotificationSettings>({
+    queryKey: ADMIN_QUERY_KEYS.settings,
+    queryFn: () => apiFetch<NotificationSettings>('/api/admin?section=settings'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const loading = settingsQuery.isLoading;
 
   useEffect(() => {
-    apiFetch('/api/admin?section=settings')
-      .then((data: unknown) => setForm(data as NotificationSettings))
-      .catch(() => toast.error('שגיאה בטעינת הגדרות'))
-      .finally(() => setLoading(false));
-  }, []);
+    if (settingsQuery.data) setForm(settingsQuery.data);
+  }, [settingsQuery.data]);
+
+  useEffect(() => {
+    if (settingsQuery.error) toast.error('שגיאה בטעינת הגדרות');
+  }, [settingsQuery.error]);
 
   function field<K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -50,6 +60,7 @@ export default function AdminSettingsPage() {
         method: 'PATCH',
         body:   JSON.stringify(form),
       });
+      queryClient.setQueryData<NotificationSettings>(ADMIN_QUERY_KEYS.settings, form);
       toast.success('הגדרות נשמרו בהצלחה');
     } catch {
       toast.error('שגיאה בשמירת הגדרות');

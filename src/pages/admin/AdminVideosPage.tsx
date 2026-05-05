@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
-import { QUERY_KEYS } from '@/hooks/useQueries';
+import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { Video, Plus, Pencil, Trash2, Loader2, Search, Youtube } from 'lucide-react';
 import { fetchCategories, createCategory, type Category } from '@/api/categoriesApi';
 import { useAuth } from '@/auth/AuthContext';
@@ -63,9 +63,6 @@ function getThumb(v: AdminVideo): string {
 export default function AdminVideosPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [videos, setVideos] = useState<AdminVideo[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -78,18 +75,23 @@ export default function AdminVideosPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminVideo | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
-    setLoading(true);
-    Promise.all([
-      apiFetch<AdminVideo[]>('/api/admin?section=videos'),
-      fetchCategories('שיעורי וידאו'),
-    ])
-      .then(([vids, cats]) => { setVideos(vids); setCategories(cats); })
-      .catch(() => toast.error('שגיאה בטעינת שיעורי וידאו'))
-      .finally(() => setLoading(false));
-  }
+  const videosQuery = useQuery<AdminVideo[]>({
+    queryKey: ADMIN_QUERY_KEYS.videos,
+    queryFn: () => apiFetch<AdminVideo[]>('/api/admin?section=videos'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שיעורי וידאו'),
+    queryFn: () => fetchCategories('שיעורי וידאו'),
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const videos = videosQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const loading = videosQuery.isLoading || categoriesQuery.isLoading;
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (videosQuery.error || categoriesQuery.error) toast.error('שגיאה בטעינת שיעורי וידאו');
+  }, [videosQuery.error, categoriesQuery.error]);
 
   function field<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm(f => ({ ...f, [key]: val }));
@@ -129,7 +131,10 @@ export default function AdminVideosPage() {
 
       if (addingCategory && newCategoryName.trim()) {
         const created = await createCategory(['שיעורי וידאו'], newCategoryName.trim());
-        setCategories(prev => [...prev, created]);
+        queryClient.setQueryData<Category[]>(
+          ADMIN_QUERY_KEYS.categoriesByTable('שיעורי וידאו'),
+          prev => [...(prev ?? []), created],
+        );
         categoryId = created.id;
       }
 
@@ -161,9 +166,9 @@ export default function AdminVideosPage() {
         });
         toast.success('השיעור נוסף');
       }
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.videos });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.videos });
       setDialogOpen(false);
-      load();
     } catch {
       toast.error('שגיאה בשמירה');
     } finally {
@@ -178,8 +183,8 @@ export default function AdminVideosPage() {
       await apiFetch(`/api/admin?section=videos&id=${deleteTarget.id}`, { method: 'DELETE' });
       toast.success('השיעור נמחק');
       setDeleteTarget(null);
+      void queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.videos });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.videos });
-      load();
     } catch {
       toast.error('שגיאה במחיקה');
     } finally {

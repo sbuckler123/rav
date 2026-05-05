@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/auth/AuthContext';
 import { getAllQuestions } from '@/api/adminQuestionsApi';
-import { getShiurim } from '@/api/getShiurim';
-import { getArticles } from '@/api/getArticles';
-import { getEvents } from '@/api/getEvents';
-import { getAlHaperekList } from '@/api/getAlHaperek';
+import {
+  ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS,
+  useShiurim, useArticles, useEvents, useAlHaperek,
+} from '@/hooks/useQueries';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
   Clock, ChevronLeft, ArrowLeft, Newspaper,
@@ -14,26 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-interface Stats {
-  totalQuestions: number;
-  pendingQuestions: number;
-  answeredQuestions: number;
-  rejectedQuestions: number;
-  totalShiurim: number;
-  upcomingShiurim: number;
-  totalArticles: number;
-  totalEvents: number;
-  totalAlHaperek: number;
-}
-
-interface RecentQuestion {
-  id: string;
-  content: string;
-  askerName?: string;
-  createdAt?: string;
-  status?: string;
-}
 
 function parseDate(dateStr: string): Date {
   const [day, month, year] = dateStr.split('.').map(Number);
@@ -85,47 +65,48 @@ function MiniStatRow({ label, value, color }: { label: string; value: number; co
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [recentQuestions, setRecentQuestions] = useState<RecentQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      getAllQuestions(),
-      getShiurim(),
-      getArticles(),
-      getEvents(),
-      getAlHaperekList(),
-    ])
-      .then(([{ questions }, { shiurim }, { articles }, { events }, { items: alHaperekItems }]) => {
-        const now = new Date();
-        const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= now);
+  const questionsQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.questions,
+    queryFn: async () => (await getAllQuestions()).questions,
+    ...ADMIN_QUERY_OPTIONS,
+  });
+  const shiurimQuery   = useShiurim();
+  const articlesQuery  = useArticles();
+  const eventsQuery    = useEvents();
+  const alHaperekQuery = useAlHaperek();
 
-        setStats({
-          totalQuestions: questions.length,
-          pendingQuestions: questions.filter(q => q.status === 'ממתין').length,
-          answeredQuestions: questions.filter(q => q.status === 'נענה').length,
-          rejectedQuestions: questions.filter(q => q.status === 'נדחה').length,
-          totalShiurim: shiurim.length,
-          upcomingShiurim: upcoming.length,
-          totalArticles: articles.length,
-          totalEvents: events.length,
-          totalAlHaperek: alHaperekItems.length,
-        });
+  const loading =
+    questionsQuery.isLoading || shiurimQuery.isLoading ||
+    articlesQuery.isLoading || eventsQuery.isLoading || alHaperekQuery.isLoading;
 
-        setRecentQuestions(
-          questions.slice(0, 5).map(q => ({
-            id: q.id,
-            content: q.questionContent,
-            askerName: q.askerName,
-            createdAt: q.createdAt,
-            status: q.status,
-          }))
-        );
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const questions = questionsQuery.data ?? [];
+  const shiurim = shiurimQuery.data?.shiurim ?? [];
+  const articles = articlesQuery.data?.articles ?? [];
+  const events = eventsQuery.data?.events ?? [];
+  const alHaperekItems = alHaperekQuery.data?.items ?? [];
+
+  const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= new Date());
+
+  const stats = loading ? null : {
+    totalQuestions:    questions.length,
+    pendingQuestions:  questions.filter(q => q.status === 'ממתין').length,
+    answeredQuestions: questions.filter(q => q.status === 'נענה').length,
+    rejectedQuestions: questions.filter(q => q.status === 'נדחה').length,
+    totalShiurim:      shiurim.length,
+    upcomingShiurim:   upcoming.length,
+    totalArticles:     articles.length,
+    totalEvents:       events.length,
+    totalAlHaperek:    alHaperekItems.length,
+  };
+
+  const recentQuestions = questions.slice(0, 5).map(q => ({
+    id: q.id,
+    content: q.questionContent,
+    askerName: q.askerName,
+    createdAt: q.createdAt,
+    status: q.status,
+  }));
 
   const now = new Date();
   const hour = now.getHours();
