@@ -181,6 +181,10 @@ export default async function handler(
     return;
   }
 
+  // Bot-only OG shell must not be indexed — search engines should crawl the
+  // canonical SPA URL, not this preview surface.
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
   const proto   = (req.headers['x-forwarded-proto'] as string | undefined) ?? 'https';
   const host    = (req.headers['x-forwarded-host'] as string | undefined) ?? (req.headers.host as string) ?? '';
   const baseUrl = `${proto}://${host}`;

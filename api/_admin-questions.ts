@@ -13,25 +13,14 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { AdminRequest } from './admin';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { enforceOrigin, enforceRateLimit } from './_security';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 const PUBLIC_REPLY_MAX_LEN = 5_000;
-
-function readBody(req: IncomingMessage, maxBytes = 50_000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    let size = 0;
-    req.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
-      data += chunk;
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
 
@@ -102,7 +91,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // ── Answer CRUD ──────────────────────────────────────────────────────────
     if (type === 'answer') {
       if (req.method === 'PATCH' && id) {
-        const { content, title } = JSON.parse(await readBody(req)) as { content: string; title?: string };
+        const { content, title } = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as { content: string; title?: string };
         const fields: Record<string, unknown> = { 'תוכן התשובה': content };
         if (title !== undefined) fields['כותרת התשובה'] = title;
         await atUpdate('תשובות', id, fields);
@@ -119,16 +108,22 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // (used by QuestionsPage and QuestionDetailPage in the admin UI).
     // Unauthenticated callers (asker follow-ups from the public Q&A page) get
     // a locked-down path: writerType is forced to 'השואל', title is dropped,
-    // and content is hard-capped — they cannot impersonate the rabbi.
+    // content is hard-capped, origin is checked, and the IP is rate-limited —
+    // they cannot impersonate the rabbi.
     if (type === 'reply' && req.method === 'POST') {
-      const body = JSON.parse(await readBody(req)) as {
+      const isAdmin = !!(req as AdminRequest).adminCtx;
+      if (!isAdmin) {
+        if (!enforceOrigin(req, res)) return;
+        if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
+      }
+
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         questionId: string; content: string; writerType?: string; title?: string;
       };
       if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
       }
 
-      const isAdmin = !!(req as AdminRequest).adminCtx;
       const content = isAdmin
         ? body.content
         : body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
@@ -156,14 +151,14 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     // ── PATCH question ───────────────────────────────────────────────────────
     if (req.method === 'PATCH' && id) {
-      const body = JSON.parse(await readBody(req)) as { fields: Record<string, unknown> };
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as { fields: Record<string, unknown> };
       await atUpdate('שאלות', id, body.fields);
       res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
     }
 
     // ── POST create question (admin) ─────────────────────────────────────────
     if (req.method === 'POST') {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         content: string; askerName?: string; category?: string;
         status?: string; consentToPublish?: boolean; approvedForPublish?: boolean;
       };
@@ -218,7 +213,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     res.statusCode = 200; res.end(JSON.stringify(questions));
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    res.statusCode = 500; res.end(JSON.stringify({ error: msg }));
+    captureServerError(err, { handler: 'admin-questions', method: req.method ?? '' });
+    res.statusCode = 500; res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

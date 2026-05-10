@@ -11,9 +11,16 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
 import { sendNewQuestionEmail } from './_email';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { enforceOrigin, enforceRateLimit } from './_security';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const MAX_NAME_LEN     = 100;
+const MAX_EMAIL_LEN    = 200;
+const MAX_QUESTION_LEN = 2_000;
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -48,18 +55,9 @@ async function airtableCreate(table: string, fields: Record<string, unknown>) {
   return res.json() as Promise<{ id: string; fields: Record<string, unknown> }>;
 }
 
-function readBody(req: IncomingMessage, maxBytes = 10_000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    let size = 0;
-    req.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
-      data += chunk;
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
+function isControlChar(s: string): boolean {
+  // eslint-disable-next-line no-control-regex
+  return /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(s);
 }
 
 // ─── handler ─────────────────────────────────────────────────────────────────
@@ -75,25 +73,42 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   // ── POST: submit a new question ──────────────────────────────────────────
   if (req.method === 'POST') {
-    try {
-      const body = JSON.parse(await readBody(req));
-      const { name, email, categoryId, question, allowPublic } = body;
+    if (!enforceOrigin(req, res)) return;
+    if (!enforceRateLimit(req, res, 'questions:submit', 5, 60_000)) return;
 
-      if (!name || !email || !question) {
+    try {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL));
+      const { name, email, categoryId, question, allowPublic } = body ?? {};
+
+      const nameStr     = typeof name     === 'string' ? name.trim()     : '';
+      const emailStr    = typeof email    === 'string' ? email.trim()    : '';
+      const questionStr = typeof question === 'string' ? question.trim() : '';
+
+      if (!nameStr || !emailStr || !questionStr) {
         res.statusCode = 400;
         res.end(JSON.stringify({ error: 'Missing required fields' }));
         return;
       }
+      if (!EMAIL_RE.test(emailStr) || emailStr.length > MAX_EMAIL_LEN) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid email' }));
+        return;
+      }
+      if (isControlChar(nameStr) || isControlChar(emailStr)) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid characters' }));
+        return;
+      }
 
       const fields: Record<string, unknown> = {
-        'תוכן השאלה': String(question).slice(0, 2000),
-        'שם השואל':   String(name).slice(0, 100),
-        'אימייל השואל': String(email).slice(0, 200),
+        'תוכן השאלה':   questionStr.slice(0, MAX_QUESTION_LEN),
+        'שם השואל':     nameStr.slice(0, MAX_NAME_LEN),
+        'אימייל השואל': emailStr,
         'הסכמה לפרסום': !!allowPublic,
-        'סטטוס': 'ממתין',
-        'תאריך': new Date().toISOString(),
+        'סטטוס':        'ממתין',
+        'תאריך':        new Date().toISOString(),
       };
-      if (categoryId) fields['קטגוריה'] = [categoryId];
+      if (categoryId && typeof categoryId === 'string') fields['קטגוריה'] = [categoryId];
 
       const [record, settings] = await Promise.all([
         airtableCreate('שאלות', fields),
@@ -121,7 +136,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         id: record.id,
         referenceId: record.fields?.['מזהה שאלה'] ?? '',
       }));
-    } catch {
+    } catch (err) {
+      captureServerError(err, { handler: 'questions', method: 'POST' });
       res.statusCode = 500;
       res.end(JSON.stringify({ error: 'Failed to submit question' }));
     }

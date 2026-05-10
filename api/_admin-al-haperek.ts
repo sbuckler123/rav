@@ -4,25 +4,14 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 const TABLE = 'על הפרק';
-
-function readBody(req: IncomingMessage, maxBytes = 200_000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    let size = 0;
-    req.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
-      data += chunk;
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
+const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
 
@@ -130,6 +119,11 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
   // GET single by id
   if (req.method === 'GET' && id) {
+    if (!RECORD_ID_RE.test(id)) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: 'Invalid id' }));
+      return;
+    }
     const data = await atFetch(TABLE, { filterByFormula: `RECORD_ID()="${id}"`, maxRecords: '1' });
     const record = data.records[0] ?? null;
     res.statusCode = 200;
@@ -139,7 +133,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
   // POST create
   if (req.method === 'POST') {
-    const body = JSON.parse(await readBody(req)) as {
+    const body = JSON.parse(await readBody(req, BODY_LIMITS.LARGE)) as {
       title: string; linkId?: string; summary?: string; coverImage?: string;
       categoryId?: string; tags?: string[]; date?: string; status?: string;
       blocks?: unknown[];
@@ -163,7 +157,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
   // PATCH update
   if (req.method === 'PATCH' && id) {
-    const body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+    const body = JSON.parse(await readBody(req, BODY_LIMITS.LARGE)) as Record<string, unknown>;
     const fields: Record<string, unknown> = {};
     if (body.title      !== undefined) fields['כותרת']       = body.title;
     if (body.linkId     !== undefined) fields['מזהה קישור']  = body.linkId;

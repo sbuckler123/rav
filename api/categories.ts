@@ -10,6 +10,8 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { requireAdmin } from './_verifyAuth';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { captureServerError } from './_sentry';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -21,15 +23,6 @@ const BASE_ID = process.env.AIRTABLE_BASE_ID;
 const TABLE   = 'קטגוריות';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk) => { data += chunk; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 async function airtableGet(params: Record<string, string> = {}, sort?: { field: string; direction?: string }[]) {
   const url = new URL(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}`);
@@ -89,10 +82,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const id        = reqUrl.searchParams.get('id');
   const forTable  = reqUrl.searchParams.get('forTable');
 
-  // Public: GET without ?admin=true (used by the public site for category dropdowns).
-  // Everything else (admin reads, all writes) must be an authorized admin.
-  const isPublicRead = req.method === 'GET' && reqUrl.searchParams.get('admin') !== 'true';
-  if (!isPublicRead && !(await requireAdmin(req, res))) return;
+  // Default: every method requires an authorized admin. The single explicit
+  // public exception is GET without ?admin=true (used by the public site for
+  // category dropdowns) — kept narrow so a future maintainer can't widen it
+  // by accident.
+  const isPublicCategoryRead =
+    req.method === 'GET' && reqUrl.searchParams.get('admin') !== 'true';
+  if (!isPublicCategoryRead) {
+    if (!(await requireAdmin(req, res))) return;
+  }
 
   try {
     if (req.method === 'DELETE' && id) {
@@ -103,7 +101,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method === 'PATCH' && id) {
-      const body = JSON.parse(await readBody(req)) as { name?: string; status?: string; tables?: string[] };
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL)) as { name?: string; status?: string; tables?: string[] };
       const fields: Record<string, unknown> = {};
       if (body.name != null)   fields['שם']     = String(body.name).trim();
       if (body.status != null) fields['סטטוס'] = body.status;
@@ -115,7 +113,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method === 'POST') {
-      const { name, tables } = JSON.parse(await readBody(req));
+      const { name, tables } = JSON.parse(await readBody(req, BODY_LIMITS.SMALL));
       const record = await airtableCreate({
         'שם': String(name).trim(),
         'סטטוס': 'פעיל',
@@ -152,7 +150,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const categories = data.records.map((r) => ({ id: r.id, name: (r.fields['שם'] as string) ?? '' }));
     res.statusCode = 200;
     res.end(JSON.stringify(categories));
-  } catch {
+  } catch (err) {
+    captureServerError(err, { handler: 'categories', method: req.method ?? '' });
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Categories operation failed' }));
   }

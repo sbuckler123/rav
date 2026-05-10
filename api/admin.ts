@@ -41,6 +41,8 @@ export type AdminRequest = IncomingMessage & { adminCtx?: AdminContext | null };
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
+  // Admin responses must never be cached by browsers or shared CDNs.
+  res.setHeader('Cache-Control', 'no-store');
 
   let section: string | null = null;
   try {
@@ -81,7 +83,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     captureServerError(err, { handler: 'admin', section: section ?? 'unknown', method: req.method ?? '' });
     if (!res.headersSent) {
       res.statusCode = 500;
-      res.end(JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }));
+      res.end(JSON.stringify({ error: 'Internal error' }));
     }
   }
 }

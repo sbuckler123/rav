@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import type { IncomingMessage, ServerResponse } from 'http';
+import { enforceRateLimit } from './_security';
 
 const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const API_KEY    = process.env.CLOUDINARY_API_KEY;
@@ -20,6 +21,10 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     res.end(JSON.stringify({ error: 'Cloudinary server config missing' }));
     return;
   }
+
+  // Defense-in-depth: even though this is admin-gated, cap signature requests
+  // to prevent a compromised admin session from spamming Cloudinary uploads.
+  if (!enforceRateLimit(req, res, 'cloudinary:sign', 30, 60_000)) return;
 
   const url         = new URL(req.url ?? '/', 'https://placeholder');
   const folderParam = url.searchParams.get('folder');

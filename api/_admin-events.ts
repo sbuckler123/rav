@@ -14,9 +14,13 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
+import { BODY_LIMITS, readBody } from './_readBody';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+/** Airtable record IDs are 17 chars: "rec" + 14 alphanumerics. */
+const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
 
 /** Accept DD.MM.YYYY or YYYY-MM-DD; always return YYYY-MM-DD for Airtable date fields. */
 function toIsoDate(raw: string | undefined): string | undefined {
@@ -39,15 +43,6 @@ function fromIsoDate(raw: string | undefined): string {
     return `${d}.${m}.${y}`;
   }
   return raw;
-}
-
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (c) => { data += c; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
 }
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
@@ -135,7 +130,10 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // ── Gallery operations ───────────────────────────────────────────────────
     if (type === 'gallery') {
       if (req.method === 'GET') {
-        const ids = (url.searchParams.get('ids') ?? '').split(',').filter(Boolean);
+        const ids = (url.searchParams.get('ids') ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => RECORD_ID_RE.test(s));
         if (!ids.length) { res.statusCode = 200; res.end(JSON.stringify([])); return; }
         const formula = ids.length === 1
           ? `RECORD_ID()='${ids[0]}'`
@@ -153,9 +151,12 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       }
 
       if (req.method === 'POST') {
-        const body = JSON.parse(await readBody(req)) as {
+        const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
           eventId: string; url: string; caption?: string; order?: string; userId?: string;
         };
+        if (!RECORD_ID_RE.test(body.eventId ?? '')) {
+          res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid eventId' })); return;
+        }
         const gFields: Record<string, unknown> = { 'URL תמונה': body.url.trim() };
         if (body.caption?.trim()) gFields['כיתוב'] = body.caption.trim();
         const orderNum = parseInt(body.order ?? '');
@@ -171,7 +172,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       }
 
       if (req.method === 'PATCH' && id) {
-        const body = JSON.parse(await readBody(req)) as { url: string; caption?: string; order?: string };
+        const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as { url: string; caption?: string; order?: string };
         const fields: Record<string, unknown> = { 'URL תמונה': body.url.trim() };
         if (body.caption?.trim()) fields['כיתוב'] = body.caption.trim();
         const orderNum = parseInt(body.order ?? '');
@@ -183,7 +184,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (req.method === 'DELETE' && id) {
         const eventId = url.searchParams.get('eventId');
         await atDelete('גלריה', id);
-        if (eventId) {
+        if (eventId && RECORD_ID_RE.test(eventId)) {
           const eventRecord = await atGetById('אירועים', eventId);
           const remaining = ((eventRecord.fields['גלריה'] as string[]) ?? []).filter((gid) => gid !== id);
           await atUpdate('אירועים', eventId, { 'גלריה': remaining });
@@ -206,7 +207,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     }
 
     if (req.method === 'PATCH' && id) {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title?: string; eventType?: string; dateHebrew?: string;
         dateLocale?: string; location?: string; excerpt?: string; userId?: string;
       };
@@ -224,7 +225,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     }
 
     if (req.method === 'POST') {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title: string; eventType?: string; dateHebrew?: string; dateLocale?: string;
         location?: string; excerpt?: string; userId?: string;
         pendingImages?: { url: string; caption?: string; order?: string }[];
@@ -294,8 +295,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     res.statusCode = 200; res.end(JSON.stringify(events));
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
     captureServerError(err, { handler: 'events', method: req.method ?? '', url: req.url ?? '' });
-    res.statusCode = 500; res.end(JSON.stringify({ error: msg }));
+    res.statusCode = 500; res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

@@ -9,20 +9,13 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { captureServerError } from './_sentry';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (c) => { data += c; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
 
@@ -96,7 +89,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     }
 
     if (req.method === 'PATCH' && id) {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title?: string; date?: string; duration?: string; description?: string;
         categoryId?: string; youtubeId?: string; views?: string; isNew?: boolean;
         status?: string; userId?: string;
@@ -118,7 +111,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     }
 
     if (req.method === 'POST') {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title: string; date?: string; duration?: string; description?: string;
         categoryId?: string; youtubeId?: string; views?: string; isNew?: boolean;
         status?: string; userId?: string;
@@ -188,7 +181,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     res.statusCode = 200; res.end(JSON.stringify(videos));
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    res.statusCode = 500; res.end(JSON.stringify({ error: msg }));
+    captureServerError(err, { handler: 'admin-videos', method: req.method ?? '' });
+    res.statusCode = 500; res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

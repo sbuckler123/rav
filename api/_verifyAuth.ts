@@ -20,11 +20,27 @@ interface JwkKey { kid?: string; kty?: string; n?: string; e?: string }
 
 interface JwtPayload {
   sub?: string;
+  iss?: string;
+  azp?: string;
   exp?: number;
   nbf?: number;
   iat?: number;
   [key: string]: unknown;
 }
+
+// ─── Expected claim values (env-driven) ──────────────────────────────────────
+
+/** e.g. "https://diverse-raptor-78.clerk.accounts.dev" — set in Vercel env. */
+const EXPECTED_ISSUER = process.env.CLERK_JWT_ISSUER;
+
+/**
+ * Comma-separated list of allowed `azp` values (origins that may mint JWTs).
+ * e.g. "https://example.com,http://localhost:5173"
+ */
+const ALLOWED_AZP = (process.env.CLERK_ALLOWED_AZP ?? '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 let jwksCache: { keys: JwkKey[] } | null = null;
 let jwksCacheTs = 0;
@@ -63,6 +79,14 @@ async function verifyClerkJWT(token: string): Promise<JwtPayload> {
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp && payload.exp < now)      throw new Error('Token expired');
   if (payload.nbf && payload.nbf > now + 10) throw new Error('Token not yet valid');
+
+  // Issuer / authorized-party checks (skip silently when env not configured).
+  if (EXPECTED_ISSUER && payload.iss !== EXPECTED_ISSUER) {
+    throw new Error('Invalid issuer');
+  }
+  if (ALLOWED_AZP.length > 0 && payload.azp && !ALLOWED_AZP.includes(payload.azp)) {
+    throw new Error('Invalid authorized party');
+  }
 
   const { keys } = await getJwks();
   const jwk = keys.find((k) => k.kid === header.kid);
@@ -204,6 +228,8 @@ export async function requireAdmin(
       detail === 'Token expired' ||
       detail === 'Token not yet valid' ||
       detail === 'Invalid token: missing sub' ||
+      detail === 'Invalid issuer' ||
+      detail === 'Invalid authorized party' ||
       detail === 'No matching key in JWKS';
 
     if (!isAuthFailure || detail === 'Not an authorized admin') {

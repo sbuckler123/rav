@@ -9,6 +9,8 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { BODY_LIMITS, readBody } from './_readBody';
+import { captureServerError } from './_sentry';
 
 const PAT          = process.env.AIRTABLE_PAT;
 const BASE_ID      = process.env.AIRTABLE_BASE_ID;
@@ -17,15 +19,6 @@ const TABLE        = 'משתמשים';
 const CLERK_API    = 'https://api.clerk.com/v1';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk) => { data += chunk; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 async function airtableGet(filter?: string) {
   const url = new URL(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}`);
@@ -179,7 +172,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     // ── PATCH ────────────────────────────────────────────────────────────────
     if (req.method === 'PATCH' && id) {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL)) as {
         name?: string;
         role?: string;
         status?: string;
@@ -211,7 +204,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     // ── POST ─────────────────────────────────────────────────────────────────
     if (req.method === 'POST') {
-      const body = JSON.parse(await readBody(req)) as {
+      const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL)) as {
         name: string;
         email: string;
         password: string;
@@ -264,8 +257,14 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     res.statusCode = 200;
     res.end(JSON.stringify(users));
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    captureServerError(err, { handler: 'admin-users', method: req.method ?? '' });
+    // Surface Clerk validation errors verbatim so the admin UI can show the
+    // actual reason (weak password, duplicate email, etc).
+    const isClerkValidation =
+      err instanceof Error && /^Clerk error|password|email/i.test(err.message);
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: message }));
+    res.end(JSON.stringify({
+      error: isClerkValidation ? (err as Error).message : 'Internal error',
+    }));
   }
 }

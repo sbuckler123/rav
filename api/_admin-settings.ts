@@ -1,23 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { fetchSettings } from './_settings';
-import { captureServerError } from './_sentry';
+import { BODY_LIMITS, readBody } from './_readBody';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
-
-function readBody(req: IncomingMessage, maxBytes = 10_000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    let size = 0;
-    req.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > maxBytes) { req.destroy(); reject(new Error('Request too large')); return; }
-      data += chunk;
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 async function atPatchSetting(id: string, value: string): Promise<void> {
   const res = await fetch(
@@ -49,7 +35,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
   // ── PATCH ────────────────────────────────────────────────────────────────────
   if (req.method === 'PATCH') {
-    const body = JSON.parse(await readBody(req)) as {
+    const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL)) as {
       notifyEnabled?:   boolean;
       notifyEmail?:     string;
       notifyFromEmail?: string;
