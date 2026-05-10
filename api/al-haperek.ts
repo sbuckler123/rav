@@ -73,11 +73,28 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   try {
     const reqUrl = new URL(req.url ?? '/', 'https://placeholder');
 
-    // PDF proxy — raw/upload files are publicly accessible, redirect directly
+    // PDF proxy — only redirect to PDFs hosted on our Cloudinary cloud.
+    // The target host AND the cloud-name path prefix must both match.
     const proxyUrl = reqUrl.searchParams.get('proxy');
     if (proxyUrl) {
-      const target = decodeURIComponent(proxyUrl);
-      res.writeHead(302, { Location: target, 'Cache-Control': 'public, max-age=3600' });
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+      let parsed: URL | null = null;
+      try { parsed = new URL(decodeURIComponent(proxyUrl)); } catch { /* invalid */ }
+
+      const isAllowed =
+        !!parsed &&
+        !!cloudName &&
+        parsed.protocol === 'https:' &&
+        parsed.host === 'res.cloudinary.com' &&
+        parsed.pathname.startsWith(`/${cloudName}/`);
+
+      if (!isAllowed) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid proxy target' }));
+        return;
+      }
+
+      res.writeHead(302, { Location: parsed!.toString(), 'Cache-Control': 'public, max-age=3600' });
       res.end();
       return;
     }

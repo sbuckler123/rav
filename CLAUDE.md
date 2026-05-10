@@ -38,13 +38,16 @@ GET/POST/PATCH/DELETE /api/admin?section=al-haperek
 
 Public (unauthenticated) endpoints are separate top-level functions: `api/articles.ts`, `api/videos.ts`, `api/events.ts`, `api/questions.ts`, `api/al-haperek.ts`, etc.
 
-**Exception**: `POST /api/admin?section=questions&type=reply` bypasses auth (public follow-up replies by question askers).
+**Exception**: `POST /api/admin?section=questions&type=reply` is the only path that allows unauthenticated access (public follow-up replies by question askers). When no admin context is set, the handler forces `writerType = 'השואל'`, drops `title`, and hard-caps `content` length so unauthenticated callers can't impersonate the rabbi.
 
 ## Auth Pattern
 
 - **Client**: Clerk. `src/api/tokenStore.ts` caches the getter; `src/api/apiFetch.ts` auto-attaches `Authorization: Bearer <token>` to every admin API call.
-- **Server**: `api/_verifyAuth.ts` verifies Clerk JWTs using JWKS (cached 5 min). Call `requireAuth(req, res)` at the top of any protected handler — it returns `false` and sends 401 if invalid, so handlers must `return` on `false`.
-- **User context**: `src/auth/AuthContext.tsx` wraps Clerk and syncs the signed-in user with the Airtable users table.
+- **Server**: `api/_verifyAuth.ts` exposes two helpers:
+  - `requireAuth(req, res)` — verifies the JWT signature only. Returns `false` and sends 401 if invalid.
+  - `requireAdmin(req, res, { requiredRole? })` — verifies the JWT, then looks up the caller in the Airtable `משתמשים` table by `clerk_id` and confirms `סטטוס = 'פעיל'`. Returns `null` and sends 401/403 on failure. Lookups are cached 60 s. **All admin write paths must use `requireAdmin`** — `requireAuth` alone would leave any signed-in Clerk user with full admin access.
+- The `admin.ts` router calls `requireAdmin` once per request and stashes the result on `req.adminCtx` (typed as `AdminRequest`). The `users` section additionally requires `requiredRole: 'מנהל'`.
+- **User context**: `src/auth/AuthContext.tsx` syncs the signed-in Clerk user with the Airtable users table (UI-only; the server enforces its own check).
 
 ## Data Layer (Airtable)
 

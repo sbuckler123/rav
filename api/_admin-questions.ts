@@ -12,9 +12,12 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { AdminRequest } from './admin';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+const PUBLIC_REPLY_MAX_LEN = 5_000;
 
 function readBody(req: IncomingMessage, maxBytes = 50_000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -111,20 +114,36 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       }
     }
 
-    // ── Submit reply (public — no auth required) ─────────────────────────────
+    // ── Submit reply ─────────────────────────────────────────────────────────
+    // Authenticated admins can submit replies with arbitrary writerType/title
+    // (used by QuestionsPage and QuestionDetailPage in the admin UI).
+    // Unauthenticated callers (asker follow-ups from the public Q&A page) get
+    // a locked-down path: writerType is forced to 'השואל', title is dropped,
+    // and content is hard-capped — they cannot impersonate the rabbi.
     if (type === 'reply' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req)) as {
         questionId: string; content: string; writerType?: string; title?: string;
       };
+      if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
+      }
+
+      const isAdmin = !!(req as AdminRequest).adminCtx;
+      const content = isAdmin
+        ? body.content
+        : body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
+      const writerType = isAdmin ? (body.writerType ?? 'רב') : 'השואל';
+
       const fields: Record<string, unknown> = {
         'שאלה':          [body.questionId],
-        'תוכן התשובה':   body.content,
-        'סוג כותב':      body.writerType ?? 'רב',
+        'תוכן התשובה':   content,
+        'סוג כותב':      writerType,
         'תאריך':         new Date().toISOString(),
       };
-      if (body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
+      if (isAdmin && body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
+
       const record = await atCreate('תשובות', fields);
-      // Also set question status back to ממתין so admin sees the new reply
+      // Reset status to ממתין so admin notices the new reply
       await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
       res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
     }

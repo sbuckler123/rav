@@ -4,8 +4,12 @@
  * Consolidates all admin sections into one function to stay within
  * Vercel Hobby plan's 12-function limit.
  *
- * All requests require Clerk JWT auth except:
- *   POST /api/admin?section=questions&type=reply  (public follow-up reply)
+ * Auth model:
+ *   - Most sections require an active admin (Clerk JWT + Airtable user lookup).
+ *   - The 'users' section additionally requires role = 'מנהל'.
+ *   - POST /api/admin?section=questions&type=reply is the one public path —
+ *     it accepts unauthenticated follow-ups from question askers, but the
+ *     handler enforces strict input constraints when no admin context is set.
  *
  * Routes:
  *   /api/admin?section=questions  → admin questions + answers
@@ -14,10 +18,13 @@
  *   /api/admin?section=shiurim    → admin shiurim
  *   /api/admin?section=videos     → admin videos
  *   /api/admin?section=users      → admin users (Clerk + Airtable)
+ *   /api/admin?section=cloudinary-sign
+ *   /api/admin?section=al-haperek
+ *   /api/admin?section=settings
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { requireAuth } from './_verifyAuth';
+import { requireAdmin, tryAdminContext, type AdminContext } from './_verifyAuth';
 import { captureServerError } from './_sentry';
 import { handle as handleQuestions }      from './_admin-questions';
 import { handle as handleArticles }       from './_admin-articles';
@@ -29,6 +36,9 @@ import { handle as handleCloudinarySign } from './_cloudinary-sign';
 import { handle as handleAlHaperek }      from './_admin-al-haperek';
 import { handle as handleSettings }       from './_admin-settings';
 
+/** Augmented request shape — handlers can read `req.adminCtx` after the router resolves auth. */
+export type AdminRequest = IncomingMessage & { adminCtx?: AdminContext | null };
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
 
@@ -38,12 +48,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     section   = url.searchParams.get('section');
     const type = url.searchParams.get('type');
 
-    // The public follow-up reply bypasses auth (submitted by question askers)
+    // Public follow-up reply: try to resolve admin context (so authed admins
+    // keep their existing capabilities) but don't reject if it's missing —
+    // the handler enforces stricter rules for unauthenticated callers.
     const isPublicReply =
       section === 'questions' && type === 'reply' && req.method === 'POST';
 
-    if (!isPublicReply) {
-      if (!(await requireAuth(req, res))) return;
+    if (isPublicReply) {
+      (req as AdminRequest).adminCtx = await tryAdminContext(req);
+    } else {
+      const requiredRole = section === 'users' ? 'מנהל' : undefined;
+      const ctx = await requireAdmin(req, res, { requiredRole });
+      if (!ctx) return;
+      (req as AdminRequest).adminCtx = ctx;
     }
 
     switch (section) {
@@ -54,8 +71,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       case 'videos':          return await handleVideos(req, res);
       case 'users':           return await handleUsers(req, res);
       case 'cloudinary-sign': return await handleCloudinarySign(req, res);
-      case 'al-haperek':     return await handleAlHaperek(req, res);
-      case 'settings':       return await handleSettings(req, res);
+      case 'al-haperek':      return await handleAlHaperek(req, res);
+      case 'settings':        return await handleSettings(req, res);
       default:
         res.statusCode = 400;
         res.end(JSON.stringify({ error: 'Unknown section' }));

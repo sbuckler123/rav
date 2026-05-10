@@ -9,7 +9,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { requireAuth } from './_verifyAuth';
+import { requireAdmin } from './_verifyAuth';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -89,9 +89,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const id        = reqUrl.searchParams.get('id');
   const forTable  = reqUrl.searchParams.get('forTable');
 
-  // Public: GET without ?admin=true (used by the public site for category dropdowns)
+  // Public: GET without ?admin=true (used by the public site for category dropdowns).
+  // Everything else (admin reads, all writes) must be an authorized admin.
   const isPublicRead = req.method === 'GET' && reqUrl.searchParams.get('admin') !== 'true';
-  if (!isPublicRead && !(await requireAuth(req, res))) return;
+  if (!isPublicRead && !(await requireAdmin(req, res))) return;
 
   try {
     if (req.method === 'DELETE' && id) {
