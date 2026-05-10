@@ -23,5 +23,8 @@
     { "source": "/videos/:path*",   "destination": "/api/og?p=/videos/:path*" },
     { "source": "/shiurim/:path*",  "destination": "/api/og?p=/shiurim/:path*" },
     { "source": "/(.*)",            "destination": "/" }
+  ],
+  "crons": [
+    { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
   ]
 }
