@@ -78,7 +78,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     try {
       const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL));
-      const { name, email, categoryId, question, allowPublic } = body ?? {};
+      const { name, email, categoryId, question, allowPublic, consent } = body ?? {};
 
       const nameStr     = typeof name     === 'string' ? name.trim()     : '';
       const emailStr    = typeof email    === 'string' ? email.trim()    : '';
@@ -87,6 +87,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       if (!nameStr || !emailStr || !questionStr) {
         res.statusCode = 400;
         res.end(JSON.stringify({ error: 'Missing required fields' }));
+        return;
+      }
+      if (consent !== true) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Privacy policy consent is required' }));
         return;
       }
       if (!EMAIL_RE.test(emailStr) || emailStr.length > MAX_EMAIL_LEN) {

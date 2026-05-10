@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ export default function QuestionForm({ categories }: Props) {
   const [categoryId, setCategoryId] = useState('');
   const [question, setQuestion] = useState('');
   const [allowPublic, setAllowPublic] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
@@ -32,6 +34,10 @@ export default function QuestionForm({ categories }: Props) {
     e.preventDefault();
     if (!name || !email || !question) {
       toast.error('אנא מלא את כל השדות הנדרשים');
+      return;
+    }
+    if (!consent) {
+      toast.error('יש לאשר את מדיניות הפרטיות לפני השליחה');
       return;
     }
     if (Date.now() - lastSubmitTime < RATE_LIMIT_MS) {
@@ -48,6 +54,7 @@ export default function QuestionForm({ categories }: Props) {
         topic: selectedCategory?.name,
         question,
         allowPublic,
+        consent,
       });
       setLastSubmitTime(Date.now());
       setSubmitted(true);
@@ -73,7 +80,7 @@ export default function QuestionForm({ categories }: Props) {
           <Button
             variant="outline"
             className="min-h-[44px]"
-            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryId(''); setQuestion(''); setAllowPublic(false); }}
+            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryId(''); setQuestion(''); setAllowPublic(false); setConsent(false); }}
           >
             שלח שאלה נוספת
           </Button>
@@ -153,7 +160,7 @@ export default function QuestionForm({ categories }: Props) {
             />
           </div>
 
-          {/* Allow public */}
+          {/* Allow public (optional) */}
           <div className="flex items-start gap-3 p-3.5 bg-white border border-input rounded-lg">
             <Checkbox
               id="allowPublic"
@@ -166,10 +173,29 @@ export default function QuestionForm({ categories }: Props) {
             </Label>
           </div>
 
+          {/* Privacy consent (required) */}
+          <div className="flex items-start gap-3 p-3.5 bg-white border border-input rounded-lg">
+            <Checkbox
+              id="consent"
+              checked={consent}
+              onCheckedChange={v => setConsent(v === true)}
+              className="mt-0.5"
+              required
+            />
+            <Label htmlFor="consent" className="cursor-pointer text-sm leading-snug text-muted-foreground">
+              אני מאשר/ת את איסוף ועיבוד פרטיי (שם, דוא"ל ותוכן השאלה) לצורך מתן מענה,
+              בהתאם ל
+              <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-secondary underline underline-offset-2 hover:text-secondary/80 mx-1">
+                מדיניות הפרטיות
+              </Link>
+              <span className="text-destructive">*</span>
+            </Label>
+          </div>
+
           <Button
             type="submit"
             className="w-full gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] font-semibold"
-            disabled={submitting}
+            disabled={submitting || !consent}
           >
             <Send className="h-4 w-4" />
             {submitting ? 'שולח...' : 'שלח שאלה'}

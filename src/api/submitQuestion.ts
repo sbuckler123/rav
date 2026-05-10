@@ -5,6 +5,7 @@ export async function submitQuestion(input: {
   topic?: string;
   question: string;
   allowPublic: boolean;
+  consent: boolean;
 }): Promise<{ success: boolean; id?: string; referenceId?: string }> {
   const res = await fetch('/api/questions', {
     method: 'POST',
@@ -15,6 +16,7 @@ export async function submitQuestion(input: {
       categoryId: input.categoryId,
       question: input.question,
       allowPublic: input.allowPublic,
+      consent: input.consent,
     }),
   });
   if (!res.ok) throw new Error(`Failed to submit question: ${res.status}`);
