@@ -105,21 +105,6 @@ export default function QuestionDetailPage() {
       await submitReply({ questionId: id, content: replyText.trim(), writerType: replyWriterType, title: replyTitle.trim() || undefined });
       if (question?.status === 'ממתין') await markAnswered(id);
 
-      // Notify asker via Make.com (fire-and-forget)
-      fetch('https://hook.eu1.make.com/ahzc1fp7fcwotv6hd14o6m5dlprvmref', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionId: id,
-          referenceId: question?.referenceId ?? '',
-          askerName: question?.askerName ?? '',
-          askerEmail: question?.askerEmail ?? '',
-          questionContent: question?.questionContent ?? '',
-          answerContent: replyText.trim(),
-          questionUrl: `${window.location.origin}/shut#q-${id}`,
-        }),
-      }).catch(() => {});
-
       toast.success('התשובה נשלחה בהצלחה');
       setReplyText('');
       setReplyTitle('');

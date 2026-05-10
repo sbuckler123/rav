@@ -41,7 +41,7 @@ export default function QuestionForm({ categories }: Props) {
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => c.id === categoryId);
-      const result = await submitQuestion({
+      await submitQuestion({
         name,
         email,
         categoryId: categoryId || undefined,
@@ -49,20 +49,6 @@ export default function QuestionForm({ categories }: Props) {
         question,
         allowPublic,
       });
-      // Notify Make.com webhook after DB save (fire-and-forget)
-      fetch('https://hook.eu1.make.com/o8mtrjupxtpqcuu4uftc203ecdtb9pd7', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionId: result.id,
-          referenceId: result.referenceId,
-          name,
-          email,
-          topic: selectedCategory?.name ?? '',
-          question,
-          allowPublic,
-        }),
-      }).catch(() => {});
       setLastSubmitTime(Date.now());
       setSubmitted(true);
       toast.success('שאלתך נשלחה בהצלחה!');
