@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/api/apiFetch';
 import { QUERY_KEYS } from '@/hooks/useQueries';
+import { useAuth } from '@/auth/AuthContext';
 import { uploadToCloudinary, uploadToCloudinaryFile } from '@/api/cloudinary';
 import ImageUpload from '@/components/admin/ImageUpload';
 import {
@@ -308,6 +309,7 @@ const EMPTY_FORM: FormState = {
 export default function AlHaperekFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const isEdit = !!id;
 
@@ -319,12 +321,15 @@ export default function AlHaperekFormPage() {
   const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [createdByName, setCreatedByName] = useState('');
+  const [updatedByName, setUpdatedByName] = useState('');
 
   useEffect(() => {
     if (!isEdit) return;
     apiFetch<{
       id: string; title: string; linkId: string; summary: string; coverImage: string;
       date: string; tags: string[]; status: string; blocks: ContentBlock[];
+      createdByName: string; updatedByName: string;
     }>(`/api/admin?section=al-haperek&id=${id}`)
       .then(data => {
         setForm({
@@ -337,6 +342,8 @@ export default function AlHaperekFormPage() {
           status: data.status === 'פורסם' ? 'פורסם' : 'טיוטה',
         });
         setBlocks(data.blocks ?? []);
+        setCreatedByName(data.createdByName ?? '');
+        setUpdatedByName(data.updatedByName ?? '');
       })
       .catch(() => toast.error('שגיאה בטעינת הנתונים'))
       .finally(() => setLoading(false));
@@ -397,6 +404,7 @@ export default function AlHaperekFormPage() {
         tags,
         status:     form.status,
         blocks,
+        userId:     user?.id,
       };
 
       if (isEdit) {
@@ -516,6 +524,24 @@ export default function AlHaperekFormPage() {
                 <Input value={form.linkId} onChange={e => field('linkId', e.target.value)}
                   placeholder="auto-generated" dir="ltr"
                   className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary font-mono text-sm" />
+              </div>
+            )}
+
+            {isEdit && (createdByName || updatedByName) && (
+              <div className="pt-3 border-t border-border space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">מעקב שינויים</p>
+                {createdByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">נוצר על ידי</span>
+                    <span className="font-medium text-primary">{createdByName}</span>
+                  </div>
+                )}
+                {updatedByName && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">עודכן על ידי</span>
+                    <span className="font-medium text-primary">{updatedByName}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
