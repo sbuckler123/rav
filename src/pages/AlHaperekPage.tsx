@@ -57,7 +57,7 @@ function formatDate(raw?: string) {
 
 function FeaturedCard({ item }: { item: AlHaperekItem }) {
   return (
-    <Link to={`/al-haperek/${item.linkId}`} className="block group mb-8 pb-8 border-b-2 border-border">
+    <Link to={`/idkunim/${item.linkId}`} className="block group mb-8 pb-8 border-b-2 border-border">
       {/* Eyebrow */}
       <div className="flex items-center gap-3 mb-5">
         <div className="w-6 h-0.5 bg-secondary flex-shrink-0" />
@@ -110,7 +110,7 @@ function SecondaryCard({ item }: { item: AlHaperekItem }) {
   const t = primaryType(item.blocks);
   const barColor = t ? TYPE_CONFIG[t].bar : 'bg-border';
   return (
-    <Link to={`/al-haperek/${item.linkId}`} className="block group h-full">
+    <Link to={`/idkunim/${item.linkId}`} className="block group h-full">
       <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
         <div className={`h-1 w-full ${barColor}`} />
         <div className="flex flex-col flex-1 p-4 sm:p-5">
@@ -149,7 +149,7 @@ function ListRow({ item }: { item: AlHaperekItem }) {
     ? TYPE_CONFIG[t]
     : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText };
   return (
-    <Link to={`/al-haperek/${item.linkId}`} className="block group">
+    <Link to={`/idkunim/${item.linkId}`} className="block group">
       <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${bg}`}>
           <Icon className={`h-4 w-4 ${iconCls}`} />
