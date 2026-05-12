@@ -79,13 +79,13 @@ export default function AdminAlHaperekPage() {
           <Newspaper className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-primary">על הפרק</h1>
+          <h1 className="text-xl font-bold text-primary">עדכונים</h1>
           <p className="text-sm text-muted-foreground">{items.length} פריטים</p>
         </div>
         <Button asChild className="h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
           <Link to="/admin/al-haperek/new" className="flex items-center gap-2">
             <Plus className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline">פריט על הפרק חדש</span>
+            <span className="hidden sm:inline">עדכון חדש</span>
             <span className="sm:hidden">חדש</span>
           </Link>
         </Button>

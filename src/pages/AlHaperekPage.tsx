@@ -318,10 +318,10 @@ export default function AlHaperekPage() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="על הפרק"
+        title="עדכונים"
         description="עדכונים אקטואליים, מכתבים לציבור, ופסקי השעה מאת הרב קלמן מאיר בר."
       />
-      <PageHeader title="על הפרק" subtitle={PAGE_DESC['/al-haperek']} />
+      <PageHeader title="עדכונים" subtitle={PAGE_DESC['/idkunim']} />
 
       <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8 lg:items-start">

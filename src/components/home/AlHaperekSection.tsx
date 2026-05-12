@@ -97,9 +97,9 @@ export default function AlHaperekSection() {
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-secondary rounded-full" />
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">על הפרק</h2>
+            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">עדכונים</h2>
           </div>
-          <Link to="/al-haperek">
+          <Link to="/idkunim">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex bg-white">
               לכל הפריטים
               <ArrowLeft className="h-4 w-4" />
