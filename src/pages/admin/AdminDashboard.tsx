@@ -4,7 +4,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { getAllQuestions } from '@/api/adminQuestionsApi';
 import {
   ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS,
-  useShiurim, useArticles, useEvents, useAlHaperek,
+  useShiurim, useArticles, useEvents, useAlHaperek, useVideos,
 } from '@/hooks/useQueries';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
@@ -72,16 +72,18 @@ export default function AdminDashboard() {
     ...ADMIN_QUERY_OPTIONS,
   });
   const shiurimQuery   = useShiurim();
+  const videosQuery    = useVideos();
   const articlesQuery  = useArticles();
   const eventsQuery    = useEvents();
   const alHaperekQuery = useAlHaperek();
 
   const loading =
-    questionsQuery.isLoading || shiurimQuery.isLoading ||
+    questionsQuery.isLoading || shiurimQuery.isLoading || videosQuery.isLoading ||
     articlesQuery.isLoading || eventsQuery.isLoading || alHaperekQuery.isLoading;
 
   const questions = questionsQuery.data ?? [];
   const shiurim = shiurimQuery.data?.shiurim ?? [];
+  const videos = videosQuery.data?.shiurim ?? [];
   const articles = articlesQuery.data?.articles ?? [];
   const events = eventsQuery.data?.events ?? [];
   const alHaperekItems = alHaperekQuery.data?.items ?? [];
@@ -95,6 +97,7 @@ export default function AdminDashboard() {
     rejectedQuestions: questions.filter(q => q.status === 'נדחה').length,
     totalShiurim:      shiurim.length,
     upcomingShiurim:   upcoming.length,
+    totalVideos:       videos.length,
     totalArticles:     articles.length,
     totalEvents:       events.length,
     totalAlHaperek:    alHaperekItems.length,
@@ -125,15 +128,13 @@ export default function AdminDashboard() {
 
       {/* Main stat cards */}
       {loading ? (
-        /* 5 skeletons, last spans 2 cols on 2-col mobile */
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
-          {[1, 2, 3, 4, 5].map(i => (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="bg-white rounded-xl border border-border p-4 sm:p-5 h-28 sm:h-32 animate-pulse bg-muted" />
           ))}
         </div>
       ) : stats && (
-        /* last card spans 2 cols when grid is 2-col so it doesn't look orphaned */
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           <StatCard
             label='שו"ת'
             value={stats.totalQuestions}
@@ -153,27 +154,35 @@ export default function AdminDashboard() {
             to="/admin/shiurim"
           />
           <StatCard
+            label="שיעורי תורה"
+            value={stats.totalVideos}
+            icon={Video}
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
+            to="/admin/videos"
+          />
+          <StatCard
             label="הגות ופסיקה"
             value={stats.totalArticles}
             icon={BookOpen}
-            iconBg="bg-primary/10"
-            iconColor="text-primary"
+            iconBg="bg-secondary/10"
+            iconColor="text-secondary-foreground"
             to="/admin/articles"
           />
           <StatCard
             label="יומן פעילות"
             value={stats.totalEvents}
             icon={Tv2}
-            iconBg="bg-secondary/10"
-            iconColor="text-secondary-foreground"
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
             to="/admin/events"
           />
           <StatCard
             label="על הפרק"
             value={stats.totalAlHaperek}
             icon={Newspaper}
-            iconBg="bg-primary/10"
-            iconColor="text-primary"
+            iconBg="bg-secondary/10"
+            iconColor="text-secondary-foreground"
             to="/admin/al-haperek"
           />
         </div>
