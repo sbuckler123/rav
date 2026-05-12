@@ -170,15 +170,7 @@ export default function AdminDashboard() {
             to="/admin/articles"
           />
           <StatCard
-            label="יומן פעילות"
-            value={stats.totalEvents}
-            icon={Tv2}
-            iconBg="bg-primary/10"
-            iconColor="text-primary"
-            to="/admin/events"
-          />
-          <StatCard
-            label="על הפרק"
+            label="עדכונים"
             value={stats.totalAlHaperek}
             icon={Newspaper}
             iconBg="bg-secondary/10"
@@ -282,9 +274,8 @@ export default function AdminDashboard() {
                 { label: 'שו"ת',          to: '/admin/questions',    icon: MessageCircleQuestion, color: 'text-primary'            },
                 { label: 'לוח אירועים',  to: '/admin/shiurim',       icon: CalendarDays,          color: 'text-secondary-foreground'},
                 { label: 'שיעורי תורה', to: '/admin/videos',        icon: Video,                 color: 'text-primary'            },
-                { label: 'יומן פעילות', to: '/admin/events',        icon: Tv2,                   color: 'text-secondary-foreground'},
                 { label: 'הגות ופסיקה', to: '/admin/articles',      icon: BookOpen,              color: 'text-primary'            },
-                { label: 'על הפרק',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary-foreground'},
+                { label: 'עדכונים',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary-foreground'},
                 { label: 'קטגוריות',     to: '/admin/categories',    icon: Tag,                   color: 'text-primary'            },
                 { label: 'משתמשים',      to: '/admin/users',         icon: Users,                 color: 'text-secondary-foreground'},
               ].map(item => (
