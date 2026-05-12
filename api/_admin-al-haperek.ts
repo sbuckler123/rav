@@ -124,10 +124,26 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       res.end(JSON.stringify({ error: 'Invalid id' }));
       return;
     }
-    const data = await atFetch(TABLE, { filterByFormula: `RECORD_ID()="${id}"`, maxRecords: '1' });
+    const [data, usersData] = await Promise.all([
+      atFetch(TABLE, { filterByFormula: `RECORD_ID()="${id}"`, maxRecords: '1' }),
+      atFetch('משתמשים'),
+    ]);
     const record = data.records[0] ?? null;
+    if (!record) { res.statusCode = 200; res.end(JSON.stringify(null)); return; }
+
+    const userMap: Record<string, string> = {};
+    usersData.records.forEach((r) => { userMap[r.id] = (r.fields['שם'] as string) ?? ''; });
+    const getName = (ids: unknown) => {
+      if (!Array.isArray(ids) || !ids.length) return '';
+      return userMap[ids[0] as string] ?? '';
+    };
+
     res.statusCode = 200;
-    res.end(JSON.stringify(record ? toAdminItem(record) : null));
+    res.end(JSON.stringify({
+      ...toAdminItem(record),
+      createdByName: getName(record.fields['נוצר על ידי']),
+      updatedByName: getName(record.fields['עודכן על ידי']),
+    }));
     return;
   }
 
@@ -136,7 +152,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     const body = JSON.parse(await readBody(req, BODY_LIMITS.LARGE)) as {
       title: string; linkId?: string; summary?: string; coverImage?: string;
       categoryId?: string; tags?: string[]; date?: string; status?: string;
-      blocks?: unknown[];
+      blocks?: unknown[]; userId?: string;
     };
     const fields: Record<string, unknown> = {
       'כותרת':       body.title,
@@ -149,6 +165,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     if (body.date)        fields['תאריך']    = body.date;
     if (body.tags?.length) fields['תגיות']   = body.tags;
     if (body.categoryId)  fields['קטגוריה'] = [body.categoryId];
+    if (body.userId) { fields['נוצר על ידי'] = [body.userId]; fields['עודכן על ידי'] = [body.userId]; }
     const record = await atCreate(TABLE, fields);
     res.statusCode = 200;
     res.end(JSON.stringify({ id: record.id }));
@@ -168,6 +185,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     if (body.date       !== undefined) fields['תאריך']       = body.date || null;
     if (body.tags       !== undefined) fields['תגיות']       = body.tags;
     if (body.categoryId !== undefined) fields['קטגוריה']    = body.categoryId ? [body.categoryId] : [];
+    if (body.userId) fields['עודכן על ידי'] = [body.userId];
     await atUpdate(TABLE, id, fields);
     res.statusCode = 200;
     res.end(JSON.stringify({ success: true }));
