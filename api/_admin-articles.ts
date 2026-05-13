@@ -46,7 +46,10 @@ async function atUpdate(table: string, id: string, fields: Record<string, unknow
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, typecast: true }),
   });
-  if (!res.ok) throw new Error(`Airtable update ${table}: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`Airtable update ${table}: ${res.status} — ${errBody}`);
+  }
   return res.json();
 }
 
