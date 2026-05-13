@@ -85,7 +85,7 @@ async function verifyClerkJWT(token: string): Promise<JwtPayload> {
     throw new Error('Invalid issuer');
   }
   if (ALLOWED_AZP.length > 0 && payload.azp && !ALLOWED_AZP.includes(payload.azp)) {
-    throw new Error(`Invalid authorized party: got="${payload.azp}" allowed="${ALLOWED_AZP.join('|')}"`);
+    throw new Error('Invalid authorized party');
   }
 
   const { keys } = await getJwks();

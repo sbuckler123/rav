@@ -46,10 +46,7 @@ async function atUpdate(table: string, id: string, fields: Record<string, unknow
     headers: { ...auth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, typecast: true }),
   });
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    throw new Error(`Airtable update ${table}: ${res.status} — ${errBody}`);
-  }
+  if (!res.ok) throw new Error(`Airtable update ${table}: ${res.status}`);
   return res.json();
 }
 
@@ -220,7 +217,6 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     res.statusCode = 200; res.end(JSON.stringify(articles));
   } catch (err) {
     captureServerError(err, { handler: 'admin-articles', method: req.method ?? '' });
-    const errMsg = err instanceof Error ? err.message : String(err);
-    res.statusCode = 500; res.end(JSON.stringify({ error: errMsg || 'Internal error' }));
+    res.statusCode = 500; res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

@@ -83,8 +83,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     captureServerError(err, { handler: 'admin', section: section ?? 'unknown', method: req.method ?? '' });
     if (!res.headersSent) {
       res.statusCode = 500;
-      const errMsg = err instanceof Error ? err.message : String(err);
-      res.end(JSON.stringify({ error: errMsg || 'Internal error' }));
+      res.end(JSON.stringify({ error: 'Internal error' }));
     }
   }
 }
