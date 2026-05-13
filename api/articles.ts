@@ -66,6 +66,7 @@ function toArticleList(
       yeshiva: f['מוסד'] ?? '',
       year: extractField(Array.isArray(f['שנה עברית']) ? (f['שנה עברית'] as unknown[])[0] : f['שנה עברית']) ?? '',
       yearNum: f['שנה לועזית'] ?? 0,
+      publishDate: typeof f['תאריך פרסום'] === 'string' ? f['תאריך פרסום'] : undefined,
       categories: categoryName ? [categoryName] : [],
       tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
       readTime: extractField(f['זמן קריאה']),
@@ -131,7 +132,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         airtableFetch(
           'מאמרים',
           { filterByFormula: `{סטטוס} = "פעיל"` },
-          [{ field: 'שנה לועזית', direction: 'desc' }],
+          [{ field: 'תאריך פרסום', direction: 'desc' }, { field: 'שנה לועזית', direction: 'desc' }],
         ),
         airtableFetch('קטגוריות', {}),
       ]);

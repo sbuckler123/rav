@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 interface FormState {
   title: string;
   yearNum: string;
+  publishDate: string;
   categoryId: string;
   tags: string[];
   status: string;
@@ -29,7 +30,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  title: '', yearNum: '',
+  title: '', yearNum: '', publishDate: '',
   categoryId: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
@@ -82,7 +83,7 @@ export default function ArticleFormPage() {
           title: string; status: string; yearNum: string; categoryId: string;
           tags: string[]; abstract: string; fullContent: string; pdfUrl: string;
           keyPoints: string; sources: string; readTime: string; linkId: string;
-          createdByName: string; updatedByName: string;
+          publishDate: string; createdByName: string; updatedByName: string;
         };
         setCreatedByName(a.createdByName);
         setUpdatedByName(a.updatedByName);
@@ -90,6 +91,7 @@ export default function ArticleFormPage() {
         setForm({
           title:       a.title,
           yearNum:     a.yearNum,
+          publishDate: a.publishDate ?? '',
           categoryId:  a.categoryId,
           tags:        a.tags,
           status:      a.status,
@@ -181,6 +183,7 @@ export default function ArticleFormPage() {
         keyPoints:       form.keyPoints.trim() || undefined,
         sources:         form.sources.trim() || undefined,
         yearNum:         form.yearNum.trim() || undefined,
+        publishDate:     form.publishDate || undefined,
         gregYearOptions: gregYearOptions.length ? gregYearOptions : undefined,
         userId:          user?.id,
       };
@@ -292,6 +295,13 @@ export default function ArticleFormPage() {
                   placeholder="2024" type="number" dir="ltr"
                   className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>תאריך פרסום</Label>
+              <Input value={form.publishDate} onChange={e => field('publishDate', e.target.value)}
+                type="date" dir="ltr"
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
             </div>
 
             {/* Categories */}
