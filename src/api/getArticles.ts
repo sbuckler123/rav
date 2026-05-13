@@ -5,6 +5,7 @@ export interface Article {
   yeshiva: string;
   year: string;
   yearNum: number;
+  publishDate?: string;
   categories: string[];
   tags: string[];
   readTime?: string;
