@@ -220,6 +220,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     res.statusCode = 200; res.end(JSON.stringify(articles));
   } catch (err) {
     captureServerError(err, { handler: 'admin-articles', method: req.method ?? '' });
-    res.statusCode = 500; res.end(JSON.stringify({ error: 'Internal error' }));
+    const errMsg = err instanceof Error ? err.message : String(err);
+    res.statusCode = 500; res.end(JSON.stringify({ error: errMsg || 'Internal error' }));
   }
 }
