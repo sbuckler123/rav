@@ -91,7 +91,7 @@ export default function App() {
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/shiurim" element={<AdminShiurimPage />} />
                     <Route path="/videos" element={<AdminVideosPage />} />
-                    {/* <Route path="/events" element={<AdminEventsPage />} /> */}
+                    <Route path="/events" element={<AdminEventsPage />} />
                     <Route path="/articles" element={<AdminArticlesPage />} />
                     <Route path="/articles/new" element={<ArticleFormPage />} />
                     <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
