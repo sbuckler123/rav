@@ -30,7 +30,10 @@ function pickNextEvent(events: EventItem[]): EventItem | null {
 function pickLatestArticle(articles: Article[]): Article | null {
   if (!articles.length) return null;
   const withDate = articles.filter(a => a.publishDate);
-  return withDate[0] ?? articles[0];
+  if (!withDate.length) return articles[0];
+  return withDate.sort((a, b) =>
+    new Date(b.publishDate!).getTime() - new Date(a.publishDate!).getTime()
+  )[0];
 }
 
 function pickLatestAnswered(questions: Question[]): Question | null {
