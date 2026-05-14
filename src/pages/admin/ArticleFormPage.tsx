@@ -14,9 +14,30 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
+// Convert ISO date (YYYY-MM-DD or full datetime) → DD/MM/YYYY for display
+function toDisplayDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+
+// Convert DD/MM/YYYY → YYYY-MM-DD for the API; returns '' if incomplete
+function toIsoDate(display: string): string {
+  const m = display.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+}
+
+// Auto-insert slashes while typing: "10052026" → "10/05/2026"
+function formatDateInput(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
 interface FormState {
   title: string;
   yearNum: string;
+  publishDate: string;
   categoryId: string;
   tags: string[];
   status: string;
@@ -29,7 +50,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  title: '', yearNum: '',
+  title: '', yearNum: '', publishDate: '',
   categoryId: '', tags: [], status: 'לא פעיל', readTime: '', abstract: '',
   fullContent: '', pdfUrl: '', keyPoints: '', sources: '',
 };
@@ -82,7 +103,7 @@ export default function ArticleFormPage() {
           title: string; status: string; yearNum: string; categoryId: string;
           tags: string[]; abstract: string; fullContent: string; pdfUrl: string;
           keyPoints: string; sources: string; readTime: string; linkId: string;
-          createdByName: string; updatedByName: string;
+          publishDate: string; createdByName: string; updatedByName: string;
         };
         setCreatedByName(a.createdByName);
         setUpdatedByName(a.updatedByName);
@@ -90,6 +111,7 @@ export default function ArticleFormPage() {
         setForm({
           title:       a.title,
           yearNum:     a.yearNum,
+          publishDate: a.publishDate ? toDisplayDate(a.publishDate) : '',
           categoryId:  a.categoryId,
           tags:        a.tags,
           status:      a.status,
@@ -181,6 +203,7 @@ export default function ArticleFormPage() {
         keyPoints:       form.keyPoints.trim() || undefined,
         sources:         form.sources.trim() || undefined,
         yearNum:         form.yearNum.trim() || undefined,
+        publishDate:     toIsoDate(form.publishDate) || undefined,
         gregYearOptions: gregYearOptions.length ? gregYearOptions : undefined,
         userId:          user?.id,
       };
@@ -292,6 +315,20 @@ export default function ArticleFormPage() {
                   placeholder="2024" type="number" dir="ltr"
                   className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary" />
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>תאריך פרסום</Label>
+              <Input
+                value={form.publishDate}
+                onChange={e => field('publishDate', formatDateInput(e.target.value))}
+                type="text"
+                placeholder="DD/MM/YYYY"
+                inputMode="numeric"
+                maxLength={10}
+                dir="ltr"
+                className="border border-input bg-white focus-visible:ring-1 focus-visible:border-secondary"
+              />
             </div>
 
             {/* Categories */}

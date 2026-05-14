@@ -91,7 +91,7 @@ export default function App() {
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/shiurim" element={<AdminShiurimPage />} />
                     <Route path="/videos" element={<AdminVideosPage />} />
-                    <Route path="/events" element={<AdminEventsPage />} />
+                    {/* <Route path="/events" element={<AdminEventsPage />} /> */}
                     <Route path="/articles" element={<AdminArticlesPage />} />
                     <Route path="/articles/new" element={<ArticleFormPage />} />
                     <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
@@ -123,14 +123,14 @@ export default function App() {
                     <Route path="/shiurei-torah/:id" element={<VideoDetailPage />} />
                     <Route path="/luach-iruyim" element={<ShiurimPage />} />
                     <Route path="/luach-iruyim/:id" element={<ShiurDetailPage />} />
-                    <Route path="/yoman-peilut" element={<EventsPage />} />
-                    <Route path="/yoman-peilut/:id" element={<EventDetailPage />} />
+                    {/* <Route path="/yoman-peilut" element={<EventsPage />} /> */}
+                    {/* <Route path="/yoman-peilut/:id" element={<EventDetailPage />} /> */}
                     <Route path="/shaal-et-harav" element={<AskPage />} />
                     <Route path="/shut" element={<QAPage />} />
                     <Route path="/hagut-upsika" element={<ArticlesPage />} />
                     <Route path="/hagut-upsika/:id" element={<ArticleDetailPage />} />
-                    <Route path="/al-haperek" element={<AlHaperekPage />} />
-                    <Route path="/al-haperek/:id" element={<AlHaperekDetailPage />} />
+                    <Route path="/idkunim" element={<AlHaperekPage />} />
+                    <Route path="/idkunim/:id" element={<AlHaperekDetailPage />} />
                     <Route path="/accessibility" element={<AccessibilityStatementPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/cookies" element={<CookiePolicyPage />} />

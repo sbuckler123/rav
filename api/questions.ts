@@ -125,7 +125,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           toEmail:         settings.notifyEmail,
           fromEmail:       settings.notifyFromEmail,
           askerName:       String(name),
+          askerEmail:      emailStr,
           questionContent: String(question),
+          allowPublic:     !!allowPublic,
           referenceId:     String(record.fields?.['מזהה שאלה'] ?? ''),
         }).catch((err) => {
           captureServerError(err, {

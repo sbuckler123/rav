@@ -99,7 +99,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title?: string; status?: string; yearNum?: string; categoryId?: string;
         tags?: string[]; fullContent?: string; pdfUrl?: string; keyPoints?: string;
-        sources?: string; gregYearOptions?: string[]; userId?: string;
+        sources?: string; gregYearOptions?: string[]; userId?: string; publishDate?: string;
       };
       const fields: Record<string, unknown> = {};
       if (body.title?.trim())       fields['כותרת']        = body.title.trim();
@@ -110,6 +110,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (body.pdfUrl?.trim())      fields['קישור PDF']    = body.pdfUrl.trim();
       if (body.keyPoints?.trim())   fields['נקודות מפתח'] = body.keyPoints.trim();
       if (body.sources?.trim())     fields['מקורות']       = body.sources.trim();
+      if (body.publishDate)         fields['תאריך פרסום'] = body.publishDate;
       if (body.yearNum?.trim()) {
         fields['שנה לועזית'] = (body.gregYearOptions?.length)
           ? [body.yearNum.trim()]
@@ -125,7 +126,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
         title: string; status?: string; yearNum?: string; categoryId?: string;
         tags?: string[]; fullContent?: string; pdfUrl?: string; keyPoints?: string;
-        sources?: string; gregYearOptions?: string[]; userId?: string;
+        sources?: string; gregYearOptions?: string[]; userId?: string; publishDate?: string;
       };
       if (!body.title?.trim()) { res.statusCode = 400; res.end(JSON.stringify({ error: 'כותרת חסרה' })); return; }
       const fields: Record<string, unknown> = { 'כותרת': body.title.trim() };
@@ -136,6 +137,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (body.pdfUrl?.trim())      fields['קישור PDF']    = body.pdfUrl.trim();
       if (body.keyPoints?.trim())   fields['נקודות מפתח'] = body.keyPoints.trim();
       if (body.sources?.trim())     fields['מקורות']       = body.sources.trim();
+      if (body.publishDate)         fields['תאריך פרסום'] = body.publishDate;
       if (body.yearNum?.trim()) {
         fields['שנה לועזית'] = (body.gregYearOptions?.length)
           ? [body.yearNum.trim()]
@@ -178,6 +180,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         sources:       extractField(f['מקורות']),
         readTime:      extractField(f['זמן קריאה']),
         linkId:        extractField(f['מזהה קישור']),
+        publishDate:   typeof f['תאריך פרסום'] === 'string' ? f['תאריך פרסום'] : '',
         createdByName: getName(f['נוצר על ידי']),
         updatedByName: getName(f['עודכן על ידי']),
       }));
@@ -186,7 +189,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     // ── GET list ─────────────────────────────────────────────────────────────
     const [articlesData, catsData] = await Promise.all([
-      atFetch('מאמרים', {}, [{ field: 'שנה לועזית', direction: 'desc' }]),
+      atFetch('מאמרים', {}, [{ field: 'תאריך פרסום', direction: 'desc' }, { field: 'שנה לועזית', direction: 'desc' }]),
       atFetch('קטגוריות', {
         filterByFormula: `AND({סטטוס}='פעיל',FIND('מאמרים',ARRAYJOIN({טבלה})))`,
       }),

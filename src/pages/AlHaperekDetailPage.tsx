@@ -255,7 +255,7 @@ export default function AlHaperekDetailPage() {
     return (
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-16 text-center">
         <p className="text-muted-foreground mb-4">הפריט לא נמצא</p>
-        <Button asChild variant="outline"><Link to="/al-haperek">חזרה לעל הפרק</Link></Button>
+        <Button asChild variant="outline"><Link to="/idkunim">חזרה לעדכונים</Link></Button>
       </div>
     );
   }
@@ -271,7 +271,7 @@ export default function AlHaperekDetailPage() {
         <Breadcrumbs
           items={[
             { label: 'דף הבית', href: '/' },
-            { label: 'על הפרק', href: '/al-haperek' },
+            { label: 'עדכונים', href: '/idkunim' },
             { label: item.title },
           ]}
         />

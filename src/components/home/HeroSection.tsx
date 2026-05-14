@@ -27,6 +27,16 @@ function pickNextEvent(events: EventItem[]): EventItem | null {
   return upcoming[0] ?? events[0];
 }
 
+function pickLatestArticle(articles: Article[]): Article | null {
+  if (!articles.length) return null;
+  const now = new Date();
+  const published = articles.filter(a => a.publishDate && new Date(a.publishDate) <= now);
+  if (!published.length) return articles[0];
+  return published.sort((a, b) =>
+    new Date(b.publishDate!).getTime() - new Date(a.publishDate!).getTime()
+  )[0];
+}
+
 function pickLatestAnswered(questions: Question[]): Question | null {
   const answered = questions.filter((q) => q.answers.length > 0);
   if (!answered.length) return null;
@@ -55,7 +65,7 @@ export default function HeroSection() {
   const loading = videosLoading || articlesLoading || eventsLoading || questionsLoading;
 
   const video = videosData ? pickLatestVideo(videosData.shiurim) : null;
-  const article = articlesData?.articles[0] ?? null;
+  const article = articlesData ? pickLatestArticle(articlesData.articles) : null;
   const event = eventsData ? pickNextEvent(eventsData.events) : null;
   const latestQA = questionsData ? pickLatestAnswered(questionsData.questions) : null;
 

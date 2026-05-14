@@ -20,10 +20,13 @@ const BASE_ID = process.env.AIRTABLE_BASE_ID;
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function extractField(val: unknown): string | undefined {
-  if (!val) return undefined;
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object' && val !== null && 'value' in val)
-    return String((val as { value: unknown }).value).trim();
+  if (val == null) return undefined;
+  if (typeof val === 'string') return val.trim() || undefined;
+  if (typeof val === 'object' && 'value' in val) {
+    const v = (val as { value: unknown }).value;
+    if (v == null) return undefined;
+    return String(v).trim() || undefined;
+  }
   return undefined;
 }
 
@@ -66,6 +69,7 @@ function toArticleList(
       yeshiva: f['מוסד'] ?? '',
       year: extractField(Array.isArray(f['שנה עברית']) ? (f['שנה עברית'] as unknown[])[0] : f['שנה עברית']) ?? '',
       yearNum: f['שנה לועזית'] ?? 0,
+      publishDate: typeof f['תאריך פרסום'] === 'string' ? f['תאריך פרסום'] : undefined,
       categories: categoryName ? [categoryName] : [],
       tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
       readTime: extractField(f['זמן קריאה']),
@@ -131,7 +135,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         airtableFetch(
           'מאמרים',
           { filterByFormula: `{סטטוס} = "פעיל"` },
-          [{ field: 'שנה לועזית', direction: 'desc' }],
+          [{ field: 'תאריך פרסום', direction: 'desc' }, { field: 'שנה לועזית', direction: 'desc' }],
         ),
         airtableFetch('קטגוריות', {}),
       ]);
