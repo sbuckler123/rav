@@ -173,7 +173,7 @@ export default function AdminDashboard() {
               icon={Newspaper}
               iconBg="bg-secondary/10"
               iconColor="text-secondary-foreground"
-              to="/admin/al-haperek"
+              to="/admin/idkunim"
             />
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                 { label: 'לוח אירועים',  to: '/admin/shiurim',       icon: CalendarDays,          color: 'text-secondary-foreground'},
                 { label: 'שיעורי תורה', to: '/admin/videos',        icon: Video,                 color: 'text-primary'            },
                 { label: 'הגות ופסיקה', to: '/admin/articles',      icon: BookOpen,              color: 'text-primary'            },
-                { label: 'עדכונים',      to: '/admin/al-haperek',    icon: Newspaper,             color: 'text-secondary-foreground'},
+                { label: 'עדכונים',      to: '/admin/idkunim',    icon: Newspaper,             color: 'text-secondary-foreground'},
                 { label: 'קטגוריות',     to: '/admin/categories',    icon: Tag,                   color: 'text-primary'            },
                 { label: 'משתמשים',      to: '/admin/users',         icon: Users,                 color: 'text-secondary-foreground'},
               ].map(item => (

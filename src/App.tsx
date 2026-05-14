@@ -95,9 +95,9 @@ export default function App() {
                     <Route path="/articles" element={<AdminArticlesPage />} />
                     <Route path="/articles/new" element={<ArticleFormPage />} />
                     <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
-                    <Route path="/al-haperek" element={<AdminAlHaperekPage />} />
-                    <Route path="/al-haperek/new" element={<AlHaperekFormPage />} />
-                    <Route path="/al-haperek/:id/edit" element={<AlHaperekFormPage />} />
+                    <Route path="/idkunim" element={<AdminAlHaperekPage />} />
+                    <Route path="/idkunim/new" element={<AlHaperekFormPage />} />
+                    <Route path="/idkunim/:id/edit" element={<AlHaperekFormPage />} />
                     <Route path="/users" element={<AdminUsersPage />} />
                     <Route path="/settings" element={<AdminSettingsPage />} />
                   </Routes>

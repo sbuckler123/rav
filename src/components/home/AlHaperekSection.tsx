@@ -50,7 +50,7 @@ function ItemCard({ item }: { item: AlHaperekItem }) {
   const barColor = t ? TYPE_CONFIG[t].bar : 'bg-border';
 
   return (
-    <Link to={`/al-haperek/${item.linkId}`} className="block group h-full">
+    <Link to={`/idkunim/${item.linkId}`} className="block group h-full">
       <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
         <div className={`h-1 w-full flex-shrink-0 ${barColor}`} />
         <div className="flex flex-col flex-1 p-4 sm:p-5">
@@ -120,7 +120,7 @@ export default function AlHaperekSection() {
         )}
 
         <div className="text-center mt-6 sm:hidden">
-          <Link to="/al-haperek">
+          <Link to="/idkunim">
             <Button variant="outline" className="gap-2 w-full min-h-[44px] bg-white">
               לכל הפריטים
               <ArrowLeft className="h-4 w-4" />
