@@ -4,7 +4,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { getAllQuestions } from '@/api/adminQuestionsApi';
 import {
   ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS,
-  useShiurim, useArticles, useEvents, useAlHaperek, useVideos,
+  useShiurim, useArticles, useAlHaperek, useVideos,
 } from '@/hooks/useQueries';
 import {
   MessageCircleQuestion, CalendarDays, BookOpen, Tv2,
@@ -74,18 +74,16 @@ export default function AdminDashboard() {
   const shiurimQuery   = useShiurim();
   const videosQuery    = useVideos();
   const articlesQuery  = useArticles();
-  const eventsQuery    = useEvents();
   const alHaperekQuery = useAlHaperek();
 
   const loading =
     questionsQuery.isLoading || shiurimQuery.isLoading || videosQuery.isLoading ||
-    articlesQuery.isLoading || eventsQuery.isLoading || alHaperekQuery.isLoading;
+    articlesQuery.isLoading || alHaperekQuery.isLoading;
 
   const questions = questionsQuery.data ?? [];
   const shiurim = shiurimQuery.data?.shiurim ?? [];
   const videos = videosQuery.data?.shiurim ?? [];
   const articles = articlesQuery.data?.articles ?? [];
-  const events = eventsQuery.data?.events ?? [];
   const alHaperekItems = alHaperekQuery.data?.items ?? [];
 
   const upcoming = shiurim.filter(s => s.date && parseDate(s.date) >= new Date());
@@ -99,7 +97,6 @@ export default function AdminDashboard() {
     upcomingShiurim:   upcoming.length,
     totalVideos:       videos.length,
     totalArticles:     articles.length,
-    totalEvents:       events.length,
     totalAlHaperek:    alHaperekItems.length,
   };
 
@@ -128,13 +125,13 @@ export default function AdminDashboard() {
 
       {/* Main stat cards */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-white rounded-xl border border-border p-4 sm:p-5 h-28 sm:h-32 animate-pulse bg-muted" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <StatCard
             label='שו"ת'
             value={stats.totalQuestions}
@@ -169,14 +166,16 @@ export default function AdminDashboard() {
             iconColor="text-secondary-foreground"
             to="/admin/articles"
           />
-          <StatCard
-            label="עדכונים"
-            value={stats.totalAlHaperek}
-            icon={Newspaper}
-            iconBg="bg-secondary/10"
-            iconColor="text-secondary-foreground"
-            to="/admin/al-haperek"
-          />
+          <div className="col-span-2 sm:col-span-1">
+            <StatCard
+              label="עדכונים"
+              value={stats.totalAlHaperek}
+              icon={Newspaper}
+              iconBg="bg-secondary/10"
+              iconColor="text-secondary-foreground"
+              to="/admin/al-haperek"
+            />
+          </div>
         </div>
       )}
 
