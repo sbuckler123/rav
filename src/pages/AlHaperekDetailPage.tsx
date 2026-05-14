@@ -342,7 +342,7 @@ export default function AlHaperekDetailPage() {
             שתף
           </Button>
           <Button asChild variant="outline" className="min-h-[44px]">
-            <Link to="/al-haperek">חזרה לרשימה</Link>
+            <Link to="/idkunim">חזרה לרשימה</Link>
           </Button>
         </div>
 
@@ -355,7 +355,7 @@ export default function AlHaperekDetailPage() {
           >
             <div className="flex-1 min-w-0 text-left">
               {prevItem && (
-                <Link to={`/al-haperek/${prevItem.linkId}`} className="group block hover:bg-primary/5 rounded-lg p-2 -m-2 transition-colors">
+                <Link to={`/idkunim/${prevItem.linkId}`} className="group block hover:bg-primary/5 rounded-lg p-2 -m-2 transition-colors">
                   <span className="text-xs text-muted-foreground block">→ הקודם</span>
                   <span className="font-semibold text-primary group-hover:text-secondary text-sm line-clamp-1">{prevItem.title}</span>
                 </Link>
@@ -363,7 +363,7 @@ export default function AlHaperekDetailPage() {
             </div>
             <div className="flex-1 min-w-0 text-right">
               {nextItem && (
-                <Link to={`/al-haperek/${nextItem.linkId}`} className="group block hover:bg-primary/5 rounded-lg p-2 -m-2 transition-colors">
+                <Link to={`/idkunim/${nextItem.linkId}`} className="group block hover:bg-primary/5 rounded-lg p-2 -m-2 transition-colors">
                   <span className="text-xs text-muted-foreground block">הבא ←</span>
                   <span className="font-semibold text-primary group-hover:text-secondary text-sm line-clamp-1">{nextItem.title}</span>
                 </Link>

@@ -423,7 +423,7 @@ export default function AlHaperekFormPage() {
         toast.success('הפריט נוסף');
       }
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.alHaperek });
-      navigate('/admin/al-haperek');
+      navigate('/admin/idkunim');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'שגיאה בשמירה');
     } finally {
@@ -444,7 +444,7 @@ export default function AlHaperekFormPage() {
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-6">
         <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground flex-shrink-0">
-          <Link to="/admin/al-haperek">
+          <Link to="/admin/idkunim">
             <ArrowRight className="h-4 w-4" />
             <span className="hidden sm:inline">חזרה</span>
           </Link>

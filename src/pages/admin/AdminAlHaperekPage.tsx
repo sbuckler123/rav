@@ -83,7 +83,7 @@ export default function AdminAlHaperekPage() {
           <p className="text-sm text-muted-foreground">{items.length} פריטים</p>
         </div>
         <Button asChild className="h-11 bg-secondary text-primary hover:bg-secondary/90 flex-shrink-0">
-          <Link to="/admin/al-haperek/new" className="flex items-center gap-2">
+          <Link to="/admin/idkunim/new" className="flex items-center gap-2">
             <Plus className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">עדכון חדש</span>
             <span className="sm:hidden">חדש</span>
@@ -138,7 +138,7 @@ export default function AdminAlHaperekPage() {
 
                 <div className="flex items-center gap-0.5 flex-shrink-0">
                   <Link
-                    to={`/admin/al-haperek/${item.id}/edit`}
+                    to={`/admin/idkunim/${item.id}/edit`}
                     className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                     title="ערוך"
                   >

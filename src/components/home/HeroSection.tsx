@@ -1,11 +1,11 @@
-import { Play, FileText, MessageCircle, Calendar, Send } from 'lucide-react';
+import { Play, FileText, MessageCircle, Newspaper, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HeroTile from './HeroTile';
 import { type ShiurItem } from '@/api/getVideos';
 import { type Article } from '@/api/getArticles';
-import { type EventItem } from '@/api/getEvents';
+import { type AlHaperekItem } from '@/api/getAlHaperek';
 import { type getPublishedQuestions } from '@/api/getPublishedQuestions';
-import { useArticles, useVideos, useEvents, useQuestions } from '@/hooks/useQueries';
+import { useArticles, useVideos, useAlHaperek, useQuestions } from '@/hooks/useQueries';
 
 type Question = Awaited<ReturnType<typeof getPublishedQuestions>>['questions'][number];
 
@@ -14,17 +14,13 @@ function pickLatestVideo(videos: ShiurItem[]): ShiurItem | null {
   return videos.find((v) => v.isNew) ?? videos[0];
 }
 
-function pickNextEvent(events: EventItem[]): EventItem | null {
-  if (!events.length) return null;
-  const now = new Date();
-  const upcoming = events
-    .filter((e) => {
-      if (!e.dateLocale) return false;
-      const d = new Date(e.dateLocale);
-      return !isNaN(d.getTime()) && d >= now;
-    })
-    .sort((a, b) => new Date(a.dateLocale).getTime() - new Date(b.dateLocale).getTime());
-  return upcoming[0] ?? events[0];
+function pickLatestAlHaperek(items: AlHaperekItem[]): AlHaperekItem | null {
+  if (!items.length) return null;
+  const withDate = items.filter((i) => i.date);
+  if (!withDate.length) return items[0];
+  return withDate.sort((a, b) =>
+    new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+  )[0];
 }
 
 function pickLatestArticle(articles: Article[]): Article | null {
@@ -59,19 +55,19 @@ function latestAnswerTitle(question: Question | null): string | undefined {
 export default function HeroSection() {
   const { data: videosData, isLoading: videosLoading } = useVideos();
   const { data: articlesData, isLoading: articlesLoading } = useArticles();
-  const { data: eventsData, isLoading: eventsLoading } = useEvents();
+  const { data: alHaperekData, isLoading: alHaperekLoading } = useAlHaperek();
   const { data: questionsData, isLoading: questionsLoading } = useQuestions();
 
-  const loading = videosLoading || articlesLoading || eventsLoading || questionsLoading;
+  const loading = videosLoading || articlesLoading || alHaperekLoading || questionsLoading;
 
   const video = videosData ? pickLatestVideo(videosData.shiurim) : null;
   const article = articlesData ? pickLatestArticle(articlesData.articles) : null;
-  const event = eventsData ? pickNextEvent(eventsData.events) : null;
+  const idkun = alHaperekData ? pickLatestAlHaperek(alHaperekData.items) : null;
   const latestQA = questionsData ? pickLatestAnswered(questionsData.questions) : null;
 
   const videoHref = video?.linkId ? `/shiurei-torah/${video.linkId}` : '/shiurei-torah';
   const articleHref = article?.linkId ? `/hagut-upsika/${article.linkId}` : '/hagut-upsika';
-  const eventHref = event?.linkId ? `/yoman-peilut/${event.linkId}` : '/yoman-peilut';
+  const idkunHref = idkun?.linkId ? `/idkunim/${idkun.linkId}` : '/idkunim';
   const qaHref = latestQA?.id ? `/shut#q-${latestQA.id}` : '/shut';
 
   return (
@@ -120,10 +116,10 @@ export default function HeroSection() {
                 loading={loading}
               />
               <HeroTile
-                label="אירוע אחרון"
-                title={event?.title}
-                to={eventHref}
-                icon={Calendar}
+                label="עדכון אחרון"
+                title={idkun?.title}
+                to={idkunHref}
+                icon={Newspaper}
                 loading={loading}
               />
             </div>
