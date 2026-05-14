@@ -8,6 +8,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
+import { getCategoryMap } from './_categories';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -110,7 +111,7 @@ function toArticleDetail(record: { id: string; fields: Record<string, unknown> }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
 
   if (!PAT || !BASE_ID) {
     res.statusCode = 500;
@@ -131,16 +132,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.statusCode = 200;
       res.end(JSON.stringify(record ? toArticleDetail(record, linkId) : null));
     } else {
-      const [articlesData, catsData] = await Promise.all([
+      const [articlesData, catMap] = await Promise.all([
         airtableFetch(
           'מאמרים',
           { filterByFormula: `{סטטוס} = "פעיל"` },
           [{ field: 'תאריך פרסום', direction: 'desc' }, { field: 'שנה לועזית', direction: 'desc' }],
         ),
-        airtableFetch('קטגוריות', {}),
+        getCategoryMap(),
       ]);
-      const catMap: Record<string, string> = {};
-      catsData.records.forEach((r) => { catMap[r.id] = (r.fields['שם'] as string) ?? ''; });
 
       res.statusCode = 200;
       res.end(JSON.stringify(toArticleList(articlesData, catMap)));
