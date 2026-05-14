@@ -7,6 +7,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
+import { getCategoryMap } from './_categories';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -50,7 +51,7 @@ async function airtableFetch(
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
 
   if (!PAT || !BASE_ID) {
     res.statusCode = 500;
@@ -59,13 +60,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   try {
-const [shiurimData, catsData] = await Promise.all([
+    const [shiurimData, catMap] = await Promise.all([
       airtableFetch('שיעורים', {}, [{ field: 'תאריך', direction: 'asc' }]),
-      airtableFetch('קטגוריות', {}),
+      getCategoryMap(),
     ]);
-
-    const catMap: Record<string, string> = {};
-    catsData.records.forEach((r) => { catMap[r.id] = (r.fields['שם'] as string) ?? ''; });
 
     const shiurim = shiurimData.records.map((r) => {
       const f = r.fields;

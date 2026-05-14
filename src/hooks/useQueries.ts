@@ -39,10 +39,21 @@ export const ADMIN_QUERY_OPTIONS = {
   retry: 1,
 } as const;
 
+// Public content is CDN-cached upstream and changes infrequently. A client-side
+// staleTime stops redundant refetches on every mount / tab focus, which would
+// otherwise multiply serverless invocations (and Airtable calls on cache miss).
+export const PUBLIC_QUERY_OPTIONS = {
+  staleTime: 5 * 60_000,
+  gcTime: 30 * 60_000,
+  refetchOnWindowFocus: false,
+  retry: 1,
+} as const;
+
 export function useArticles() {
   return useQuery({
     queryKey: QUERY_KEYS.articles,
     queryFn: getArticles,
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }
 
@@ -50,6 +61,7 @@ export function useVideos() {
   return useQuery({
     queryKey: QUERY_KEYS.videos,
     queryFn: getVideos,
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }
 
@@ -57,6 +69,7 @@ export function useEvents() {
   return useQuery({
     queryKey: QUERY_KEYS.events,
     queryFn: getEvents,
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }
 
@@ -64,6 +77,7 @@ export function useShiurim() {
   return useQuery({
     queryKey: QUERY_KEYS.shiurim,
     queryFn: getShiurim,
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }
 
@@ -71,6 +85,7 @@ export function useAlHaperek() {
   return useQuery({
     queryKey: QUERY_KEYS.alHaperek,
     queryFn: getAlHaperekList,
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }
 
@@ -78,5 +93,6 @@ export function useQuestions(categoryId?: string) {
   return useQuery({
     queryKey: QUERY_KEYS.questions(categoryId),
     queryFn: () => getPublishedQuestions({ categoryId }),
+    ...PUBLIC_QUERY_OPTIONS,
   });
 }

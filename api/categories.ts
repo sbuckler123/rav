@@ -139,7 +139,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.end(JSON.stringify(categories));
       return;
     }
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
     const filter = forTable
       ? `AND({סטטוס}="פעיל",FIND("${escapeAirtable(forTable)}",ARRAYJOIN({טבלה})))`
       : `{סטטוס}="פעיל"`;
