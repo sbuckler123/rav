@@ -120,7 +120,7 @@ function FeaturedCard({ item }: { item: AlHaperekItem }) {
       </div>
 
       {/* Title */}
-      <h2 className="font-serif font-bold text-3xl sm:text-4xl leading-tight text-primary group-hover:text-secondary transition-colors duration-200 mb-4">
+      <h2 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl leading-tight text-primary group-hover:text-secondary transition-colors duration-200 mb-4">
         {item.title}
       </h2>
 
@@ -132,7 +132,7 @@ function FeaturedCard({ item }: { item: AlHaperekItem }) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         {item.date && (
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <CalendarDays className="h-3.5 w-3.5" />
