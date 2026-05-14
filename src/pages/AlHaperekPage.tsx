@@ -53,6 +53,50 @@ function formatDate(raw?: string) {
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function formatDayMonth(raw?: string) {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long' });
+}
+
+// ── Date grouping ─────────────────────────────────────────────────────────────
+
+function dateValue(raw?: string): number {
+  if (!raw) return -Infinity;
+  const t = new Date(raw).getTime();
+  return isNaN(t) ? -Infinity : t;
+}
+
+function monthKey(raw?: string): string {
+  if (!raw) return 'no-date';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return 'no-date';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLabel(raw?: string): string {
+  if (!raw) return 'ללא תאריך';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return 'ללא תאריך';
+  return d.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+}
+
+/** Groups a date-sorted list into contiguous month buckets. */
+function groupByMonth(items: AlHaperekItem[]) {
+  const groups: { key: string; label: string; items: AlHaperekItem[] }[] = [];
+  let current: { key: string; label: string; items: AlHaperekItem[] } | null = null;
+  for (const item of items) {
+    const key = monthKey(item.date);
+    if (!current || current.key !== key) {
+      current = { key, label: monthLabel(item.date), items: [] };
+      groups.push(current);
+    }
+    current.items.push(item);
+  }
+  return groups;
+}
+
 // ── Featured card — large typographic treatment, no box ──────────────────────
 
 function FeaturedCard({ item }: { item: AlHaperekItem }) {
@@ -104,75 +148,67 @@ function FeaturedCard({ item }: { item: AlHaperekItem }) {
   );
 }
 
-// ── Secondary card — items 1–4, two-column grid ───────────────────────────────
+// ── Month section header ──────────────────────────────────────────────────────
 
-function SecondaryCard({ item }: { item: AlHaperekItem }) {
-  const t = primaryType(item.blocks);
-  const barColor = t ? TYPE_CONFIG[t].bar : 'bg-border';
+function MonthHeader({ label }: { label: string }) {
   return (
-    <Link to={`/idkunim/${item.linkId}`} className="block group h-full">
-      <div className="flex flex-col h-full bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-        <div className={`h-1 w-full ${barColor}`} />
-        <div className="flex flex-col flex-1 p-4 sm:p-5">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <ContentTypeBadge blocks={item.blocks} />
-            {item.date && (
-              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.date)}</span>
-            )}
-          </div>
-          {item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {item.tags.slice(0, 2).map(t => (
-                <Badge key={t} variant="secondary" className="text-[10px] px-2 py-0.5">{t}</Badge>
-              ))}
-            </div>
-          )}
-          <h3 className="font-serif font-bold text-base sm:text-lg leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-2 flex-1">
-            {item.title}
-          </h3>
-          {item.summary && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
-              {item.summary}
-            </p>
-          )}
-        </div>
-      </div>
-    </Link>
+    <div className="flex items-center gap-3 mb-1">
+      <span className="w-1.5 h-1.5 rounded-full bg-secondary flex-shrink-0" />
+      <h3 className="text-sm font-bold text-primary flex-shrink-0">{label}</h3>
+      <div className="h-px flex-1 bg-border" />
+    </div>
   );
 }
 
-// ── List row — items 5+, compact rows ────────────────────────────────────────
+// ── Editorial row — newspaper-style entry ────────────────────────────────────
 
-function ListRow({ item }: { item: AlHaperekItem }) {
+function EditorialRow({ item }: { item: AlHaperekItem }) {
   const t = primaryType(item.blocks);
-  const { bg, iconCls, Icon } = t
+  const { bg, iconCls, Icon, label } = t
     ? TYPE_CONFIG[t]
-    : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText };
+    : { bg: 'bg-muted', iconCls: 'text-muted-foreground', Icon: FileText, label: '' };
+
   return (
     <Link to={`/idkunim/${item.linkId}`} className="block group">
-      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${bg}`}>
-          <Icon className={`h-4 w-4 ${iconCls}`} />
+      <article className="flex gap-3 sm:gap-4 py-5 border-b border-border last:border-0">
+        {/* Type icon */}
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${bg}`}>
+          <Icon className={`h-5 w-5 ${iconCls}`} />
         </div>
+
+        {/* Body */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-serif font-bold text-sm sm:text-base text-primary group-hover:text-secondary transition-colors line-clamp-1">
+          <div className="flex items-center gap-2 mb-1">
+            {label && <span className={`text-[11px] font-semibold ${iconCls}`}>{label}</span>}
+            {label && item.date && <span className="text-muted-foreground/40">·</span>}
+            {item.date && (
+              <time className="text-xs text-muted-foreground">{formatDayMonth(item.date)}</time>
+            )}
+          </div>
+          <h3 className="font-serif font-bold text-lg sm:text-xl leading-snug text-primary group-hover:text-secondary transition-colors line-clamp-2">
             {item.title}
           </h3>
           {item.summary && (
-            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 hidden sm:block">
+            <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-2 mt-1 leading-relaxed">
               {item.summary}
             </p>
           )}
-        </div>
-        <div className="flex-shrink-0 space-y-0.5 text-left">
           {item.tags.length > 0 && (
-            <p className="text-[10px] font-semibold text-secondary uppercase tracking-wide">{item.tags[0]}</p>
-          )}
-          {item.date && (
-            <p className="text-xs text-muted-foreground">{formatDate(item.date)}</p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+              {item.tags.slice(0, 3).map(tag => (
+                <span key={tag} className="text-[11px] font-medium text-secondary">#{tag}</span>
+              ))}
+            </div>
           )}
         </div>
-      </div>
+
+        {/* Optional thumbnail — only when the item has a cover image */}
+        {item.coverImage && (
+          <div className="hidden sm:block w-28 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+            <img src={item.coverImage} alt="" loading="lazy" className="w-full h-full object-cover" />
+          </div>
+        )}
+      </article>
     </Link>
   );
 }
@@ -304,14 +340,17 @@ export default function AlHaperekPage() {
   const allTags = [...new Set(items.flatMap(i => i.tags))].sort();
 
   const term = search.trim().toLowerCase();
-  const filtered = items.filter(i => {
-    const matchesSearch = !term || i.title.toLowerCase().includes(term) || i.summary?.toLowerCase().includes(term);
-    const matchesTag    = !selectedTag || i.tags.includes(selectedTag);
-    return matchesSearch && matchesTag;
-  });
+  const filtered = items
+    .filter(i => {
+      const matchesSearch = !term || i.title.toLowerCase().includes(term) || i.summary?.toLowerCase().includes(term);
+      const matchesTag    = !selectedTag || i.tags.includes(selectedTag);
+      return matchesSearch && matchesTag;
+    })
+    .sort((a, b) => dateValue(b.date) - dateValue(a.date));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const visible    = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const groups     = groupByMonth(visible.slice(1));
 
   function resetPage() { setPage(1); }
 
@@ -339,17 +378,25 @@ export default function AlHaperekPage() {
           {/* Main content — right column on desktop */}
           <div className="lg:col-start-1 lg:row-start-1">
             {isLoading ? (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="space-y-3 pb-8 border-b-2 border-border">
                   <div className="h-3 w-32 bg-muted animate-pulse rounded" />
                   <div className="h-10 w-3/4 bg-muted animate-pulse rounded" />
                   <div className="h-4 w-full bg-muted animate-pulse rounded" />
                   <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="h-44 rounded-xl bg-muted animate-pulse" />)}
+                <div className="space-y-6">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-muted animate-pulse flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                        <div className="h-5 w-3/4 bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="rounded-xl bg-muted animate-pulse h-40" />
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
@@ -366,26 +413,20 @@ export default function AlHaperekPage() {
               </div>
             ) : (
               <>
-                {/* Featured */}
+                {/* Featured lead */}
                 <FeaturedCard item={visible[0]} />
 
-                {/* Secondary grid — items 1–4 */}
-                {visible.length > 1 && (
-                  <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                    {visible.slice(1, 5).map(item => (
-                      <SecondaryCard key={item.linkId} item={item} />
-                    ))}
-                  </div>
-                )}
-
-                {/* List — items 5+ */}
-                {visible.length > 5 && (
-                  <div className="bg-white rounded-xl border border-border overflow-hidden mb-8">
-                    {visible.slice(5).map(item => (
-                      <ListRow key={item.linkId} item={item} />
-                    ))}
-                  </div>
-                )}
+                {/* Date-grouped editorial feed */}
+                {groups.map(group => (
+                  <section key={group.key} className="mb-8">
+                    <MonthHeader label={group.label} />
+                    <div>
+                      {group.items.map(item => (
+                        <EditorialRow key={item.linkId} item={item} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
 
                 {/* Pagination */}
                 {totalPages > 1 && (
