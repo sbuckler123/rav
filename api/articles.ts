@@ -20,10 +20,13 @@ const BASE_ID = process.env.AIRTABLE_BASE_ID;
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function extractField(val: unknown): string | undefined {
-  if (!val) return undefined;
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object' && val !== null && 'value' in val)
-    return String((val as { value: unknown }).value).trim();
+  if (val == null) return undefined;
+  if (typeof val === 'string') return val.trim() || undefined;
+  if (typeof val === 'object' && 'value' in val) {
+    const v = (val as { value: unknown }).value;
+    if (v == null) return undefined;
+    return String(v).trim() || undefined;
+  }
   return undefined;
 }
 
