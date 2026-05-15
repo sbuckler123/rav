@@ -6,7 +6,6 @@ import VideosSection from '@/components/home/VideosSection';
 import AskRabbiSection from '@/components/home/AskRabbiSection';
 import ArticlesSection from '@/components/home/ArticlesSection';
 import EventsSection from '@/components/home/EventsSection';
-import EventsHomeSection from '@/components/home/EventsHomeSection';
 import AlHaperekSection from '@/components/home/AlHaperekSection';
 import FadeIn from '@/components/FadeIn';
 
@@ -30,9 +29,6 @@ export default function HomePage() {
       </FadeIn>
       <FadeIn>
         <EventsSection />
-      </FadeIn>
-      <FadeIn>
-        <EventsHomeSection />
       </FadeIn>
       <FadeIn>
         <ArticlesSection />
