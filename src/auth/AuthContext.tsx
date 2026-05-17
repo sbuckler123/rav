@@ -36,11 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const email = clerkUser.primaryEmailAddress?.emailAddress ?? '';
-    if (!email) return;
-
     getBearerToken()
-      .then((token) => fetch(`/api/auth-user?email=${encodeURIComponent(email)}`, {
+      .then((token) => fetch('/api/auth-user', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }))
       .then((r) => r.ok ? r.json() : null)

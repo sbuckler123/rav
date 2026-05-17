@@ -1,9 +1,9 @@
 /**
  * Vercel Serverless Function — Auth user lookup
- * After Clerk authenticates a user, this returns their Airtable record
- * (name, role, id) for attribution purposes.
+ * Returns the Airtable record for the CALLER (resolved from the verified JWT's
+ * Clerk user id), so a signed-in user can only ever see their own admin record.
  *
- * GET /api/auth-user?email=xxx → { id, name, email, role } | null
+ * GET /api/auth-user → { id, name, email, role } | null
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
@@ -26,14 +26,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  if (!(await requireAuth(req, res))) return;
+  const payload = await requireAuth(req, res);
+  if (!payload) return;
 
-  const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
-  const email  = reqUrl.searchParams.get('email');
-
-  if (!email) {
-    res.statusCode = 400;
-    res.end(JSON.stringify({ error: 'Missing email' }));
+  const clerkId = payload.sub;
+  if (!clerkId) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
     return;
   }
 
@@ -43,7 +42,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     );
     url.searchParams.set(
       'filterByFormula',
-      `AND({אימייל}="${escapeAirtable(email)}",{סטטוס}="פעיל")`,
+      `AND({clerk_id}="${escapeAirtable(clerkId)}",{סטטוס}="פעיל")`,
     );
     url.searchParams.set('maxRecords', '1');
 
@@ -68,7 +67,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify({
       id:    record.id,
       name:  record.fields['שם']      ?? '',
-      email: record.fields['אימייל'] ?? email,
+      email: record.fields['אימייל'] ?? '',
       role:  record.fields['תפקיד']  ?? 'צוות',
     }));
   } catch {
