@@ -65,6 +65,7 @@ export default function Header() {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-2">
+              {/* Newsletter button hidden — not in use yet
               <button
                 type="button"
                 onClick={() => setNewsletterOpen(true)}
@@ -73,6 +74,7 @@ export default function Header() {
                 <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="leading-none">הצטרפות לניוזלטר</span>
               </button>
+              */}
               <Link
                 to="/shaal-et-harav"
                 onClick={scrollTop}
@@ -180,6 +182,7 @@ export default function Header() {
                   <Send className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">שאל את הרב</span>
                 </Link>
+                {/* Newsletter button hidden — not in use yet
                 <button
                   type="button"
                   onClick={() => { setNewsletterOpen(true); setIsMenuOpen(false); }}
@@ -188,13 +191,16 @@ export default function Header() {
                   <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="leading-none">הצטרפות לניוזלטר</span>
                 </button>
+                */}
               </div>
             </div>
           )}
         </div>
       </header>
 
+      {/* Newsletter dialog hidden — not in use yet
       <NewsletterDialog open={newsletterOpen} onOpenChange={setNewsletterOpen} />
+      */}
     </>
   );
 }
