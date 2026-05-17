@@ -16,6 +16,10 @@ import type { AdminRequest } from './admin';
 import { BODY_LIMITS, readBody } from './_readBody';
 import { enforceOrigin, enforceRateLimit } from './_security';
 import { captureServerError } from './_sentry';
+import { fetchSettings } from './_settings';
+import { sendFollowUpEmail } from './_email';
+
+const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -104,43 +108,98 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     }
 
     // ── Submit reply ─────────────────────────────────────────────────────────
-    // Authenticated admins can submit replies with arbitrary writerType/title
+    // Authenticated admins write a new answer record to Airtable directly
     // (used by QuestionsPage and QuestionDetailPage in the admin UI).
-    // Unauthenticated callers (asker follow-ups from the public Q&A page) get
-    // a locked-down path: writerType is forced to 'השואל', title is dropped,
-    // content is hard-capped, origin is checked, and the IP is rate-limited —
-    // they cannot impersonate the rabbi.
+    //
+    // Unauthenticated callers (asker follow-ups from the public Q&A page) do
+    // NOT write to Airtable — the server cannot verify the submitter's identity,
+    // so writing a publicly-rendered "answer" attributed to 'השואל' would let
+    // any visitor impersonate the original asker. Instead, the follow-up text
+    // is emailed to the rabbi like the new-question notification; the rabbi
+    // can decide whether to manually publish a response from the admin UI.
     if (type === 'reply' && req.method === 'POST') {
       const isAdmin = !!(req as AdminRequest).adminCtx;
-      if (!isAdmin) {
-        if (!enforceOrigin(req, res)) return;
-        if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
+
+      if (isAdmin) {
+        const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
+          questionId: string; content: string; writerType?: string; title?: string;
+        };
+        if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+          res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
+        }
+
+        const fields: Record<string, unknown> = {
+          'שאלה':          [body.questionId],
+          'תוכן התשובה':   body.content,
+          'סוג כותב':      body.writerType ?? 'רב',
+          'תאריך':         new Date().toISOString(),
+        };
+        if (body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
+
+        const record = await atCreate('תשובות', fields);
+        // Reset status to ממתין so admin notices the new reply
+        await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+        res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
       }
 
+      // Unauthenticated follow-up: email-only, no Airtable write.
+      if (!enforceOrigin(req, res)) return;
+      if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
+
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-        questionId: string; content: string; writerType?: string; title?: string;
+        questionId: string; content: string;
       };
       if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
       }
+      if (!RECORD_ID_RE.test(body.questionId)) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid question id' })); return;
+      }
 
-      const content = isAdmin
-        ? body.content
-        : body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
-      const writerType = isAdmin ? (body.writerType ?? 'רב') : 'השואל';
+      const content = body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
 
-      const fields: Record<string, unknown> = {
-        'שאלה':          [body.questionId],
-        'תוכן התשובה':   content,
-        'סוג כותב':      writerType,
-        'תאריך':         new Date().toISOString(),
-      };
-      if (isAdmin && body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
+      // Fetch the question to enrich the email and verify it's publicly visible.
+      const qRes = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${body.questionId}`,
+        { headers: auth() },
+      );
+      if (!qRes.ok) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
+      }
+      const question = await qRes.json() as { id: string; fields: Record<string, unknown> };
+      const f = question.fields;
 
-      const record = await atCreate('תשובות', fields);
-      // Reset status to ממתין so admin notices the new reply
-      await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
-      res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
+      // Only accept follow-ups against questions that are publicly visible —
+      // otherwise we'd leak the existence of unpublished/rejected questions.
+      const consent  = f['הסכמה לפרסום']  === true;
+      const approved = f['מאושר לפרסום'] === true;
+      const rejected = f['סטטוס'] === 'נדחה';
+      if (!consent || !approved || rejected) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
+      }
+      // Honor the admin's per-question "block follow-ups" flag server-side.
+      if (f['חסום שאלות המשך'] === true) {
+        res.statusCode = 403; res.end(JSON.stringify({ error: 'Follow-ups are disabled for this question' })); return;
+      }
+
+      const settings = await fetchSettings();
+      if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) {
+        res.statusCode = 503; res.end(JSON.stringify({ error: 'Follow-up channel not configured' })); return;
+      }
+
+      await sendFollowUpEmail({
+        toEmail:         settings.notifyEmail,
+        fromEmail:       settings.notifyFromEmail,
+        askerName:       String(f['שם השואל'] ?? ''),
+        askerEmail:      String(f['אימייל השואל'] ?? ''),
+        questionContent: String(f['תוכן השאלה'] ?? ''),
+        followUpContent: content,
+        referenceId:     String(f['מזהה שאלה'] ?? ''),
+      }).catch((err) => {
+        captureServerError(err, { handler: 'admin-questions', method: 'follow-up-email' });
+      });
+
+      res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
     }
 
     // ── DELETE question ──────────────────────────────────────────────────────
