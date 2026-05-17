@@ -92,12 +92,12 @@ export default function AlHaperekSection() {
 
   return (
     <section className="bg-[#F7F4EE] py-12 sm:py-16">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl">
 
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-secondary rounded-full" />
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">עדכונים</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-primary">עדכונים</h2>
           </div>
           <Link to="/idkunim">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex bg-white">
@@ -108,13 +108,13 @@ export default function AlHaperekSection() {
         </div>
 
         {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {[1, 2, 3].map(i => (
               <div key={i} className="rounded-xl bg-muted animate-pulse h-44" />
             ))}
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {items.map(item => <ItemCard key={item.linkId} item={item} />)}
           </div>
         )}

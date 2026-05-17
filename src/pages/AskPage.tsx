@@ -44,7 +44,7 @@ export default function AskPage() {
         subtitle="שלחו את שאלותיכם ההלכתיות ותקבלו מענה מלשכת הרב הראשי"
       />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-10">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8 sm:py-10">
 
         <section className="grid lg:grid-cols-5 gap-6 lg:gap-8" aria-label="שליחת שאלה">
           <div className="lg:col-span-3 order-2 lg:order-1">

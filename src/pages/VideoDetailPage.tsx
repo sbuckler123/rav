@@ -34,7 +34,7 @@ export default function VideoDetailPage() {
   if (!video) {
     return (
       <div className="min-h-screen bg-muted/30">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
           <Card>
             <CardContent className="p-6 text-center">
               <h2 className="text-2xl font-bold mb-4">שיעור לא נמצא</h2>
@@ -71,7 +71,7 @@ export default function VideoDetailPage() {
         description={`שיעור וידאו מאת הרב קלמן מאיר בר: ${video.title}`}
         image={getThumb(video)}
       />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-6 sm:py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },
           { label: 'שיעורי תורה', href: '/shiurei-torah' },

@@ -13,13 +13,13 @@ export default function ArticlesSection() {
 
   return (
     <section className="bg-[#F7F4EE] py-12 sm:py-16">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl">
 
         {/* Section header */}
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-secondary rounded-full" />
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">מאמרים ופסקי הלכה</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-primary">מאמרים ופסקי הלכה</h2>
           </div>
           <Link to="/hagut-upsika">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex bg-white">

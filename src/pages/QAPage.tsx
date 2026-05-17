@@ -34,7 +34,7 @@ export default function QAPage() {
         subtitle={PAGE_DESC['/shut']}
       />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 sm:py-10">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8 sm:py-10">
         <section id="qa-section" aria-label="שאלות ותשובות מפורסמות">
           {loading ? (
             <div className="space-y-4" aria-busy="true" aria-label="טוען שאלות">
