@@ -362,7 +362,7 @@ export default function AlHaperekPage() {
       />
       <PageHeader title="עדכונים" subtitle={PAGE_DESC['/idkunim']} />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8">
         <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8 lg:items-start">
 
           {/* Sidebar — top on mobile, left column on desktop */}

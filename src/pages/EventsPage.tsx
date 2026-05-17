@@ -195,7 +195,7 @@ function EventCard({ event }: { event: EventItem }) {
 
 function Skeleton() {
   return (
-    <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl py-8 space-y-10">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8 space-y-10">
       <div className="h-24 bg-muted animate-pulse rounded-xl" />
       {[0, 1].map(i => (
         <div key={i} className="space-y-4">
@@ -266,7 +266,7 @@ export default function EventsPage() {
   if (isError) return (
     <div className="min-h-screen bg-background">
       <PageHeader title="יומן פעילות" subtitle={PAGE_DESC['/yoman-peilut']} />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl py-16 text-center text-destructive">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-16 text-center text-destructive">
         שגיאה בטעינת האירועים
       </div>
     </div>
@@ -280,7 +280,7 @@ export default function EventsPage() {
       />
       <PageHeader title="יומן פעילות" subtitle={PAGE_DESC['/yoman-peilut']} />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8">
 
         {/* ── Filter bar ── */}
         <div className="bg-white border border-border rounded-xl p-4 mb-8 shadow-sm space-y-3">

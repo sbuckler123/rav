@@ -39,7 +39,7 @@ export default function ArticleDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-muted/30">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 space-y-6">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8 space-y-6">
           <Skeleton className="h-6 w-64" />
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-32 w-full" />
@@ -64,7 +64,7 @@ export default function ArticleDetailPage() {
         description={(article.abstract ?? '').slice(0, 155) || `מאמר מאת הרב קלמן מאיר בר: ${article.title}`}
         type="article"
       />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
         <Breadcrumbs items={[
           { label: 'דף הבית', href: '/' },
           { label: 'הגות ופסיקה', href: '/hagut-upsika' },

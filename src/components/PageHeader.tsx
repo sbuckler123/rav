@@ -55,7 +55,7 @@ export default function PageHeader({
 
       {/* Title & subtitle */}
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-primary mb-3 leading-tight tracking-wide">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-serif font-bold text-primary mb-3 leading-tight tracking-wide">
           {title}
         </h1>
 
