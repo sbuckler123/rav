@@ -175,7 +175,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           ? (r.fields['תשובות'] as string[])
           : [];
         const answers = answersData.records
-          .filter((a) => linkedAnswerIds.includes(a.id))
+          .filter((a) => linkedAnswerIds.includes(a.id) && a.fields['ממתין לאישור'] !== true)
           .map((a) => ({
             id: a.id,
             title: (a.fields['כותרת התשובה'] as string) ?? '',
