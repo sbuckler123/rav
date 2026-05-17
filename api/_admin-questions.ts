@@ -95,9 +95,16 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     // ── Answer CRUD ──────────────────────────────────────────────────────────
     if (type === 'answer') {
       if (req.method === 'PATCH' && id) {
-        const { content, title } = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as { content: string; title?: string };
-        const fields: Record<string, unknown> = { 'תוכן התשובה': content };
-        if (title !== undefined) fields['כותרת התשובה'] = title;
+        const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
+          content?: string; title?: string; pendingApproval?: boolean;
+        };
+        const fields: Record<string, unknown> = {};
+        if (body.content !== undefined)         fields['תוכן התשובה']  = body.content;
+        if (body.title !== undefined)           fields['כותרת התשובה'] = body.title;
+        if (body.pendingApproval !== undefined) fields['ממתין לאישור'] = body.pendingApproval;
+        if (Object.keys(fields).length === 0) {
+          res.statusCode = 400; res.end(JSON.stringify({ error: 'No fields to update' })); return;
+        }
         await atUpdate('תשובות', id, fields);
         res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
       }
@@ -109,14 +116,15 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
     // ── Submit reply ─────────────────────────────────────────────────────────
     // Authenticated admins write a new answer record to Airtable directly
-    // (used by QuestionsPage and QuestionDetailPage in the admin UI).
+    // (used by QuestionsPage and QuestionDetailPage in the admin UI). These
+    // are not gated — they auto-publish.
     //
-    // Unauthenticated callers (asker follow-ups from the public Q&A page) do
-    // NOT write to Airtable — the server cannot verify the submitter's identity,
-    // so writing a publicly-rendered "answer" attributed to 'השואל' would let
-    // any visitor impersonate the original asker. Instead, the follow-up text
-    // is emailed to the rabbi like the new-question notification; the rabbi
-    // can decide whether to manually publish a response from the admin UI.
+    // Unauthenticated callers (asker follow-ups from the public Q&A page) save
+    // to Airtable with `ממתין לאישור = true` so the answer is invisible on the
+    // public Q&A feed until an admin approves it. This closes the impersonation
+    // vector — anyone can still submit content, but nothing renders publicly
+    // under the asker's identity without explicit admin review. A notification
+    // email is also sent to the rabbi.
     if (type === 'reply' && req.method === 'POST') {
       const isAdmin = !!(req as AdminRequest).adminCtx;
 
@@ -142,7 +150,8 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
       }
 
-      // Unauthenticated follow-up: email-only, no Airtable write.
+      // Unauthenticated follow-up: write to Airtable with ממתין לאישור=true
+      // (hidden from public until admin approves) and notify the rabbi by email.
       if (!enforceOrigin(req, res)) return;
       if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
 
@@ -182,22 +191,32 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         res.statusCode = 403; res.end(JSON.stringify({ error: 'Follow-ups are disabled for this question' })); return;
       }
 
-      const settings = await fetchSettings();
-      if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) {
-        res.statusCode = 503; res.end(JSON.stringify({ error: 'Follow-up channel not configured' })); return;
-      }
-
-      await sendFollowUpEmail({
-        toEmail:         settings.notifyEmail,
-        fromEmail:       settings.notifyFromEmail,
-        askerName:       String(f['שם השואל'] ?? ''),
-        askerEmail:      String(f['אימייל השואל'] ?? ''),
-        questionContent: String(f['תוכן השאלה'] ?? ''),
-        followUpContent: content,
-        referenceId:     String(f['מזהה שאלה'] ?? ''),
-      }).catch((err) => {
-        captureServerError(err, { handler: 'admin-questions', method: 'follow-up-email' });
+      // Persist the follow-up as a pending answer record (hidden from public).
+      await atCreate('תשובות', {
+        'שאלה':          [body.questionId],
+        'תוכן התשובה':   content,
+        'סוג כותב':      'השואל',
+        'תאריך':         new Date().toISOString(),
+        'ממתין לאישור': true,
       });
+      // Flip question status back to 'ממתין' so the admin sees it needs attention.
+      await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+
+      // Notify the rabbi by email (fail-soft — the record is already saved).
+      const settings = await fetchSettings();
+      if (settings.notifyEnabled && settings.notifyEmail && settings.notifyFromEmail) {
+        await sendFollowUpEmail({
+          toEmail:         settings.notifyEmail,
+          fromEmail:       settings.notifyFromEmail,
+          askerName:       String(f['שם השואל'] ?? ''),
+          askerEmail:      String(f['אימייל השואל'] ?? ''),
+          questionContent: String(f['תוכן השאלה'] ?? ''),
+          followUpContent: content,
+          referenceId:     String(f['מזהה שאלה'] ?? ''),
+        }).catch((err) => {
+          captureServerError(err, { handler: 'admin-questions', method: 'follow-up-email' });
+        });
+      }
 
       res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
     }
@@ -246,11 +265,12 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       const answers = answersData.records
         .filter((a) => linkedAnswerIds.includes(a.id))
         .map((a) => ({
-          id:          a.id,
-          title:       (a.fields['כותרת התשובה'] as string) ?? '',
-          content:     (a.fields['תוכן התשובה'] as string) ?? '',
-          writerType:  (a.fields['סוג כותב'] as string) ?? 'רב',
-          date:        a.fields['תאריך'] as string | undefined,
+          id:               a.id,
+          title:            (a.fields['כותרת התשובה'] as string) ?? '',
+          content:          (a.fields['תוכן התשובה'] as string) ?? '',
+          writerType:       (a.fields['סוג כותב'] as string) ?? 'רב',
+          date:             a.fields['תאריך'] as string | undefined,
+          pendingApproval:  a.fields['ממתין לאישור'] === true,
         }))
         .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 

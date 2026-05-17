@@ -17,6 +17,7 @@ import {
   updateQuestion,
   blockFollowUp,
   updateAnswer,
+  approveAnswer,
   deleteAnswer,
   deleteQuestion,
   getWriterTypeChoices,
@@ -185,6 +186,20 @@ export default function QuestionDetailPage() {
     }
   }
 
+  async function handleApproveAnswer(answerId: string) {
+    setActionLoading('approveAnswer-' + answerId);
+    try {
+      await approveAnswer(answerId);
+      toast.success('שאלת המשך אושרה ופורסמה');
+      reload();
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.questions() });
+    } catch {
+      toast.error('שגיאה באישור');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handleDeleteAnswer(answerId: string) {
     setActionLoading('deleteAnswer-' + answerId);
     try {
@@ -322,12 +337,23 @@ export default function QuestionDetailPage() {
               {question.answers.map(answer => (
                 <div key={answer.id} className={cn(
                   'bg-white rounded-xl border p-5',
-                  answer.writerType === 'רב' ? 'border-secondary/40 border-r-4' : 'border-border'
+                  answer.pendingApproval
+                    ? 'border-amber-300 border-r-4 bg-amber-50/40'
+                    : answer.writerType === 'רב'
+                      ? 'border-secondary/40 border-r-4'
+                      : 'border-border'
                 )}>
+                  {answer.pendingApproval && (
+                    <div className="flex items-center gap-2 mb-3 -mt-1">
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">ממתין לאישור</Badge>
+                      <span className="text-xs text-amber-700">שאלת המשך זו לא מוצגת באתר עד שתאושר</span>
+                    </div>
+                  )}
                   <div className="flex items-start gap-3">
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                      answer.writerType === 'רב' ? 'bg-secondary/10' : 'bg-muted'
+                      answer.pendingApproval ? 'bg-amber-100'
+                        : answer.writerType === 'רב' ? 'bg-secondary/10' : 'bg-muted'
                     )}>
                       {writerIcon(answer.writerType)}
                     </div>
@@ -360,6 +386,19 @@ export default function QuestionDetailPage() {
                             </>
                           ) : (
                             <>
+                              {answer.pendingApproval && (
+                                <button
+                                  onClick={() => handleApproveAnswer(answer.id)}
+                                  disabled={!!actionLoading}
+                                  className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors flex items-center gap-1 disabled:opacity-50"
+                                  title="אשר ופרסם"
+                                >
+                                  {actionLoading === 'approveAnswer-' + answer.id
+                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    : <CheckCircle2 className="h-3.5 w-3.5" />}
+                                  אשר ופרסם
+                                </button>
+                              )}
                               <button
                                 onClick={() => { setEditingAnswerId(answer.id); setAnswerEditText(answer.content); setAnswerEditTitle(answer.title ?? ''); }}
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"

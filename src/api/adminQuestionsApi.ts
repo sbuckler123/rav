@@ -7,6 +7,7 @@ export interface AdminAnswer {
   content: string;
   writerType: string;
   date?: string;
+  pendingApproval?: boolean;
 }
 
 export interface AdminQuestion {
@@ -89,6 +90,14 @@ export async function updateAnswer(answerId: string, content: string, title?: st
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content, ...(title !== undefined && { title }) }),
+  });
+}
+
+export async function approveAnswer(answerId: string) {
+  return apiFetch(`/api/admin?section=questions&type=answer&id=${answerId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pendingApproval: false }),
   });
 }
 
