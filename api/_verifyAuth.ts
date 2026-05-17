@@ -18,7 +18,7 @@ import { captureServerError } from './_sentry';
 
 interface JwkKey { kid?: string; kty?: string; n?: string; e?: string }
 
-interface JwtPayload {
+export interface JwtPayload {
   sub?: string;
   iss?: string;
   azp?: string;
@@ -158,19 +158,23 @@ async function lookupAdminByClerkId(clerkId: string): Promise<AdminContext | nul
 
 // ─── requireAuth (signature only) ────────────────────────────────────────────
 
-export async function requireAuth(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+/**
+ * Verifies the JWT and returns the decoded payload on success.
+ * On failure, sends 401 and returns null. Handlers must `return` immediately
+ * when this returns null.
+ */
+export async function requireAuth(req: IncomingMessage, res: ServerResponse): Promise<JwtPayload | null> {
   const authHeader = (req.headers['authorization'] as string | undefined) ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
   if (!token) {
     res.statusCode = 401;
     res.end(JSON.stringify({ error: 'Unauthorized' }));
-    return false;
+    return null;
   }
 
   try {
-    await verifyClerkJWT(token);
-    return true;
+    return await verifyClerkJWT(token);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     if (detail !== 'Token expired') {
@@ -178,7 +182,7 @@ export async function requireAuth(req: IncomingMessage, res: ServerResponse): Pr
     }
     res.statusCode = 401;
     res.end(JSON.stringify({ error: 'Unauthorized', detail }));
-    return false;
+    return null;
   }
 }
 
