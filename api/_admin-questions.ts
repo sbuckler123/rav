@@ -15,6 +15,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { AdminRequest } from './admin';
 import { BODY_LIMITS, readBody } from './_readBody';
 import { enforceOrigin, enforceRateLimit } from './_security';
+import { requireTurnstile } from './_turnstile';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
 import { sendFollowUpEmail, sendAnswerToAskerEmail } from './_email';
@@ -223,8 +224,11 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
 
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-        questionId: string; content: string;
+        questionId: string; content: string; turnstileToken?: string;
       };
+
+      // Bot protection (no-op until TURNSTILE_SECRET_KEY is configured)
+      if (!(await requireTurnstile(req, res, body.turnstileToken))) return;
       if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
       }

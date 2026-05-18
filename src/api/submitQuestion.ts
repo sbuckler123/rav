@@ -6,17 +6,19 @@ export async function submitQuestion(input: {
   question: string;
   allowPublic: boolean;
   consent: boolean;
+  turnstileToken?: string | null;
 }): Promise<{ success: boolean; id?: string; referenceId?: string }> {
   const res = await fetch('/api/questions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: input.name,
-      email: input.email,
-      categoryId: input.categoryId,
-      question: input.question,
-      allowPublic: input.allowPublic,
-      consent: input.consent,
+      name:           input.name,
+      email:          input.email,
+      categoryId:     input.categoryId,
+      question:       input.question,
+      allowPublic:    input.allowPublic,
+      consent:        input.consent,
+      turnstileToken: input.turnstileToken ?? undefined,
     }),
   });
   if (!res.ok) throw new Error(`Failed to submit question: ${res.status}`);

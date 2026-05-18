@@ -13,6 +13,7 @@ import { fetchSettings } from './_settings';
 import { sendNewQuestionEmail } from './_email';
 import { BODY_LIMITS, readBody } from './_readBody';
 import { enforceOrigin, enforceRateLimit } from './_security';
+import { requireTurnstile } from './_turnstile';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -78,7 +79,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     try {
       const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL));
-      const { name, email, categoryId, question, allowPublic, consent } = body ?? {};
+      const { name, email, categoryId, question, allowPublic, consent, turnstileToken } = body ?? {};
+
+      // Bot protection (no-op until TURNSTILE_SECRET_KEY is configured)
+      if (!(await requireTurnstile(req, res, typeof turnstileToken === 'string' ? turnstileToken : undefined))) return;
 
       const nameStr     = typeof name     === 'string' ? name.trim()     : '';
       const emailStr    = typeof email    === 'string' ? email.trim()    : '';

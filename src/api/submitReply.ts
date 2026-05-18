@@ -12,13 +12,20 @@ export async function submitReply(input: {
   content: string;
   writerType?: string;
   title?: string;
+  turnstileToken?: string | null;
 }): Promise<{ success: boolean; id?: string }> {
   return apiFetch<{ success: boolean; id?: string }>(
     '/api/admin?section=questions&type=reply',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        questionId:     input.questionId,
+        content:        input.content,
+        writerType:     input.writerType,
+        title:          input.title,
+        turnstileToken: input.turnstileToken ?? undefined,
+      }),
     },
   );
 }

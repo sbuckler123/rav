@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { submitQuestion } from '@/api/submitQuestion';
+import Turnstile, { isTurnstileEnabled } from '@/components/Turnstile';
 import { CheckCircle, Send } from 'lucide-react';
 
 interface Props {
@@ -25,6 +26,7 @@ export default function QuestionForm({ categories }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const RATE_LIMIT_MS = 60_000; // 1 minute between submissions
   const MAX_NAME_LEN = 100;
@@ -44,6 +46,10 @@ export default function QuestionForm({ categories }: Props) {
       toast.error('נא המתן דקה בין שליחת שאלות');
       return;
     }
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error('יש להמתין לסיום בדיקת אבטחה');
+      return;
+    }
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => c.id === categoryId);
@@ -55,6 +61,7 @@ export default function QuestionForm({ categories }: Props) {
         question,
         allowPublic,
         consent,
+        turnstileToken,
       });
       setLastSubmitTime(Date.now());
       setSubmitted(true);
@@ -192,10 +199,17 @@ export default function QuestionForm({ categories }: Props) {
             </Label>
           </div>
 
+          {/* Turnstile bot challenge (renders only when site key is configured) */}
+          {isTurnstileEnabled && (
+            <div className="flex justify-center">
+              <Turnstile onToken={setTurnstileToken} />
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] font-semibold"
-            disabled={submitting || !consent}
+            disabled={submitting || !consent || (isTurnstileEnabled && !turnstileToken)}
           >
             <Send className="h-4 w-4" />
             {submitting ? 'שולח...' : 'שלח שאלה'}
