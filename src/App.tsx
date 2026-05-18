@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { heIL } from '@clerk/localizations';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
@@ -20,49 +20,58 @@ function ScrollToTop() {
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
+
+// Eager: needed for first paint or appears on every route
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HomePage from '@/pages/HomePage';
-import AboutPage from '@/pages/AboutPage';
-import VideosPage from '@/pages/VideosPage';
-import EventsPage from '@/pages/EventsPage';
-import ShiurimPage from '@/pages/ShiurimPage';
-import AskPage from '@/pages/AskPage';
-import QAPage from '@/pages/QAPage';
-import ArticlesPage from '@/pages/ArticlesPage';
-import VideoDetailPage from '@/pages/VideoDetailPage';
-import ShiurDetailPage from '@/pages/ShiurDetailPage';
-import EventDetailPage from '@/pages/EventDetailPage';
-import ArticleDetailPage from '@/pages/ArticleDetailPage';
 import { Toaster } from '@/components/ui/sonner';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieBanner from '@/components/CookieBanner';
 import ErrorBoundary from '@/components/ErrorBoundary';
-
-// Admin
 import { AuthProvider } from '@/auth/AuthContext';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
-import AdminLayout from '@/components/admin/AdminLayout';
-import LoginPage from '@/pages/admin/LoginPage';
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import QuestionsPage from '@/pages/admin/QuestionsPage';
-import QuestionDetailPage from '@/pages/admin/QuestionDetailPage';
-import CategoriesPage from '@/pages/admin/CategoriesPage';
-import AdminShiurimPage from '@/pages/admin/AdminShiurimPage';
-import AdminVideosPage from '@/pages/admin/AdminVideosPage';
-import AdminEventsPage from '@/pages/admin/AdminEventsPage';
-import AdminArticlesPage from '@/pages/admin/AdminArticlesPage';
-import ArticleFormPage from '@/pages/admin/ArticleFormPage';
-import AdminAlHaperekPage from '@/pages/admin/AdminAlHaperekPage';
-import AlHaperekFormPage from '@/pages/admin/AlHaperekFormPage';
-import AdminUsersPage from '@/pages/admin/AdminUsersPage';
-import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
-import AlHaperekPage from '@/pages/AlHaperekPage';
-import AlHaperekDetailPage from '@/pages/AlHaperekDetailPage';
-import AccessibilityStatementPage from '@/pages/AccessibilityStatementPage';
-import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
-import CookiePolicyPage from '@/pages/CookiePolicyPage';
-import TermsPage from '@/pages/TermsPage';
+
+// Lazy: every other page is loaded only when its route is visited
+const AboutPage                   = lazy(() => import('@/pages/AboutPage'));
+const VideosPage                  = lazy(() => import('@/pages/VideosPage'));
+const ShiurimPage                 = lazy(() => import('@/pages/ShiurimPage'));
+const AskPage                     = lazy(() => import('@/pages/AskPage'));
+const QAPage                      = lazy(() => import('@/pages/QAPage'));
+const ArticlesPage                = lazy(() => import('@/pages/ArticlesPage'));
+const VideoDetailPage             = lazy(() => import('@/pages/VideoDetailPage'));
+const ShiurDetailPage             = lazy(() => import('@/pages/ShiurDetailPage'));
+const ArticleDetailPage           = lazy(() => import('@/pages/ArticleDetailPage'));
+const AlHaperekPage               = lazy(() => import('@/pages/AlHaperekPage'));
+const AlHaperekDetailPage         = lazy(() => import('@/pages/AlHaperekDetailPage'));
+const AccessibilityStatementPage  = lazy(() => import('@/pages/AccessibilityStatementPage'));
+const PrivacyPolicyPage           = lazy(() => import('@/pages/PrivacyPolicyPage'));
+const CookiePolicyPage            = lazy(() => import('@/pages/CookiePolicyPage'));
+const TermsPage                   = lazy(() => import('@/pages/TermsPage'));
+
+const AdminLayout         = lazy(() => import('@/components/admin/AdminLayout'));
+const LoginPage           = lazy(() => import('@/pages/admin/LoginPage'));
+const AdminDashboard      = lazy(() => import('@/pages/admin/AdminDashboard'));
+const QuestionsPage       = lazy(() => import('@/pages/admin/QuestionsPage'));
+const QuestionDetailPage  = lazy(() => import('@/pages/admin/QuestionDetailPage'));
+const CategoriesPage      = lazy(() => import('@/pages/admin/CategoriesPage'));
+const AdminShiurimPage    = lazy(() => import('@/pages/admin/AdminShiurimPage'));
+const AdminVideosPage     = lazy(() => import('@/pages/admin/AdminVideosPage'));
+const AdminEventsPage     = lazy(() => import('@/pages/admin/AdminEventsPage'));
+const AdminArticlesPage   = lazy(() => import('@/pages/admin/AdminArticlesPage'));
+const ArticleFormPage     = lazy(() => import('@/pages/admin/ArticleFormPage'));
+const AdminAlHaperekPage  = lazy(() => import('@/pages/admin/AdminAlHaperekPage'));
+const AlHaperekFormPage   = lazy(() => import('@/pages/admin/AlHaperekFormPage'));
+const AdminUsersPage      = lazy(() => import('@/pages/admin/AdminUsersPage'));
+const AdminSettingsPage   = lazy(() => import('@/pages/admin/AdminSettingsPage'));
+
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center py-24" aria-busy="true" aria-label="טוען">
+      <div className="h-6 w-6 rounded-full border-2 border-secondary border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
@@ -77,31 +86,42 @@ export default function App() {
         <Routes>
 
           {/* Admin routes — no public Header/Footer */}
-          <Route path="/admin/login" element={<LoginPage />} />
+          <Route
+            path="/admin/login"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <LoginPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/admin/*"
             element={
               <ErrorBoundary>
               <ProtectedRoute>
-                <AdminLayout>
-                  <Routes>
-                    <Route path="/" element={<AdminDashboard />} />
-                    <Route path="/questions" element={<QuestionsPage />} />
-                    <Route path="/questions/:id" element={<QuestionDetailPage />} />
-                    <Route path="/categories" element={<CategoriesPage />} />
-                    <Route path="/shiurim" element={<AdminShiurimPage />} />
-                    <Route path="/videos" element={<AdminVideosPage />} />
-                    <Route path="/events" element={<AdminEventsPage />} />
-                    <Route path="/articles" element={<AdminArticlesPage />} />
-                    <Route path="/articles/new" element={<ArticleFormPage />} />
-                    <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
-                    <Route path="/idkunim" element={<AdminAlHaperekPage />} />
-                    <Route path="/idkunim/new" element={<AlHaperekFormPage />} />
-                    <Route path="/idkunim/:id/edit" element={<AlHaperekFormPage />} />
-                    <Route path="/users" element={<AdminUsersPage />} />
-                    <Route path="/settings" element={<AdminSettingsPage />} />
-                  </Routes>
-                </AdminLayout>
+                <Suspense fallback={<RouteFallback />}>
+                  <AdminLayout>
+                    <Suspense fallback={<RouteFallback />}>
+                      <Routes>
+                        <Route path="/" element={<AdminDashboard />} />
+                        <Route path="/questions" element={<QuestionsPage />} />
+                        <Route path="/questions/:id" element={<QuestionDetailPage />} />
+                        <Route path="/categories" element={<CategoriesPage />} />
+                        <Route path="/shiurim" element={<AdminShiurimPage />} />
+                        <Route path="/videos" element={<AdminVideosPage />} />
+                        <Route path="/events" element={<AdminEventsPage />} />
+                        <Route path="/articles" element={<AdminArticlesPage />} />
+                        <Route path="/articles/new" element={<ArticleFormPage />} />
+                        <Route path="/articles/:id/edit" element={<ArticleFormPage />} />
+                        <Route path="/idkunim" element={<AdminAlHaperekPage />} />
+                        <Route path="/idkunim/new" element={<AlHaperekFormPage />} />
+                        <Route path="/idkunim/:id/edit" element={<AlHaperekFormPage />} />
+                        <Route path="/users" element={<AdminUsersPage />} />
+                        <Route path="/settings" element={<AdminSettingsPage />} />
+                      </Routes>
+                    </Suspense>
+                  </AdminLayout>
+                </Suspense>
               </ProtectedRoute>
               </ErrorBoundary>
             }
@@ -116,26 +136,26 @@ export default function App() {
                 <Header />
                 <AccessibilityWidget />
                 <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/odot" element={<AboutPage />} />
-                    <Route path="/shiurei-torah" element={<VideosPage />} />
-                    <Route path="/shiurei-torah/:id" element={<VideoDetailPage />} />
-                    <Route path="/luach-iruyim" element={<ShiurimPage />} />
-                    <Route path="/luach-iruyim/:id" element={<ShiurDetailPage />} />
-                    {/* <Route path="/yoman-peilut" element={<EventsPage />} /> */}
-                    {/* <Route path="/yoman-peilut/:id" element={<EventDetailPage />} /> */}
-                    <Route path="/shaal-et-harav" element={<AskPage />} />
-                    <Route path="/shut" element={<QAPage />} />
-                    <Route path="/hagut-upsika" element={<ArticlesPage />} />
-                    <Route path="/hagut-upsika/:id" element={<ArticleDetailPage />} />
-                    <Route path="/idkunim" element={<AlHaperekPage />} />
-                    <Route path="/idkunim/:id" element={<AlHaperekDetailPage />} />
-                    <Route path="/accessibility" element={<AccessibilityStatementPage />} />
-                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="/cookies" element={<CookiePolicyPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                  </Routes>
+                  <Suspense fallback={<RouteFallback />}>
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/odot" element={<AboutPage />} />
+                      <Route path="/shiurei-torah" element={<VideosPage />} />
+                      <Route path="/shiurei-torah/:id" element={<VideoDetailPage />} />
+                      <Route path="/luach-iruyim" element={<ShiurimPage />} />
+                      <Route path="/luach-iruyim/:id" element={<ShiurDetailPage />} />
+                      <Route path="/shaal-et-harav" element={<AskPage />} />
+                      <Route path="/shut" element={<QAPage />} />
+                      <Route path="/hagut-upsika" element={<ArticlesPage />} />
+                      <Route path="/hagut-upsika/:id" element={<ArticleDetailPage />} />
+                      <Route path="/idkunim" element={<AlHaperekPage />} />
+                      <Route path="/idkunim/:id" element={<AlHaperekDetailPage />} />
+                      <Route path="/accessibility" element={<AccessibilityStatementPage />} />
+                      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                      <Route path="/cookies" element={<CookiePolicyPage />} />
+                      <Route path="/terms" element={<TermsPage />} />
+                    </Routes>
+                  </Suspense>
                 </main>
                 <Footer />
               </div>
