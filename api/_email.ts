@@ -215,6 +215,13 @@ function buildQuestionReceivedHtml(opts: {
               <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">השאלה ששלחת:</p>
               <div style="background:#F9FAFB;border-right:3px solid #9CA3AF;padding:14px 16px;border-radius:0 6px 6px 0;line-height:1.7;font-size:14px;white-space:pre-wrap;word-wrap:break-word;color:#4B5563;">${escapeHtml(questionContent)}</div>
 
+              ${referenceId ? `
+              <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px;">
+              <p style="margin:0;font-size:13px;color:#4B5563;line-height:1.7;">
+                <strong style="color:#1B2A4A;">תיקון או עדכון לשאלה?</strong><br/>
+                יש לשלוח שאלה חדשה דרך הטופס באתר ולציין בתוכן השאלה את המזהה <strong style="font-family:monospace;color:#1B2A4A;">#${escapeHtml(referenceId)}</strong>. נעדכן או נחליף את השאלה הקודמת.
+              </p>` : ''}
+
               <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px;">
               <p style="margin:0 0 8px;font-size:14px;color:#4B5563;">לשליחת שאלה נוספת:</p>
               <p style="margin:0 0 18px;"><a href="${escapeHtml(baseUrl)}/shaal-et-harav" style="color:#1B2A4A;text-decoration:underline;font-weight:bold;font-size:14px;">פתח טופס באתר ←</a></p>
