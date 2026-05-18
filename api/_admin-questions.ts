@@ -17,7 +17,7 @@ import { BODY_LIMITS, readBody } from './_readBody';
 import { enforceOrigin, enforceRateLimit } from './_security';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
-import { sendFollowUpEmail } from './_email';
+import { sendFollowUpEmail, sendAnswerToAskerEmail } from './_email';
 
 const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
 
@@ -75,6 +75,53 @@ async function getFieldChoices(tableName: string, fieldName: string): Promise<st
   const table = data.tables?.find((t) => t.name === tableName);
   const field = table?.fields?.find((f) => f.name === fieldName);
   return field?.options?.choices?.map((c) => c.name) ?? [];
+}
+
+/**
+ * Sends an email to the asker with the rabbi's answer. Includes a "view on
+ * site" link only when the question is publicly visible (consent + approved).
+ * BCCs the rabbi so they get a copy of what was sent. Fail-soft — caller
+ * should swallow the rejection.
+ */
+async function notifyAskerOfAnswer(
+  questionId: string,
+  answerContent: string,
+  answerTitle: string | undefined,
+): Promise<void> {
+  const settings = await fetchSettings();
+  if (!settings.notifyAskerOnReply) return;
+  if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) return;
+
+  const qRes = await fetch(
+    `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${questionId}`,
+    { headers: auth() },
+  );
+  if (!qRes.ok) return;
+  const question = await qRes.json() as { id: string; fields: Record<string, unknown> };
+  const f = question.fields;
+
+  const askerEmail = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
+  if (!askerEmail) return; // older / admin-created questions may not have an email
+
+  const isPubliclyVisible =
+    f['הסכמה לפרסום']  === true &&
+    f['מאושר לפרסום'] === true;
+  const publicUrl = isPubliclyVisible
+    ? `${settings.publicBaseUrl.replace(/\/$/, '')}/shut#q-${questionId}`
+    : undefined;
+
+  await sendAnswerToAskerEmail({
+    toEmail:         askerEmail,
+    fromEmail:       settings.notifyFromEmail,
+    bccEmail:        settings.notifyEmail,
+    replyToEmail:    settings.notifyEmail,
+    askerName:       String(f['שם השואל'] ?? ''),
+    questionContent: String(f['תוכן השאלה'] ?? ''),
+    answerTitle,
+    answerContent,
+    referenceId:     String(f['מזהה שאלה'] ?? ''),
+    publicUrl,
+  });
 }
 
 export async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -136,17 +183,29 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
           res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
         }
 
+        const writerType = body.writerType ?? 'רב';
+        const answerTitle = body.title?.trim();
+
         const fields: Record<string, unknown> = {
           'שאלה':          [body.questionId],
           'תוכן התשובה':   body.content,
-          'סוג כותב':      body.writerType ?? 'רב',
+          'סוג כותב':      writerType,
           'תאריך':         new Date().toISOString(),
         };
-        if (body.title?.trim()) fields['כותרת התשובה'] = body.title.trim();
+        if (answerTitle) fields['כותרת התשובה'] = answerTitle;
 
         const record = await atCreate('תשובות', fields);
         // Reset status to ממתין so admin notices the new reply
         await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+
+        // Notify the asker only when the rabbi (not a moderator) replied.
+        // Fail-soft: the admin's write succeeds even if the email send fails.
+        if (writerType === 'רב' && RECORD_ID_RE.test(body.questionId)) {
+          notifyAskerOfAnswer(body.questionId, body.content, answerTitle).catch((err) => {
+            captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
+          });
+        }
+
         res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
       }
 

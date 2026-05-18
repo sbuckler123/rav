@@ -4,20 +4,26 @@ const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 export interface NotificationSettings {
-  notifyEnabled:   boolean;
-  notifyEmail:     string;
-  notifyFromEmail: string;
+  notifyEnabled:       boolean;
+  notifyEmail:         string;
+  notifyFromEmail:     string;
+  notifyAskerOnReply:  boolean;
+  publicBaseUrl:       string;
 }
 
 export interface SettingsFull extends NotificationSettings {
   _records: Record<string, { id: string; value: string }>;
 }
 
+const DEFAULT_PUBLIC_BASE_URL = 'https://www.haravkalmanber.co.il';
+
 const DEFAULTS: SettingsFull = {
-  notifyEnabled:   false,
-  notifyEmail:     '',
-  notifyFromEmail: '',
-  _records:        {},
+  notifyEnabled:       false,
+  notifyEmail:         '',
+  notifyFromEmail:     '',
+  notifyAskerOnReply:  true,
+  publicBaseUrl:       DEFAULT_PUBLIC_BASE_URL,
+  _records:            {},
 };
 
 export async function fetchSettings(): Promise<SettingsFull> {
@@ -43,9 +49,13 @@ export async function fetchSettings(): Promise<SettingsFull> {
     }
 
     return {
-      notifyEnabled:   _records['notify_enabled']?.value === 'true',
-      notifyEmail:     _records['notify_email']?.value ?? '',
-      notifyFromEmail: _records['notify_from_email']?.value ?? '',
+      notifyEnabled:      _records['notify_enabled']?.value === 'true',
+      notifyEmail:        _records['notify_email']?.value ?? '',
+      notifyFromEmail:    _records['notify_from_email']?.value ?? '',
+      // Default to true so the feature is on without a manual Airtable edit;
+      // an explicit 'false' value disables it.
+      notifyAskerOnReply: _records['notify_asker_on_reply']?.value !== 'false',
+      publicBaseUrl:      _records['public_base_url']?.value || DEFAULT_PUBLIC_BASE_URL,
       _records,
     };
   } catch {
