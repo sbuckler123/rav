@@ -125,7 +125,7 @@ export default function EventDetailPage() {
                     className="block w-full aspect-video overflow-hidden focus:outline-none focus:ring-2 focus:ring-secondary"
                   >
                     <img
-                      src={cldOptimize(entry.gallery[0].url, 1200)}
+                      src={cldOptimize(entry.gallery[0].url, 1200, 675)}
                       alt={entry.gallery[0].caption || entry.title}
                       className="w-full h-full object-cover"
                     />
@@ -145,7 +145,7 @@ export default function EventDetailPage() {
                         onClick={() => openLightbox(idx)}
                         className="shrink-0 w-32 h-24 rounded-md overflow-hidden border border-border hover:border-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-secondary"
                       >
-                        <img src={cldOptimize(img.url, 300)} alt={img.caption} loading="lazy" className="w-full h-full object-cover" />
+                        <img src={cldOptimize(img.url, 256, 192)} alt={img.caption} loading="lazy" className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>
@@ -283,7 +283,7 @@ export default function EventDetailPage() {
                       >
                         {e.mainImageUrl ? (
                           <img
-                            src={cldOptimize(e.mainImageUrl, 200)}
+                            src={cldOptimize(e.mainImageUrl, 160, 112)}
                             alt={e.title}
                             loading="lazy"
                             className="h-14 w-20 shrink-0 rounded object-cover"

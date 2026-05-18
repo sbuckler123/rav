@@ -94,7 +94,7 @@ function FeaturedCard({ event }: { event: EventItem }) {
           {/* Image */}
           <div className="relative h-56 md:h-auto min-h-[200px] bg-primary flex-shrink-0">
             <img
-              src={cldOptimize(img, 800)}
+              src={cldOptimize(img, 800, 500)}
               alt={event.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
@@ -152,7 +152,7 @@ function EventCard({ event }: { event: EventItem }) {
         {/* Thumbnail */}
         <div className="relative aspect-video bg-primary flex-shrink-0 overflow-hidden">
           <img
-            src={cldOptimize(img, 500)}
+            src={cldOptimize(img, 500, 281)}
             alt={event.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"

@@ -206,7 +206,7 @@ function EditorialRow({ item }: { item: AlHaperekItem }) {
         {/* Optional thumbnail — only when the item has a cover image */}
         {item.coverImage && (
           <div className="hidden sm:block w-28 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-            <img src={cldOptimize(item.coverImage, 400)} alt="" loading="lazy" className="w-full h-full object-cover" />
+            <img src={cldOptimize(item.coverImage, 320, 240)} alt="" loading="lazy" className="w-full h-full object-cover" />
           </div>
         )}
       </article>
