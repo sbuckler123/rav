@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { heIL } from '@clerk/localizations';
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { lazyWithRetry as lazy } from '@/lib/lazyWithRetry';
 
 const queryClient = new QueryClient({
   defaultOptions: {
