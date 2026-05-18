@@ -3,23 +3,29 @@
  * browser receives a properly sized, modern-format (WebP/AVIF), auto-quality
  * image instead of the original upload.
  *
- * Pass-through for non-Cloudinary URLs (YouTube thumbnails, fillout.com,
- * static assets, data: URLs).
+ * - `cldOptimize(url)`              → f_auto,q_auto only (no resize)
+ * - `cldOptimize(url, w)`           → also caps width; portrait images stay tall
+ *                                     (c_limit, no upscale)
+ * - `cldOptimize(url, w, h)`        → resize-and-crop to exact width/height with
+ *                                     AI-picked focal point (c_fill,g_auto).
+ *                                     Use when the slot has a fixed aspect.
  *
- * Use `width` to cap the largest dimension; smaller-than-requested originals
- * are not upscaled (c_limit).
+ * Pass-through for non-Cloudinary URLs (YouTube thumbnails, static assets,
+ * data: URIs).
  */
-export function cldOptimize(url: string, width?: number): string;
-export function cldOptimize(url: undefined, width?: number): undefined;
-export function cldOptimize(url: string | undefined, width?: number): string | undefined;
-export function cldOptimize(url: string | undefined, width?: number): string | undefined {
+export function cldOptimize(url: string, width?: number, height?: number): string;
+export function cldOptimize(url: undefined, width?: number, height?: number): undefined;
+export function cldOptimize(url: string | undefined, width?: number, height?: number): string | undefined;
+export function cldOptimize(url: string | undefined, width?: number, height?: number): string | undefined {
   if (!url || !url.includes('res.cloudinary.com')) return url;
 
   // Idempotent — bail if a transformation segment is already present.
-  if (/\/image\/upload\/[^/]*(f_auto|q_auto|w_\d+)/.test(url)) return url;
+  if (/\/image\/upload\/[^/]*(f_auto|q_auto|w_\d+|c_fill|c_limit)/.test(url)) return url;
 
   const params: string[] = ['f_auto', 'q_auto'];
-  if (width) {
+  if (width && height) {
+    params.push(`w_${width}`, `h_${height}`, 'c_fill', 'g_auto');
+  } else if (width) {
     params.push(`w_${width}`, 'c_limit');
   }
 

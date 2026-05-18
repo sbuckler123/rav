@@ -9,10 +9,19 @@ import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
 import { type ShiurItem } from '@/api/getVideos';
 import { useVideos } from '@/hooks/useQueries';
+import { cldOptimize } from '@/lib/cloudinaryImage';
 
-function getThumb(video: ShiurItem): string {
-  if (video.thumbnail) return video.thumbnail;
-  if (video.youtubeId) return `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`;
+// YouTube thumbnail sizes:
+//   maxresdefault.jpg  1280x720 ~240 KB  (not guaranteed to exist)
+//   sddefault.jpg       640x480  ~50 KB  (large featured slot)
+//   hqdefault.jpg       480x360  ~30 KB  (grid card)
+//   mqdefault.jpg       320x180  ~10 KB  (tiny thumb)
+function getThumb(video: ShiurItem, size: 'featured' | 'card' = 'card'): string {
+  if (video.thumbnail) return cldOptimize(video.thumbnail, size === 'featured' ? 800 : 480, size === 'featured' ? 450 : 270);
+  if (video.youtubeId) {
+    const variant = size === 'featured' ? 'sddefault' : 'hqdefault';
+    return `https://img.youtube.com/vi/${video.youtubeId}/${variant}.jpg`;
+  }
   return "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="%231B2A4A"/><polygon points="130,60 130,120 190,90" fill="%23C9A84C"/></svg>');
 }
 
@@ -198,10 +207,11 @@ export default function VideosPage() {
                 {/* Thumbnail */}
                 <div className="relative h-56 sm:h-64 lg:h-auto min-h-[220px] bg-primary">
                   <img
-                    src={getThumb(featuredVideo)}
+                    src={getThumb(featuredVideo, 'featured')}
                     alt={featuredVideo.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="eager"
+                    fetchPriority="high"
                   />
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
