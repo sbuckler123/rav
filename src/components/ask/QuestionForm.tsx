@@ -21,7 +21,7 @@ export default function QuestionForm({ categories }: Props) {
   const [email, setEmail] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [question, setQuestion] = useState('');
-  const [allowPublic, setAllowPublic] = useState(false);
+  const [allowPublic, setAllowPublic] = useState(true);
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -87,7 +87,7 @@ export default function QuestionForm({ categories }: Props) {
           <Button
             variant="outline"
             className="min-h-[44px]"
-            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryId(''); setQuestion(''); setAllowPublic(false); setConsent(false); }}
+            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryId(''); setQuestion(''); setAllowPublic(true); setConsent(false); }}
           >
             שלח שאלה נוספת
           </Button>
@@ -201,7 +201,7 @@ export default function QuestionForm({ categories }: Props) {
 
           {/* Turnstile bot challenge (renders only when site key is configured) */}
           {isTurnstileEnabled && (
-            <div className="flex justify-center">
+            <div className="flex justify-start">
               <Turnstile onToken={setTurnstileToken} />
             </div>
           )}
