@@ -9,15 +9,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface NotificationSettings {
-  notifyEnabled:   boolean;
-  notifyEmail:     string;
-  notifyFromEmail: string;
+  notifyEnabled:       boolean;
+  notifyEmail:         string;
+  notifyFromEmail:     string;
+  notifyAskerOnReply:  boolean;
+  publicBaseUrl:       string;
 }
 
 const DEFAULT: NotificationSettings = {
-  notifyEnabled:   false,
-  notifyEmail:     '',
-  notifyFromEmail: '',
+  notifyEnabled:       false,
+  notifyEmail:         '',
+  notifyFromEmail:     '',
+  notifyAskerOnReply:  true,
+  publicBaseUrl:       'https://www.haravkalmanber.co.il',
 };
 
 export default function AdminSettingsPage() {
@@ -152,6 +156,54 @@ export default function AdminSettingsPage() {
                   — אך אז ניתן לשלוח רק לכתובת האימייל של חשבון ה-Resend.
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Asker notifications card */}
+        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-muted/30">
+            <Bell className="h-4 w-4 text-secondary flex-shrink-0" />
+            <h2 className="font-semibold text-primary text-sm">התראות לשואלים</h2>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium text-sm text-primary">שלח אימייל לשואל כשהרב משיב</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  השואל יקבל את התשובה לאימייל שלו, ועותק (BCC) ישלח לכתובת ההתראות. עובד רק כשהתראות פעילות.
+                </p>
+              </div>
+              <label dir="ltr" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={form.notifyAskerOnReply}
+                  onChange={e => field('notifyAskerOnReply', e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:bg-secondary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
+              </label>
+            </div>
+
+            <div
+              className={`space-y-1.5 transition-opacity duration-200 ${
+                form.notifyAskerOnReply ? 'opacity-100' : 'opacity-40 pointer-events-none select-none'
+              }`}
+            >
+              <Label htmlFor="publicBaseUrl">כתובת בסיס לאתר (לקישור בתוך האימייל)</Label>
+              <Input
+                id="publicBaseUrl"
+                type="url"
+                dir="ltr"
+                placeholder="https://www.haravkalmanber.co.il"
+                value={form.publicBaseUrl}
+                onChange={e => field('publicBaseUrl', e.target.value)}
+                className="h-10"
+              />
+              <p className="text-xs text-muted-foreground">
+                משמש לבניית קישור לשאלה באתר, רק כשהשאלה פורסמה.
+              </p>
             </div>
           </div>
         </div>

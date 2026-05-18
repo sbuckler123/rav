@@ -10,6 +10,13 @@
         { "key": "Strict-Transport-Security","value": "max-age=63072000; includeSubDomains; preload" },
         { "key": "Content-Security-Policy",  "value": "default-src 'self'; script-src 'self' https://analytics.umami.is https://cloud.umami.is https://clerk.haravkalmanber.co.il; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://res.cloudinary.com https://img.clerk.com https://img.youtube.com; connect-src 'self' https://clerk.haravkalmanber.co.il wss://clerk.haravkalmanber.co.il https://api.cloudinary.com https://analytics.umami.is https://cloud.umami.is https://api-gateway.umami.dev https://*.sentry.io; font-src 'self' data: https://fonts.gstatic.com; worker-src blob:; frame-src 'self' https://www.youtube.com https://challenges.cloudflare.com https://res.cloudinary.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" }
       ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type",  "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
     }
   ],
   "functions": {
@@ -26,7 +33,7 @@
     { "source": "/articles/:path*", "destination": "/api/og?p=/articles/:path*" },
     { "source": "/videos/:path*",   "destination": "/api/og?p=/videos/:path*" },
     { "source": "/shiurim/:path*",  "destination": "/api/og?p=/shiurim/:path*" },
-    { "source": "/(.*)",            "destination": "/" }
+    { "source": "/((?!.*\\.).*)",   "destination": "/" }
   ],
   "crons": [
     { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }

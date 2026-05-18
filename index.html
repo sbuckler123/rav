@@ -30,6 +30,55 @@
     <meta name="twitter:image" content="https://www.haravkalmanber.co.il/og-image.jpg" />
 
     <script defer src="https://analytics.umami.is/script.js" data-website-id="57ac0036-58b1-4f5d-8dde-2ce0f1b76835"></script>
+
+    <!-- Structured data — helps Google understand who/what this site is about -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://www.haravkalmanber.co.il/#person",
+          "name": "הרב קלמן מאיר בר",
+          "alternateName": ["Rabbi Kalman Meir Bar", "הרב קלמן בר"],
+          "jobTitle": "הרב הראשי לישראל",
+          "description": "הרב הראשי לישראל ונשיא מועצת הרבנות הראשית",
+          "url": "https://www.haravkalmanber.co.il/",
+          "image": "https://www.haravkalmanber.co.il/og-image.jpg",
+          "nationality": "Israeli",
+          "memberOf": {
+            "@id": "https://www.haravkalmanber.co.il/#organization"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://www.haravkalmanber.co.il/#organization",
+          "name": "הרבנות הראשית לישראל",
+          "url": "https://www.haravkalmanber.co.il/",
+          "logo": "https://www.haravkalmanber.co.il/logo.png",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "אהליאב 5",
+            "addressLocality": "ירושלים",
+            "addressCountry": "IL"
+          },
+          "telephone": "+972-2-5313131",
+          "email": "Kh@rab.gov.il"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.haravkalmanber.co.il/#website",
+          "url": "https://www.haravkalmanber.co.il/",
+          "name": "הרב קלמן מאיר בר - הרב הראשי לישראל",
+          "description": "האתר הרשמי של הרב קלמן מאיר בר, הרב הראשי לישראל. שאלות ותשובות, שיעורי תורה, פסקי הלכה ואירועים.",
+          "inLanguage": "he-IL",
+          "publisher": {
+            "@id": "https://www.haravkalmanber.co.il/#organization"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
