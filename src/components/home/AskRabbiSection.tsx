@@ -96,13 +96,13 @@ export default function AskRabbiSection() {
 
   return (
     <section className="py-12 sm:py-16 bg-background" dir="rtl">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-secondary rounded-full" />
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-primary">שאלות שנשאלו לאחרונה</h2>
+            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary">שאלות שנשאלו לאחרונה</h2>
           </div>
           <Link to="/shut">
             <Button variant="outline" size="sm" className="gap-2 text-sm hidden sm:flex">

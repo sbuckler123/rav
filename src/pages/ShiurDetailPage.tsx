@@ -165,7 +165,7 @@ export default function ShiurDetailPage() {
     <div className="min-h-screen bg-background">
       {/* Page header */}
       <div className="border-b bg-white">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-6">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6">
           <Breadcrumbs
             items={[
               { label: 'דף הבית', href: '/' },
@@ -178,7 +178,7 @@ export default function ShiurDetailPage() {
 
       {/* Title area */}
       <div className="bg-[#F7F4EE] border-b">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-6 sm:py-10">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-10">
           <div className="flex items-start gap-4 sm:gap-6">
             {/* Date badge */}
             {shiur.date && (
@@ -235,7 +235,7 @@ export default function ShiurDetailPage() {
       </div>
 
       {/* Body */}
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
 
           {/* Main content */}
