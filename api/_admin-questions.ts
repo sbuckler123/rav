@@ -347,7 +347,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
       return {
         id:                 r.id,
-        referenceId:        f['מזהה שאלה'] as string | undefined,
+        referenceId:        f['מזהה שאלה'] != null ? String(f['מזהה שאלה']) : undefined,
         questionContent:    (f['תוכן השאלה'] as string) ?? '',
         askerName:          f['שם השואל'] as string | undefined,
         askerEmail:         f['אימייל השואל'] as string | undefined,

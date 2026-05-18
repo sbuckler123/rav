@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   ArrowRight, CheckCircle2, BookOpen,
   MessageCircle, HelpCircle, Loader2, Send, Eye, EyeOff,
-  Pencil, Trash2, Check, X, Ban,
+  Pencil, Trash2, Check, X, Ban, Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -250,17 +250,32 @@ export default function QuestionDetailPage() {
   return (
     <div className="max-w-4xl w-full">
 
-      {/* Back + header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
+      {/* Back + header — wraps to 2 rows on narrow screens */}
+      <div className="flex items-center gap-3 gap-y-2 mb-6 flex-wrap">
+        <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground flex-shrink-0">
           <Link to="/admin/questions">
             <ArrowRight className="h-4 w-4" />
             חזרה
           </Link>
         </Button>
-        <div className="w-px h-5 bg-border" />
-        <h1 className="text-lg font-bold text-primary flex-1 truncate">פרטי שאלה</h1>
-        {statusBadge(question.status)}
+        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <h1 className="text-lg font-bold text-primary truncate">פרטי שאלה</h1>
+        {question.referenceId && (
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(`#${question.referenceId}`);
+              toast.success('המזהה הועתק');
+            }}
+            title="העתק מזהה"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary/15 border border-secondary/30 text-secondary font-mono font-bold text-sm hover:bg-secondary/25 transition-colors flex-shrink-0"
+          >
+            <span>#{question.referenceId}</span>
+            <Copy className="h-3 w-3 opacity-60" />
+          </button>
+        )}
+        <div className="flex-1 min-w-[1px]" />
+        <div className="flex-shrink-0">{statusBadge(question.status)}</div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
