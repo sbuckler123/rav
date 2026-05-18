@@ -110,11 +110,14 @@ async function notifyAskerOfAnswer(
     ? `${settings.publicBaseUrl.replace(/\/$/, '')}/shut#q-${questionId}`
     : undefined;
 
+  // Reply-To is intentionally NOT set. If we set Reply-To = notifyEmail
+  // (the rabbi's inbox) it would be visible in headers and exposed when the
+  // asker hits "Reply". Replies instead route back to notifyFromEmail; the
+  // rabbi gets the BCC copy in his inbox (BCC is hidden by the protocol).
   await sendAnswerToAskerEmail({
     toEmail:         askerEmail,
     fromEmail:       settings.notifyFromEmail,
     bccEmail:        settings.notifyEmail,
-    replyToEmail:    settings.notifyEmail,
     askerName:       String(f['שם השואל'] ?? ''),
     questionContent: String(f['תוכן השאלה'] ?? ''),
     answerTitle,
