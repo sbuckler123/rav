@@ -10,7 +10,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
-import { sendNewQuestionEmail } from './_email';
+import { sendNewQuestionEmail, sendQuestionReceivedEmail } from './_email';
 import { BODY_LIMITS, readBody } from './_readBody';
 import { enforceOrigin, enforceRateLimit } from './_security';
 import { requireTurnstile } from './_turnstile';
@@ -124,7 +124,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         fetchSettings(),
       ]);
 
+      const referenceId = String(record.fields?.['מזהה שאלה'] ?? '');
+
       if (settings.notifyEnabled && settings.notifyEmail && settings.notifyFromEmail) {
+        // 1) Notify the rabbi of the new question
         await sendNewQuestionEmail({
           toEmail:         settings.notifyEmail,
           fromEmail:       settings.notifyFromEmail,
@@ -132,13 +135,25 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           askerEmail:      emailStr,
           questionContent: String(question),
           allowPublic:     !!allowPublic,
-          referenceId:     String(record.fields?.['מזהה שאלה'] ?? ''),
+          referenceId,
         }).catch((err) => {
-          captureServerError(err, {
-            handler:     'questions-email',
-            referenceId: String(record.fields?.['מזהה שאלה'] ?? ''),
-          });
+          captureServerError(err, { handler: 'questions-email', referenceId });
         });
+
+        // 2) Confirmation email to the asker with their reference number
+        if (settings.notifyAskerOnSubmit) {
+          await sendQuestionReceivedEmail({
+            toEmail:         emailStr,
+            fromEmail:       settings.notifyFromEmail,
+            askerName:       String(name),
+            questionContent: String(question),
+            allowPublic:     !!allowPublic,
+            referenceId,
+            publicBaseUrl:   settings.publicBaseUrl,
+          }).catch((err) => {
+            captureServerError(err, { handler: 'questions-asker-confirmation', referenceId });
+          });
+        }
       }
 
       res.statusCode = 200;

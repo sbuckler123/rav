@@ -8,6 +8,7 @@ export interface NotificationSettings {
   notifyEmail:         string;
   notifyFromEmail:     string;
   notifyAskerOnReply:  boolean;
+  notifyAskerOnSubmit: boolean;
   publicBaseUrl:       string;
 }
 
@@ -22,6 +23,7 @@ const DEFAULTS: SettingsFull = {
   notifyEmail:         '',
   notifyFromEmail:     '',
   notifyAskerOnReply:  true,
+  notifyAskerOnSubmit: true,
   publicBaseUrl:       DEFAULT_PUBLIC_BASE_URL,
   _records:            {},
 };
@@ -52,10 +54,11 @@ export async function fetchSettings(): Promise<SettingsFull> {
       notifyEnabled:      _records['notify_enabled']?.value === 'true',
       notifyEmail:        _records['notify_email']?.value ?? '',
       notifyFromEmail:    _records['notify_from_email']?.value ?? '',
-      // Default to true so the feature is on without a manual Airtable edit;
-      // an explicit 'false' value disables it.
-      notifyAskerOnReply: _records['notify_asker_on_reply']?.value !== 'false',
-      publicBaseUrl:      _records['public_base_url']?.value || DEFAULT_PUBLIC_BASE_URL,
+      // Default to true so these features are on without a manual Airtable edit;
+      // an explicit 'false' value disables each.
+      notifyAskerOnReply:  _records['notify_asker_on_reply']?.value  !== 'false',
+      notifyAskerOnSubmit: _records['notify_asker_on_submit']?.value !== 'false',
+      publicBaseUrl:       _records['public_base_url']?.value || DEFAULT_PUBLIC_BASE_URL,
       _records,
     };
   } catch {
