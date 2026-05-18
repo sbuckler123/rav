@@ -60,7 +60,7 @@ export default function ArticlesPage() {
         subtitle={PAGE_DESC['/hagut-upsika']}
       />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl py-8">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl 2xl:max-w-screen-2xl py-8">
         {/* Filter Bar */}
         <div className="mb-8 rounded-2xl border border-border/60 bg-[#F7F4EE] p-5 sm:p-6 space-y-4">
 

@@ -57,7 +57,7 @@ export default function VideosSection() {
 
   return (
     <section className="bg-background py-12 sm:py-16">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl 2xl:max-w-screen-2xl">
 
         {/* Section header */}
         <div className="flex items-center justify-between mb-8">
