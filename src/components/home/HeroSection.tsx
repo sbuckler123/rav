@@ -86,6 +86,8 @@ export default function HeroSection() {
               <img
                 src="/og-image.jpg"
                 alt="הרב קלמן מאיר בר"
+                fetchPriority="high"
+                loading="eager"
                 className="w-full object-cover object-top max-h-[200px] sm:max-h-[280px] lg:max-h-none lg:h-full"
               />
             </div>
