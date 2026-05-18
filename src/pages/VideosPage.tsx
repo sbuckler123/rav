@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Play, Search, X, ChevronLeft, ChevronRight, CalendarDays, Clock, Eye } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
@@ -28,8 +28,12 @@ function getThumb(video: ShiurItem, size: 'featured' | 'card' = 'card'): string 
 const ITEMS_PER_PAGE = 12;
 
 export default function VideosPage() {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  // Initialize from the URL so deep-links like /shiurei-torah?category=מועדים
+  // (e.g., from the 'all videos in category' button on a video detail page)
+  // apply the filter on first render.
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('category') ?? 'all');
   const [yearFilter, setYearFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc');
   const [page, setPage] = useState(1);
