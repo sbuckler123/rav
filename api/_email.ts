@@ -43,28 +43,32 @@ export async function sendFollowUpEmail(opts: FollowUpEmailOpts): Promise<void> 
 }
 
 export interface AnswerToAskerEmailOpts {
-  toEmail:         string;
-  fromEmail:       string;
-  bccEmail?:       string;
-  replyToEmail?:   string;
-  askerName:       string;
-  questionContent: string;
-  answerTitle?:    string;
-  answerContent:   string;
-  referenceId?:    string;
-  /** If set, the email includes a "view on site" link. Set only when the question is publicly visible. */
-  publicUrl?:      string;
+  toEmail:           string;
+  fromEmail:         string;
+  bccEmail?:         string;
+  replyToEmail?:     string;
+  askerName:         string;
+  questionContent:   string;
+  answerTitle?:      string;
+  answerContent:     string;
+  referenceId?:      string;
+  /** "View on site" button — set only when the question is publicly visible. */
+  publicUrl?:        string;
+  /** Always set. Points to the right follow-up form: public Q&A page when the question is published, askPage otherwise. */
+  followUpUrl:       string;
+  /** Affects wording of the footer CTA. */
+  isPubliclyVisible: boolean;
 }
 
 export async function sendAnswerToAskerEmail(opts: AnswerToAskerEmailOpts): Promise<void> {
-  const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl } = opts;
+  const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible } = opts;
   await resend.emails.send({
     from:    fromEmail,
     to:      [toEmail],
     bcc:     bccEmail ? [bccEmail] : undefined,
     replyTo: replyToEmail || undefined,
     subject: `תשובה לשאלתך מאת הרב קלמן מאיר בר${referenceId ? ` — #${referenceId}` : ''}`,
-    html:    buildAnswerToAskerHtml({ askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl }),
+    html:    buildAnswerToAskerHtml({ askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible }),
   });
 }
 
@@ -194,14 +198,20 @@ function buildFollowUpHtml(opts: {
 }
 
 function buildAnswerToAskerHtml(opts: {
-  askerName:       string;
-  questionContent: string;
-  answerTitle?:    string;
-  answerContent:   string;
-  referenceId?:    string;
-  publicUrl?:      string;
+  askerName:         string;
+  questionContent:   string;
+  answerTitle?:      string;
+  answerContent:     string;
+  referenceId?:      string;
+  publicUrl?:        string;
+  followUpUrl:       string;
+  isPubliclyVisible: boolean;
 }): string {
-  const { askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl } = opts;
+  const { askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible } = opts;
+  const followUpLabel = isPubliclyVisible ? 'שלח שאלת המשך באתר ←' : 'פתח טופס שאלה חדשה ←';
+  const followUpIntro = isPubliclyVisible
+    ? 'לשליחת שאלת המשך, יש להשתמש בטופס שמתחת לשאלה באתר:'
+    : 'לפניות נוספות, יש לשלוח שאלה חדשה דרך הטופס באתר:';
   const greetingName = askerName?.trim() ? escapeHtml(askerName.trim()) : 'שלום רב';
   return `<!DOCTYPE html>
 <html dir="rtl" lang="he" xmlns="http://www.w3.org/1999/xhtml">
@@ -254,7 +264,9 @@ function buildAnswerToAskerHtml(opts: {
               <p style="margin:0;"><a href="${escapeHtml(publicUrl)}" style="display:inline-block;background:#1B2A4A;color:#C9A84C;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:14px;">צפה באתר ←</a></p>` : ''}
 
               <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px;">
-              <p style="color:#9CA3AF;font-size:12px;margin:0;line-height:1.6;">הודעה זו נשלחה אוטומטית ממערכת ניהול האתר. ניתן להשיב לאימייל זה כדי לפנות לרב.</p>
+              <p style="margin:0 0 8px;font-size:14px;color:#4B5563;">${followUpIntro}</p>
+              <p style="margin:0 0 18px;"><a href="${escapeHtml(followUpUrl)}" style="color:#1B2A4A;text-decoration:underline;font-weight:bold;font-size:14px;">${followUpLabel}</a></p>
+              <p style="color:#9CA3AF;font-size:12px;margin:0;line-height:1.6;">הודעה זו נשלחה אוטומטית ממערכת ניהול האתר. אין להשיב לאימייל זה — הוא נשלח מכתובת שאינה מנוטרת.</p>
             </td>
           </tr>
         </table>

@@ -103,17 +103,20 @@ async function notifyAskerOfAnswer(
   const askerEmail = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
   if (!askerEmail) return; // older / admin-created questions may not have an email
 
+  const baseUrl = settings.publicBaseUrl.replace(/\/$/, '');
   const isPubliclyVisible =
     f['הסכמה לפרסום']  === true &&
     f['מאושר לפרסום'] === true;
-  const publicUrl = isPubliclyVisible
-    ? `${settings.publicBaseUrl.replace(/\/$/, '')}/shut#q-${questionId}`
-    : undefined;
+  const publicUrl   = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : undefined;
+  // Always provide a follow-up URL. For published questions it points to the
+  // public Q&A page (which has the follow-up form). Otherwise it points to
+  // the new-question form on the askPage.
+  const followUpUrl = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : `${baseUrl}/shaal-et-harav`;
 
-  // Reply-To is intentionally NOT set. If we set Reply-To = notifyEmail
-  // (the rabbi's inbox) it would be visible in headers and exposed when the
-  // asker hits "Reply". Replies instead route back to notifyFromEmail; the
-  // rabbi gets the BCC copy in his inbox (BCC is hidden by the protocol).
+  // Reply-To is intentionally NOT set. The From address is no-reply, so
+  // replies will bounce; the footer directs the asker to follow up via the
+  // website instead. The rabbi gets the BCC copy in his inbox (BCC is hidden
+  // by the protocol, so the rabbi's address is not exposed to the asker).
   await sendAnswerToAskerEmail({
     toEmail:         askerEmail,
     fromEmail:       settings.notifyFromEmail,
@@ -124,6 +127,8 @@ async function notifyAskerOfAnswer(
     answerContent,
     referenceId:     String(f['מזהה שאלה'] ?? ''),
     publicUrl,
+    followUpUrl,
+    isPubliclyVisible,
   });
 }
 
