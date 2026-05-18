@@ -16,7 +16,7 @@ export default function AboutPage() {
         breadcrumbs={[{ label: 'דף הבית', href: '/' }, { label: 'אודות' }]}
       />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 
         {/* Biography */}
         <section className="grid md:grid-cols-5 gap-10 mb-16" aria-label="ביוגרפיה">

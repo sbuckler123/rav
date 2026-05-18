@@ -68,7 +68,7 @@ export default function VideosPage() {
   if (loading) return (
     <div className="min-h-screen bg-background">
       <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl 2xl:max-w-screen-2xl py-8 space-y-6">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 space-y-6">
         <div className="h-28 bg-muted animate-pulse rounded-xl" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[...Array(6)].map((_, i) => (
@@ -89,7 +89,7 @@ export default function VideosPage() {
   if (isError) return (
     <div className="min-h-screen bg-background">
       <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl 2xl:max-w-screen-2xl py-16 text-center text-destructive">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-destructive">
         שגיאה בטעינת השיעורים
       </div>
     </div>
@@ -103,7 +103,7 @@ export default function VideosPage() {
       />
       <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
 
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl 2xl:max-w-screen-2xl py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
 
         {/* ── Filter bar ── */}
         <div className="bg-white border border-border rounded-xl p-4 mb-6 shadow-sm space-y-3">

@@ -58,7 +58,7 @@ export default function EventDetailPage() {
 
   if (entry === undefined) {
     return (
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-16 text-center text-muted-foreground">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-16 text-center text-muted-foreground">
         טוען...
       </div>
     );
@@ -66,7 +66,7 @@ export default function EventDetailPage() {
 
   if (!entry) {
     return (
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8 text-center">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8 text-center">
         <p className="text-muted-foreground">הרשומה לא נמצאה.</p>
         <Link to="/yoman-peilut">
           <Button variant="outline" className="mt-4">חזרה ליומן פעילות</Button>
@@ -83,7 +83,7 @@ export default function EventDetailPage() {
         title={entry.title}
         description={`אירוע של הרב קלמן מאיר בר: ${entry.title}`}
       />
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs
           items={[
             { label: 'דף הבית', href: '/' },
@@ -333,7 +333,7 @@ export default function EventDetailPage() {
           <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20" onClick={prevImage} aria-label="תמונה קודמת">
             <ChevronRight className="h-8 w-8" />
           </Button>
-          <div className="max-w-4xl w-full">
+          <div className="max-w-7xl w-full">
             <img
               src={entry.gallery[currentImageIndex].url}
               alt={entry.gallery[currentImageIndex].caption}
