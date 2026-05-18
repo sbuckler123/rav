@@ -8,6 +8,7 @@ import PageHeader from '@/components/PageHeader';
 import { PAGE_DESC } from '@/config/nav';
 import { useAlHaperek } from '@/hooks/useQueries';
 import type { AlHaperekItem, ContentBlock } from '@/api/getAlHaperek';
+import { cldOptimize } from '@/lib/cloudinaryImage';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -205,7 +206,7 @@ function EditorialRow({ item }: { item: AlHaperekItem }) {
         {/* Optional thumbnail — only when the item has a cover image */}
         {item.coverImage && (
           <div className="hidden sm:block w-28 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-            <img src={item.coverImage} alt="" loading="lazy" className="w-full h-full object-cover" />
+            <img src={cldOptimize(item.coverImage, 400)} alt="" loading="lazy" className="w-full h-full object-cover" />
           </div>
         )}
       </article>

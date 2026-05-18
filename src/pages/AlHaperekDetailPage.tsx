@@ -7,6 +7,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import SEO from '@/components/SEO';
 import { getAlHaperekItem, type AlHaperekItem, type ContentBlock } from '@/api/getAlHaperek';
 import { useAlHaperek } from '@/hooks/useQueries';
+import { cldOptimize } from '@/lib/cloudinaryImage';
 
 // ── YouTube helpers ──────────────────────────────────────────────────────────
 
@@ -86,8 +87,9 @@ function ImagesBlock({
             aria-label={`פתח תמונה ${i + 1}`}
           >
             <img
-              src={url}
+              src={cldOptimize(url, 1200)}
               alt={block.caption ?? `תמונה ${i + 1}`}
+              loading="lazy"
               className={`w-full group-hover:scale-[1.02] transition-transform duration-200 ${count === 1 ? 'h-auto max-h-[600px] object-contain' : 'h-full object-cover'}`}
             />
           </button>
@@ -187,7 +189,7 @@ function Lightbox({ images, index, onClose }: { images: string[]; index: number;
       {/* Image */}
       <div className="max-w-4xl w-full flex-1 flex items-center justify-center" onClick={e => e.stopPropagation()}>
         <img
-          src={images[current]}
+          src={cldOptimize(images[current], 1600)}
           alt={`תמונה ${current + 1}`}
           className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg mx-auto"
         />
