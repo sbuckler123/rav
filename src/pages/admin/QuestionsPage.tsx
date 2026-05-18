@@ -87,9 +87,12 @@ export default function QuestionsPage() {
 
   const filtered = questions.filter(q => {
     const matchTab = activeTab === 'all' || q.status === activeTab;
-    const matchSearch = !search ||
-      q.questionContent.includes(search) ||
-      (q.askerName ?? '').includes(search);
+    // Allow searching by reference id with or without a leading '#'
+    const term = search.trim().replace(/^#/, '').toLowerCase();
+    const matchSearch = !term ||
+      q.questionContent.toLowerCase().includes(term) ||
+      (q.askerName ?? '').toLowerCase().includes(term) ||
+      (q.referenceId ?? '').toLowerCase().includes(term);
     return matchTab && matchSearch;
   });
 
@@ -158,7 +161,7 @@ export default function QuestionsPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="חיפוש לפי שם או תוכן..."
+            placeholder="חיפוש לפי מזהה, שם או תוכן..."
             className="pr-9 border border-input bg-white"
           />
         </div>
@@ -210,6 +213,12 @@ export default function QuestionsPage() {
                     {q.questionContent}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {q.referenceId && (
+                      <>
+                        <span className="font-mono font-semibold text-secondary">#{q.referenceId}</span>
+                        <span className="mx-1.5">·</span>
+                      </>
+                    )}
                     {q.askerName && <span>{q.askerName}</span>}
                     {q.askerName && q.createdAt && <span className="mx-1.5">·</span>}
                     {q.createdAt && <span>{formatAdminDate(q.createdAt)}</span>}
