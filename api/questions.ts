@@ -160,7 +160,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.end(JSON.stringify({
         success: true,
         id: record.id,
-        referenceId: record.fields?.['מזהה שאלה'] ?? '',
+        referenceId: referenceId,
       }));
     } catch (err) {
       captureServerError(err, { handler: 'questions', method: 'POST' });
@@ -205,7 +205,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
         return {
           id: r.id,
-          referenceId: r.fields['מזהה שאלה'],
+          referenceId: r.fields['מזהה שאלה'] != null ? String(r.fields['מזהה שאלה']) : undefined,
           questionContent: r.fields['תוכן השאלה'] ?? '',
           category: Array.isArray(r.fields['קטגוריה']) ? r.fields['קטגוריה'][0] : undefined,
           createdAt: r.fields['תאריך'],

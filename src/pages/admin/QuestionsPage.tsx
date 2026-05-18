@@ -89,10 +89,12 @@ export default function QuestionsPage() {
     const matchTab = activeTab === 'all' || q.status === activeTab;
     // Allow searching by reference id with or without a leading '#'
     const term = search.trim().replace(/^#/, '').toLowerCase();
+    // Coerce to string in case Airtable returns a number for the auto-number field
+    const refStr = q.referenceId != null ? String(q.referenceId).toLowerCase() : '';
     const matchSearch = !term ||
       q.questionContent.toLowerCase().includes(term) ||
       (q.askerName ?? '').toLowerCase().includes(term) ||
-      (q.referenceId ?? '').toLowerCase().includes(term);
+      refStr.includes(term);
     return matchTab && matchSearch;
   });
 
