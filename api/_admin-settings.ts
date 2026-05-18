@@ -47,11 +47,12 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     const s = await fetchSettings();
     res.statusCode = 200;
     res.end(JSON.stringify({
-      notifyEnabled:      s.notifyEnabled,
-      notifyEmail:        s.notifyEmail,
-      notifyFromEmail:    s.notifyFromEmail,
-      notifyAskerOnReply: s.notifyAskerOnReply,
-      publicBaseUrl:      s.publicBaseUrl,
+      notifyEnabled:       s.notifyEnabled,
+      notifyEmail:         s.notifyEmail,
+      notifyFromEmail:     s.notifyFromEmail,
+      notifyAskerOnReply:  s.notifyAskerOnReply,
+      notifyAskerOnSubmit: s.notifyAskerOnSubmit,
+      publicBaseUrl:       s.publicBaseUrl,
     }));
     return;
   }
@@ -59,11 +60,12 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
   // ── PATCH ────────────────────────────────────────────────────────────────────
   if (req.method === 'PATCH') {
     const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL)) as {
-      notifyEnabled?:      boolean;
-      notifyEmail?:        string;
-      notifyFromEmail?:    string;
-      notifyAskerOnReply?: boolean;
-      publicBaseUrl?:      string;
+      notifyEnabled?:       boolean;
+      notifyEmail?:         string;
+      notifyFromEmail?:     string;
+      notifyAskerOnReply?:  boolean;
+      notifyAskerOnSubmit?: boolean;
+      publicBaseUrl?:       string;
     };
 
     const { _records } = await fetchSettings();
@@ -77,6 +79,8 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       updates.push(upsertSetting('notify_from_email', body.notifyFromEmail, _records));
     if (body.notifyAskerOnReply !== undefined)
       updates.push(upsertSetting('notify_asker_on_reply', body.notifyAskerOnReply ? 'true' : 'false', _records));
+    if (body.notifyAskerOnSubmit !== undefined)
+      updates.push(upsertSetting('notify_asker_on_submit', body.notifyAskerOnSubmit ? 'true' : 'false', _records));
     if (body.publicBaseUrl !== undefined)
       updates.push(upsertSetting('public_base_url', body.publicBaseUrl, _records));
 

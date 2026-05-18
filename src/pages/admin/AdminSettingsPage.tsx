@@ -13,6 +13,7 @@ interface NotificationSettings {
   notifyEmail:         string;
   notifyFromEmail:     string;
   notifyAskerOnReply:  boolean;
+  notifyAskerOnSubmit: boolean;
   publicBaseUrl:       string;
 }
 
@@ -21,6 +22,7 @@ const DEFAULT: NotificationSettings = {
   notifyEmail:         '',
   notifyFromEmail:     '',
   notifyAskerOnReply:  true,
+  notifyAskerOnSubmit: true,
   publicBaseUrl:       'https://www.haravkalmanber.co.il',
 };
 
@@ -169,6 +171,24 @@ export default function AdminSettingsPage() {
 
           <div className="p-6 space-y-5">
             <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium text-sm text-primary">שלח אישור לשואל כששאלה נשלחת</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  השואל יקבל אימייל אישור עם מזהה השאלה מיד לאחר שליחת השאלה. עובד רק כשהתראות פעילות.
+                </p>
+              </div>
+              <label dir="ltr" className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={form.notifyAskerOnSubmit}
+                  onChange={e => field('notifyAskerOnSubmit', e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:bg-secondary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
               <div>
                 <p className="font-medium text-sm text-primary">שלח אימייל לשואל כשהרב משיב</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

@@ -5,6 +5,7 @@ import { MessageCircle, ChevronDown, ChevronUp, Send, BookOpen, HelpCircle, Cale
 import { toast } from 'sonner';
 import { submitReply } from '@/api/submitReply';
 import type { getPublishedQuestions } from '@/api/getPublishedQuestions';
+import Turnstile, { isTurnstileEnabled } from '@/components/Turnstile';
 
 type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
 type Question = GetPublishedQuestionsOutputType['questions'][0];
@@ -350,12 +351,17 @@ function QuestionCard({ question, categories }: { question: Question; categories
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleReply = async () => {
     if (!replyText.trim()) return;
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error('יש להמתין לסיום בדיקת אבטחה');
+      return;
+    }
     setSubmitting(true);
     try {
-      await submitReply({ questionId: question.id, content: replyText, writerType: 'השואל' });
+      await submitReply({ questionId: question.id, content: replyText, writerType: 'השואל', turnstileToken });
       setSent(true);
       setReplyText('');
       setReplyOpen(false);
@@ -447,10 +453,15 @@ function QuestionCard({ question, categories }: { question: Question; categories
                       rows={4}
                       className="text-sm resize-none border border-input bg-white focus-visible:ring-1 w-full"
                     />
+                    {isTurnstileEnabled && (
+                      <div className="flex justify-center sm:justify-start">
+                        <Turnstile onToken={setTurnstileToken} />
+                      </div>
+                    )}
                     <Button
                       size="sm"
                       onClick={handleReply}
-                      disabled={submitting || !replyText.trim()}
+                      disabled={submitting || !replyText.trim() || (isTurnstileEnabled && !turnstileToken)}
                       className="gap-2 bg-secondary text-primary hover:bg-secondary/90 min-h-[44px] w-full sm:w-auto"
                     >
                       <Send className="h-3.5 w-3.5" />
