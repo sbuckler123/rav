@@ -29,11 +29,12 @@
     { "source": "/al-haperek/:path*", "destination": "/idkunim/:path*", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/events/:path*",   "destination": "/api/og?p=/events/:path*" },
-    { "source": "/articles/:path*", "destination": "/api/og?p=/articles/:path*" },
-    { "source": "/videos/:path*",   "destination": "/api/og?p=/videos/:path*" },
-    { "source": "/shiurim/:path*",  "destination": "/api/og?p=/shiurim/:path*" },
-    { "source": "/((?!.*\\.).*)",   "destination": "/" }
+    { "source": "/sitemap.xml",          "destination": "/api/og?sitemap=1" },
+    { "source": "/shiurei-torah/:path*", "destination": "/api/og?p=/shiurei-torah/:path*" },
+    { "source": "/luach-iruyim/:path*",  "destination": "/api/og?p=/luach-iruyim/:path*" },
+    { "source": "/hagut-upsika/:path*",  "destination": "/api/og?p=/hagut-upsika/:path*" },
+    { "source": "/idkunim/:path*",       "destination": "/api/og?p=/idkunim/:path*" },
+    { "source": "/((?!.*\\.).*)",        "destination": "/" }
   ],
   "crons": [
     { "path": "/api/cron-cleanup", "schedule": "0 3 * * *" }
