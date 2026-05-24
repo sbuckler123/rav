@@ -85,7 +85,7 @@ export async function sendQuestionReceivedEmail(opts: QuestionReceivedEmailOpts)
 export async function sendAnswerToAskerEmail(opts: AnswerToAskerEmailOpts): Promise<void> {
   const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, writerType, publicUrl, followUpUrl, isPubliclyVisible } = opts;
   const isSecretariat = writerType === 'מזכירות';
-  const subjectAttribution = isSecretariat ? 'ממזכירות לשכת הרב הראשי' : 'מאת הרב קלמן מאיר בר';
+  const subjectAttribution = isSecretariat ? 'ממזכירות לשכת הרב הראשי' : 'מלשכת הרב הראשי לישראל';
   await resend.emails.send({
     from:    fromEmail,
     to:      [toEmail],
@@ -205,7 +205,7 @@ function buildQuestionReceivedHtml(opts: {
           <!-- Body -->
           <tr>
             <td class="email-pad" dir="rtl" style="padding:32px;text-align:right;">
-              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">שלום ${greetingName},<br/>שאלתך התקבלה והועברה לבחינתו של הרב קלמן מאיר בר. נחזור אליך באימייל זה לאחר שתינתן תשובה.</p>
+              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">שלום ${greetingName},<br/>שאלתך התקבלה והועברה לעיון בלשכת הרב הראשי לישראל. נחזור אליך באימייל זה לאחר שתינתן תשובה.</p>
 
               ${referenceId ? `
               <div style="background:#FAF7EF;border:1px solid #C9A84C;border-radius:8px;padding:14px 18px;margin:18px 0;text-align:center;">
@@ -317,7 +317,7 @@ function buildAnswerToAskerHtml(opts: {
   const isSecretariat = writerType === 'מזכירות';
   const introLine = isSecretariat
     ? 'התקבל מענה ממזכירות לשכת הרב הראשי לשאלה ששלחת:'
-    : 'הרב קלמן מאיר בר השיב לשאלה ששלחת:';
+    : 'התקבל מענה לשאלתך מלשכת הרב הראשי לישראל:';
   const answerLabel = isSecretariat ? 'מענה המזכירות:' : 'תשובת הרב:';
   const followUpLabel = isPubliclyVisible ? 'שלח שאלת המשך באתר ←' : 'פתח טופס שאלה חדשה ←';
   const followUpIntro = isPubliclyVisible
