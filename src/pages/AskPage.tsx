@@ -25,7 +25,7 @@ const guidelines = [
 ];
 
 export default function AskPage() {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ name: string }[]>([]);
 
   useEffect(() => {
     getCategories().then(r => setCategories(r.categories)).catch(() => {});

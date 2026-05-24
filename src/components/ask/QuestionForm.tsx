@@ -13,13 +13,13 @@ import Turnstile, { isTurnstileEnabled } from '@/components/Turnstile';
 import { CheckCircle, Send } from 'lucide-react';
 
 interface Props {
-  categories: { id: string; name: string }[];
+  categories: { name: string }[];
 }
 
 export default function QuestionForm({ categories }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryName, setCategoryName] = useState('');
   const [question, setQuestion] = useState('');
   const [allowPublic, setAllowPublic] = useState(true);
   const [consent, setConsent] = useState(false);
@@ -52,12 +52,11 @@ export default function QuestionForm({ categories }: Props) {
     }
     setSubmitting(true);
     try {
-      const selectedCategory = categories.find(c => c.id === categoryId);
       await submitQuestion({
         name,
         email,
-        categoryId: categoryId || undefined,
-        topic: selectedCategory?.name,
+        category: categoryName || undefined,
+        topic: categoryName || undefined,
         question,
         allowPublic,
         consent,
@@ -87,7 +86,7 @@ export default function QuestionForm({ categories }: Props) {
           <Button
             variant="outline"
             className="min-h-[44px]"
-            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryId(''); setQuestion(''); setAllowPublic(true); setConsent(false); }}
+            onClick={() => { setSubmitted(false); setName(''); setEmail(''); setCategoryName(''); setQuestion(''); setAllowPublic(true); setConsent(false); }}
           >
             שלח שאלה נוספת
           </Button>
@@ -137,15 +136,15 @@ export default function QuestionForm({ categories }: Props) {
           {categories.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">נושא השאלה</Label>
-              <Select value={categoryId} onValueChange={setCategoryId} dir="rtl">
+              <Select value={categoryName} onValueChange={setCategoryName} dir="rtl">
                 <SelectTrigger className="min-h-[44px] border border-input bg-white focus:ring-1 focus:border-secondary">
-                  <span className={categoryId ? '' : 'text-muted-foreground'}>
-                    {categoryId ? categories.find(c => c.id === categoryId)?.name : 'בחר נושא (אופציונלי)'}
+                  <span className={categoryName ? '' : 'text-muted-foreground'}>
+                    {categoryName || 'בחר נושא (אופציונלי)'}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

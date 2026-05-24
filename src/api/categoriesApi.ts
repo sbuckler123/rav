@@ -6,9 +6,11 @@ export interface Category {
 }
 
 export async function fetchCategories(forTable: string): Promise<Category[]> {
-  const res = await fetch(`/api/categories?forTable=${encodeURIComponent(forTable)}`);
-  if (!res.ok) throw new Error(`Failed to fetch categories: ${res.status}`);
-  return res.json() as Promise<Category[]>;
+  // Admin path: returns rec IDs (required for editing linked-record fields on
+  // shiurim/videos/articles, and for mapping the rec IDs that come back from
+  // admin GETs of those tables to their display names). Goes through
+  // apiFetch so the Clerk admin token is attached.
+  return apiFetch<Category[]>(`/api/categories?forTable=${encodeURIComponent(forTable)}&admin=true`);
 }
 
 export async function createCategory(tables: string[], name: string): Promise<Category> {

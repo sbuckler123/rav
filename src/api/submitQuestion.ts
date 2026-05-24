@@ -1,7 +1,7 @@
 export async function submitQuestion(input: {
   name: string;
   email: string;
-  categoryId?: string;
+  category?: string;
   topic?: string;
   question: string;
   allowPublic: boolean;
@@ -14,7 +14,7 @@ export async function submitQuestion(input: {
     body: JSON.stringify({
       name:           input.name,
       email:          input.email,
-      categoryId:     input.categoryId,
+      category:       input.category,
       question:       input.question,
       allowPublic:    input.allowPublic,
       consent:        input.consent,

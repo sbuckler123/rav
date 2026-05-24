@@ -40,6 +40,21 @@ async function airtableFetch(
   return res.json() as Promise<{ records: { id: string; fields: Record<string, unknown> }[] }>;
 }
 
+/**
+ * Resolves a public category name (sent by the question-submission form) to
+ * its Airtable record ID so we can write the linked-record field. Returns
+ * null when the name doesn't match a קטגוריות row. The name is sanitised for
+ * formula injection before interpolation.
+ */
+async function resolveCategoryRecordId(name: string): Promise<string | null> {
+  const escaped = name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const data = await airtableFetch('קטגוריות', {
+    filterByFormula: `{שם}="${escaped}"`,
+    maxRecords: '1',
+  });
+  return data.records[0]?.id ?? null;
+}
+
 async function airtableCreate(table: string, fields: Record<string, unknown>) {
   const res = await fetch(
     `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}`,
@@ -79,7 +94,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     try {
       const body = JSON.parse(await readBody(req, BODY_LIMITS.SMALL));
-      const { name, email, categoryId, question, allowPublic, consent, turnstileToken } = body ?? {};
+      const { name, email, category, question, allowPublic, consent, turnstileToken } = body ?? {};
 
       // Bot protection (no-op until TURNSTILE_SECRET_KEY is configured)
       if (!(await requireTurnstile(req, res, typeof turnstileToken === 'string' ? turnstileToken : undefined))) return;
@@ -117,7 +132,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'סטטוס':        'ממתין',
         'תאריך':        new Date().toISOString(),
       };
-      if (categoryId && typeof categoryId === 'string') fields['קטגוריה'] = [categoryId];
+      // Public clients send a category NAME (rec IDs are no longer exposed).
+      // Resolve to a rec ID server-side; silently drop on miss rather than
+      // failing the submission since category is optional.
+      if (category && typeof category === 'string') {
+        const trimmed = category.trim();
+        if (trimmed) {
+          const categoryRecordId = await resolveCategoryRecordId(trimmed);
+          if (categoryRecordId) fields['קטגוריה'] = [categoryRecordId];
+        }
+      }
 
       const [record, settings] = await Promise.all([
         airtableCreate('שאלות', fields),

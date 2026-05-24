@@ -16,7 +16,7 @@ const PAGE_SIZE = 10;
 
 interface Props {
   questions: Question[];
-  categories: { id: string; name: string }[];
+  categories: { name: string }[];
 }
 
 function formatDate(raw: string | undefined): string {
@@ -225,7 +225,7 @@ export default function PublishedQA({ questions, categories }: Props) {
             const count = sorted.filter(q => q.category === c.name).length;
             return (
               <button
-                key={c.id}
+                key={c.name}
                 onClick={() => handleCategoryChange(c.name)}
                 className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[44px] ${
                   selectedCategory === c.name

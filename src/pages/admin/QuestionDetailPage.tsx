@@ -26,7 +26,7 @@ import {
 } from '@/api/adminQuestionsApi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
-import { getCategories } from '@/api/getCategories';
+import { fetchCategories } from '@/api/categoriesApi';
 import { cn, formatAdminDate } from '@/lib/utils';
 
 function writerIcon(type: string) {
@@ -73,7 +73,7 @@ export default function QuestionDetailPage() {
   });
   const categoriesQuery = useQuery({
     queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שאלות'),
-    queryFn: async () => (await getCategories()).categories,
+    queryFn: () => fetchCategories('שאלות'),
     ...ADMIN_QUERY_OPTIONS,
   });
   const writerTypesQuery = useQuery<string[]>({
