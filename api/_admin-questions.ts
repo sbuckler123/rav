@@ -18,7 +18,7 @@ import { enforceOrigin, enforceRateLimit } from './_security';
 import { requireTurnstile } from './_turnstile';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
-import { sendFollowUpEmail, sendAnswerToAskerEmail } from './_email';
+import { sendFollowUpEmail, sendFollowUpReceivedEmail, sendAnswerToAskerEmail } from './_email';
 
 const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
 const REFERENCE_ID_RE = /^\d{1,10}$/;
@@ -377,20 +377,46 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       // Flip question status back to 'ממתין' so the admin sees it needs attention.
       await atUpdate('שאלות', questionRecordId, { 'סטטוס': 'ממתין' });
 
-      // Notify the rabbi by email (fail-soft — the record is already saved).
+      // Emails are fail-soft — the answer record is already saved.
       const settings = await fetchSettings();
       if (settings.notifyEnabled && settings.notifyEmail && settings.notifyFromEmail) {
+        const askerName       = String(f['שם השואל'] ?? '');
+        const askerEmail      = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
+        const questionContent = String(f['תוכן השאלה'] ?? '');
+        const referenceId     = f['מזהה שאלה'] != null ? String(f['מזהה שאלה']) : '';
+
+        // 1) Rabbi notification — primary "you have a new follow-up to handle" alert.
         await sendFollowUpEmail({
           toEmail:         settings.notifyEmail,
           fromEmail:       settings.notifyFromEmail,
-          askerName:       String(f['שם השואל'] ?? ''),
-          askerEmail:      String(f['אימייל השואל'] ?? ''),
-          questionContent: String(f['תוכן השאלה'] ?? ''),
+          askerName,
+          askerEmail,
+          questionContent,
           followUpContent: content,
-          referenceId:     String(f['מזהה שאלה'] ?? ''),
+          referenceId,
         }).catch((err) => {
           captureServerError(err, { handler: 'admin-questions', method: 'follow-up-email' });
         });
+
+        // 2) Confirmation to the asker — mirrors the confirmation flow on
+        //    initial question submission. The rabbi already received the
+        //    dedicated notification above, so no BCC here. Gated on the asker
+        //    having a contact email and on the existing notifyAskerOnSubmit
+        //    setting (same intent: confirm receipt of something the asker
+        //    just submitted).
+        if (askerEmail && settings.notifyAskerOnSubmit) {
+          await sendFollowUpReceivedEmail({
+            toEmail:         askerEmail,
+            fromEmail:       settings.notifyFromEmail,
+            askerName,
+            questionContent,
+            followUpContent: content,
+            referenceId,
+            publicBaseUrl:   settings.publicBaseUrl,
+          }).catch((err) => {
+            captureServerError(err, { handler: 'admin-questions', method: 'follow-up-asker-confirmation' });
+          });
+        }
       }
 
       res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;

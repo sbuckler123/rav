@@ -82,6 +82,28 @@ export async function sendQuestionReceivedEmail(opts: QuestionReceivedEmailOpts)
   });
 }
 
+export interface FollowUpReceivedEmailOpts {
+  toEmail:         string;
+  fromEmail:       string;
+  bccEmail?:       string;
+  askerName:       string;
+  questionContent: string;
+  followUpContent: string;
+  referenceId?:    string;
+  publicBaseUrl:   string;
+}
+
+export async function sendFollowUpReceivedEmail(opts: FollowUpReceivedEmailOpts): Promise<void> {
+  const { toEmail, fromEmail, bccEmail, askerName, questionContent, followUpContent, referenceId, publicBaseUrl } = opts;
+  await resend.emails.send({
+    from:    fromEmail,
+    to:      [toEmail],
+    bcc:     bccEmail ? [bccEmail] : undefined,
+    subject: `שאלת ההמשך שלך התקבלה${referenceId ? ` — #${referenceId}` : ''}`,
+    html:    buildFollowUpReceivedHtml({ askerName, questionContent, followUpContent, referenceId, publicBaseUrl }),
+  });
+}
+
 export async function sendAnswerToAskerEmail(opts: AnswerToAskerEmailOpts): Promise<void> {
   const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, writerType, publicUrl, followUpUrl, isPubliclyVisible } = opts;
   const isSecretariat = writerType === 'מזכירות';
@@ -229,6 +251,78 @@ function buildQuestionReceivedHtml(opts: {
               <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px;">
               <p style="margin:0 0 8px;font-size:14px;color:#4B5563;">לשליחת שאלה נוספת:</p>
               <p style="margin:0 0 18px;"><a href="${escapeHtml(baseUrl)}/shaal-et-harav" style="color:#1B2A4A;text-decoration:underline;font-weight:bold;font-size:14px;">פתח טופס באתר ←</a></p>
+              <p style="color:#9CA3AF;font-size:12px;margin:0;line-height:1.6;">הודעה זו נשלחה אוטומטית ממערכת ניהול האתר. אין להשיב לאימייל זה — הוא נשלח מכתובת שאינה מנוטרת.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildFollowUpReceivedHtml(opts: {
+  askerName:       string;
+  questionContent: string;
+  followUpContent: string;
+  referenceId?:    string;
+  publicBaseUrl:   string;
+}): string {
+  const { askerName, questionContent, followUpContent, referenceId, publicBaseUrl } = opts;
+  const greetingName = askerName?.trim() ? escapeHtml(askerName.trim()) : 'שלום רב';
+  const baseUrl = publicBaseUrl.replace(/\/$/, '');
+  const followUpUrl = referenceId ? `${baseUrl}/shut#q-${escapeHtml(referenceId)}` : `${baseUrl}/shut`;
+  return `<!DOCTYPE html>
+<html dir="rtl" lang="he" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>שאלת ההמשך שלך התקבלה</title>
+  <style>
+    body { margin:0; padding:0; width:100% !important; -webkit-text-size-adjust:100%; }
+    table { border-collapse:collapse; }
+    a { color:#1B2A4A; }
+    @media only screen and (max-width:600px) {
+      .email-container { width:100% !important; }
+      .email-pad      { padding:20px !important; }
+      .email-head-pad { padding:20px !important; }
+      .email-title    { font-size:18px !important; }
+    }
+  </style>
+</head>
+<body dir="rtl" style="margin:0;padding:0;background:#F7F4EE;">
+  <table role="presentation" dir="rtl" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F4EE;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" dir="rtl" class="email-container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#1B2A4A;">
+          <!-- Header -->
+          <tr>
+            <td class="email-head-pad" dir="rtl" style="background:#1B2A4A;padding:24px 32px;text-align:right;">
+              <h1 class="email-title" style="color:#C9A84C;margin:0;font-size:20px;font-weight:bold;">שאלת ההמשך שלך התקבלה</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td class="email-pad" dir="rtl" style="padding:32px;text-align:right;">
+              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">שלום ${greetingName},<br/>שאלת ההמשך ששלחת התקבלה והועברה לעיון בלשכת הרב הראשי לישראל. נחזור אליך באימייל זה לאחר שתינתן תשובה.</p>
+
+              ${referenceId ? `
+              <div style="background:#FAF7EF;border:1px solid #C9A84C;border-radius:8px;padding:14px 18px;margin:18px 0;text-align:center;">
+                <p style="margin:0 0 4px;color:#6B7280;font-size:13px;">מזהה השאלה</p>
+                <p style="margin:0;color:#1B2A4A;font-size:22px;font-weight:bold;letter-spacing:1px;font-family:monospace;">#${escapeHtml(referenceId)}</p>
+              </div>` : ''}
+
+              <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">השאלה המקורית:</p>
+              <div style="background:#F9FAFB;border-right:3px solid #9CA3AF;padding:14px 16px;border-radius:0 6px 6px 0;line-height:1.7;font-size:14px;white-space:pre-wrap;word-wrap:break-word;color:#4B5563;">${escapeHtml(questionContent)}</div>
+
+              <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">שאלת ההמשך ששלחת:</p>
+              <div style="background:#FAF7EF;border-right:3px solid #C9A84C;padding:14px 16px;border-radius:0 6px 6px 0;line-height:1.7;font-size:14px;white-space:pre-wrap;word-wrap:break-word;">${escapeHtml(followUpContent)}</div>
+
+              <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px;">
+              <p style="margin:0 0 8px;font-size:14px;color:#4B5563;">לצפיה בשאלה באתר:</p>
+              <p style="margin:0 0 18px;"><a href="${followUpUrl}" style="color:#1B2A4A;text-decoration:underline;font-weight:bold;font-size:14px;">פתח באתר ←</a></p>
               <p style="color:#9CA3AF;font-size:12px;margin:0;line-height:1.6;">הודעה זו נשלחה אוטומטית ממערכת ניהול האתר. אין להשיב לאימייל זה — הוא נשלח מכתובת שאינה מנוטרת.</p>
             </td>
           </tr>
