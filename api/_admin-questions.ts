@@ -105,21 +105,21 @@ async function notifyAskerOfAnswer(
   answerContent: string,
   answerTitle: string | undefined,
   writerType: string,
-): Promise<void> {
+): Promise<boolean> {
   const settings = await fetchSettings();
-  if (!settings.notifyAskerOnReply) return;
-  if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) return;
+  if (!settings.notifyAskerOnReply) return false;
+  if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) return false;
 
   const qRes = await fetch(
     `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${questionId}`,
     { headers: auth() },
   );
-  if (!qRes.ok) return;
+  if (!qRes.ok) return false;
   const question = await qRes.json() as { id: string; fields: Record<string, unknown> };
   const f = question.fields;
 
   const askerEmail = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
-  if (!askerEmail) return; // older / admin-created questions may not have an email
+  if (!askerEmail) return false; // older / admin-created questions may not have an email
 
   const baseUrl = settings.publicBaseUrl.replace(/\/$/, '');
   const isPubliclyVisible =
@@ -153,6 +153,7 @@ async function notifyAskerOfAnswer(
     followUpUrl,
     isPubliclyVisible,
   });
+  return true;
 }
 
 export async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -168,6 +169,59 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     if (type === 'fieldChoices') {
       const choices = await getFieldChoices('תשובות', 'סוג כותב');
       res.statusCode = 200; res.end(JSON.stringify(choices)); return;
+    }
+
+    // ── Resend asker notification email ──────────────────────────────────────
+    // Admin-only. Used to re-send the "your question has been answered" email
+    // for an existing answer (e.g. historical answers from before the
+    // notification gate was widened). Refuses if already sent so admins can't
+    // accidentally spam the asker. Sets `אימייל נשלח: true` on success.
+    if (type === 'resendNotification' && req.method === 'POST') {
+      const answerId = id;
+      if (!answerId || !RECORD_ID_RE.test(answerId)) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid answer id' })); return;
+      }
+
+      const aRes = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('תשובות')}/${answerId}`,
+        { headers: auth() },
+      );
+      if (!aRes.ok) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Answer not found' })); return;
+      }
+      const answer = await aRes.json() as { id: string; fields: Record<string, unknown> };
+      const af = answer.fields;
+
+      if (af['אימייל נשלח'] === true) {
+        res.statusCode = 409; res.end(JSON.stringify({ error: 'Email already sent' })); return;
+      }
+      const aWriterType = typeof af['סוג כותב'] === 'string' ? af['סוג כותב'] as string : '';
+      if (aWriterType !== 'רב' && aWriterType !== 'מזכירות') {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Only rabbi/secretariat answers trigger notifications' })); return;
+      }
+      if (af['ממתין לאישור'] === true) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Answer is pending approval' })); return;
+      }
+
+      const linkedQuestionIds = Array.isArray(af['שאלה']) ? (af['שאלה'] as string[]) : [];
+      const linkedQuestionId = linkedQuestionIds[0];
+      if (!linkedQuestionId || !RECORD_ID_RE.test(linkedQuestionId)) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Answer is not linked to a valid question' })); return;
+      }
+
+      const sent = await notifyAskerOfAnswer(
+        linkedQuestionId,
+        String(af['תוכן התשובה'] ?? ''),
+        typeof af['כותרת התשובה'] === 'string' ? af['כותרת התשובה'] as string : undefined,
+        aWriterType,
+      );
+      if (!sent) {
+        // Notification was suppressed (settings disabled, missing asker email, etc.)
+        res.statusCode = 422; res.end(JSON.stringify({ error: 'Notification could not be sent (check settings or asker email)' })); return;
+      }
+
+      await atUpdate('תשובות', answerId, { 'אימייל נשלח': true });
+      res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
     }
 
     // ── Answer CRUD ──────────────────────────────────────────────────────────
@@ -246,11 +300,16 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
         // Notify the asker when the rabbi or the secretariat replied (but not
         // when the asker themself sent a follow-up). Fail-soft: the admin's
-        // write succeeds even if the email send fails.
+        // write succeeds even if the email send fails. On success, mark the
+        // answer record so the admin UI can disable the resend button.
         if ((writerType === 'רב' || writerType === 'מזכירות') && RECORD_ID_RE.test(questionRecordId!)) {
-          notifyAskerOfAnswer(questionRecordId!, body.content, answerTitle, writerType).catch((err) => {
-            captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
-          });
+          notifyAskerOfAnswer(questionRecordId!, body.content, answerTitle, writerType)
+            .then((sent) => {
+              if (sent) return atUpdate('תשובות', record.id, { 'אימייל נשלח': true });
+            })
+            .catch((err) => {
+              captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
+            });
         }
 
         res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
@@ -387,6 +446,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
           writerType:       (a.fields['סוג כותב'] as string) ?? 'רב',
           date:             a.fields['תאריך'] as string | undefined,
           pendingApproval:  a.fields['ממתין לאישור'] === true,
+          emailSent:        a.fields['אימייל נשלח'] === true,
         }))
         .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 
