@@ -11,7 +11,7 @@ export const QUERY_KEYS = {
   videos: ['videos'] as const,
   events: ['events'] as const,
   shiurim: ['shiurim'] as const,
-  questions: (categoryId?: string) => ['questions', categoryId ?? ''] as const,
+  questions: (category?: string) => ['questions', category ?? ''] as const,
   alHaperek: ['alHaperek'] as const,
 };
 
@@ -89,10 +89,10 @@ export function useAlHaperek() {
   });
 }
 
-export function useQuestions(categoryId?: string) {
+export function useQuestions(category?: string) {
   return useQuery({
-    queryKey: QUERY_KEYS.questions(categoryId),
-    queryFn: () => getPublishedQuestions({ categoryId }),
+    queryKey: QUERY_KEYS.questions(category),
+    queryFn: () => getPublishedQuestions({ category }),
     ...PUBLIC_QUERY_OPTIONS,
   });
 }

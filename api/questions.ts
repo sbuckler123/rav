@@ -174,21 +174,25 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
   try {
     const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
-    const categoryId = reqUrl.searchParams.get('categoryId');
+    const categoryFilter = reqUrl.searchParams.get('category');
 
-    const [questionsData, answersData] = await Promise.all([
+    const [questionsData, answersData, categoriesData] = await Promise.all([
       airtableFetch('שאלות', {
         filterByFormula: "AND({הסכמה לפרסום}=TRUE(),{מאושר לפרסום}=TRUE(),NOT({סטטוס}='נדחה'))",
       }),
       airtableFetch('תשובות', { filterByFormula: 'NOT({שאלה}="")' }).catch(() => ({ records: [] })),
+      airtableFetch('קטגוריות', {}).catch(() => ({ records: [] })),
     ]);
 
+    // Build a rec ID → category name map so we can return human-readable
+    // category names to the client instead of leaking Airtable record IDs.
+    const categoryNameById = new Map<string, string>();
+    for (const c of categoriesData.records) {
+      const name = c.fields['שם'];
+      if (typeof name === 'string') categoryNameById.set(c.id, name);
+    }
+
     const questions = questionsData.records
-      .filter((r) => {
-        if (!categoryId) return true;
-        const linked = r.fields['קטגוריה'];
-        return Array.isArray(linked) && linked.includes(categoryId);
-      })
       .map((r) => {
         const linkedAnswerIds = Array.isArray(r.fields['תשובות'])
           ? (r.fields['תשובות'] as string[])
@@ -196,23 +200,27 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const answers = answersData.records
           .filter((a) => linkedAnswerIds.includes(a.id) && a.fields['ממתין לאישור'] !== true)
           .map((a) => ({
-            id: a.id,
             title: (a.fields['כותרת התשובה'] as string) ?? '',
             content: a.fields['תוכן התשובה'] ?? '',
             writerType: a.fields['סוג כותב'] ?? 'רב',
             date: a.fields['תאריך'],
           }));
 
+        const linkedCategoryId = Array.isArray(r.fields['קטגוריה'])
+          ? (r.fields['קטגוריה'] as string[])[0]
+          : undefined;
+        const category = linkedCategoryId ? categoryNameById.get(linkedCategoryId) : undefined;
+
         return {
-          id: r.id,
           referenceId: r.fields['מזהה שאלה'] != null ? String(r.fields['מזהה שאלה']) : undefined,
           questionContent: r.fields['תוכן השאלה'] ?? '',
-          category: Array.isArray(r.fields['קטגוריה']) ? r.fields['קטגוריה'][0] : undefined,
+          category,
           createdAt: r.fields['תאריך'],
           followUpBlocked: r.fields['חסום שאלות המשך'] === true,
           answers,
         };
-      });
+      })
+      .filter((q) => !categoryFilter || q.category === categoryFilter);
 
     res.statusCode = 200;
     res.end(JSON.stringify({ questions }));

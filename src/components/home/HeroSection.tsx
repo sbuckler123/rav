@@ -68,7 +68,7 @@ export default function HeroSection() {
   const videoHref = video?.linkId ? `/shiurei-torah/${video.linkId}` : '/shiurei-torah';
   const articleHref = article?.linkId ? `/hagut-upsika/${article.linkId}` : '/hagut-upsika';
   const idkunHref = idkun?.linkId ? `/idkunim/${idkun.linkId}` : '/idkunim';
-  const qaHref = latestQA?.id ? `/shut#q-${latestQA.id}` : '/shut';
+  const qaHref = latestQA?.referenceId ? `/shut#q-${latestQA.referenceId}` : '/shut';
 
   return (
     <section className="relative bg-gradient-to-br from-primary via-primary to-[#0f1e38] overflow-hidden">

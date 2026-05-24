@@ -21,11 +21,27 @@ import { fetchSettings } from './_settings';
 import { sendFollowUpEmail, sendAnswerToAskerEmail } from './_email';
 
 const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
+const REFERENCE_ID_RE = /^\d{1,10}$/;
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 const PUBLIC_REPLY_MAX_LEN = 5_000;
+
+/**
+ * Resolves a public `referenceId` (the numeric "מזהה שאלה" autonumber) to the
+ * internal Airtable record ID. Returns null if no matching question exists.
+ * Used by the public follow-up flow so rec IDs never leave the server.
+ */
+async function recordIdForReference(referenceId: string): Promise<string | null> {
+  const url = new URL(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}`);
+  url.searchParams.set('filterByFormula', `{מזהה שאלה}=${referenceId}`);
+  url.searchParams.set('maxRecords', '1');
+  const res = await fetch(url.toString(), { headers: auth() });
+  if (!res.ok) return null;
+  const data = await res.json() as { records: { id: string }[] };
+  return data.records[0]?.id ?? null;
+}
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
 
@@ -108,11 +124,15 @@ async function notifyAskerOfAnswer(
   const isPubliclyVisible =
     f['הסכמה לפרסום']  === true &&
     f['מאושר לפרסום'] === true;
-  const publicUrl   = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : undefined;
+  // Use the public-facing referenceId (numeric "מזהה שאלה") for deep links so
+  // the URL doesn't leak Airtable rec IDs. The DOM anchor on the public Q&A
+  // page is keyed on the same value.
+  const referenceId = f['מזהה שאלה'] != null ? String(f['מזהה שאלה']) : '';
+  const publicUrl   = isPubliclyVisible && referenceId ? `${baseUrl}/shut#q-${referenceId}` : undefined;
   // Always provide a follow-up URL. For published questions it points to the
   // public Q&A page (which has the follow-up form). Otherwise it points to
   // the new-question form on the askPage.
-  const followUpUrl = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : `${baseUrl}/shaal-et-harav`;
+  const followUpUrl = isPubliclyVisible && referenceId ? `${baseUrl}/shut#q-${referenceId}` : `${baseUrl}/shaal-et-harav`;
 
   // Reply-To is intentionally NOT set. The From address is no-reply, so
   // replies will bounce; the footer directs the asker to follow up via the
@@ -126,7 +146,7 @@ async function notifyAskerOfAnswer(
     questionContent: String(f['תוכן השאלה'] ?? ''),
     answerTitle,
     answerContent,
-    referenceId:     String(f['מזהה שאלה'] ?? ''),
+    referenceId,
     publicUrl,
     followUpUrl,
     isPubliclyVisible,
@@ -224,23 +244,30 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
 
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-        questionId: string; content: string; turnstileToken?: string;
+        referenceId?: string; content: string; turnstileToken?: string;
       };
 
       // Bot protection (no-op until TURNSTILE_SECRET_KEY is configured)
       if (!(await requireTurnstile(req, res, body.turnstileToken))) return;
-      if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+      if (!body.referenceId || typeof body.content !== 'string' || !body.content.trim()) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
       }
-      if (!RECORD_ID_RE.test(body.questionId)) {
+      if (!REFERENCE_ID_RE.test(body.referenceId)) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid question id' })); return;
+      }
+
+      // Resolve the public referenceId to the internal rec ID. Returning the
+      // same 404 as a missing question avoids leaking whether the ID exists.
+      const questionRecordId = await recordIdForReference(body.referenceId);
+      if (!questionRecordId) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
       }
 
       const content = body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
 
       // Fetch the question to enrich the email and verify it's publicly visible.
       const qRes = await fetch(
-        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${body.questionId}`,
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${questionRecordId}`,
         { headers: auth() },
       );
       if (!qRes.ok) {
@@ -264,14 +291,14 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
       // Persist the follow-up as a pending answer record (hidden from public).
       await atCreate('תשובות', {
-        'שאלה':          [body.questionId],
+        'שאלה':          [questionRecordId],
         'תוכן התשובה':   content,
         'סוג כותב':      'השואל',
         'תאריך':         new Date().toISOString(),
         'ממתין לאישור': true,
       });
       // Flip question status back to 'ממתין' so the admin sees it needs attention.
-      await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+      await atUpdate('שאלות', questionRecordId, { 'סטטוס': 'ממתין' });
 
       // Notify the rabbi by email (fail-soft — the record is already saved).
       const settings = await fetchSettings();
