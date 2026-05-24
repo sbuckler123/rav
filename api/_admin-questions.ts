@@ -208,17 +208,32 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
       if (isAdmin) {
         const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-          questionId: string; content: string; writerType?: string; title?: string;
+          questionId?: string; referenceId?: string; content: string; writerType?: string; title?: string;
         };
-        if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+        if (typeof body.content !== 'string' || !body.content.trim() || (!body.questionId && !body.referenceId)) {
           res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
+        }
+
+        // Admin clients pass questionId (rec ID) directly. The public Q&A page
+        // sends referenceId only — happens when an admin is signed in and uses
+        // the public follow-up form — so resolve it server-side.
+        let questionRecordId = body.questionId;
+        if (!questionRecordId && body.referenceId) {
+          if (!REFERENCE_ID_RE.test(body.referenceId)) {
+            res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid question id' })); return;
+          }
+          const resolved = await recordIdForReference(body.referenceId);
+          if (!resolved) {
+            res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
+          }
+          questionRecordId = resolved;
         }
 
         const writerType = body.writerType ?? 'רב';
         const answerTitle = body.title?.trim();
 
         const fields: Record<string, unknown> = {
-          'שאלה':          [body.questionId],
+          'שאלה':          [questionRecordId],
           'תוכן התשובה':   body.content,
           'סוג כותב':      writerType,
           'תאריך':         new Date().toISOString(),
@@ -227,13 +242,13 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
         const record = await atCreate('תשובות', fields);
         // Reset status to ממתין so admin notices the new reply
-        await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+        await atUpdate('שאלות', questionRecordId!, { 'סטטוס': 'ממתין' });
 
         // Notify the asker when the rabbi or the secretariat replied (but not
         // when the asker themself sent a follow-up). Fail-soft: the admin's
         // write succeeds even if the email send fails.
-        if ((writerType === 'רב' || writerType === 'מזכירות') && RECORD_ID_RE.test(body.questionId)) {
-          notifyAskerOfAnswer(body.questionId, body.content, answerTitle, writerType).catch((err) => {
+        if ((writerType === 'רב' || writerType === 'מזכירות') && RECORD_ID_RE.test(questionRecordId!)) {
+          notifyAskerOfAnswer(questionRecordId!, body.content, answerTitle, writerType).catch((err) => {
             captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
           });
         }
