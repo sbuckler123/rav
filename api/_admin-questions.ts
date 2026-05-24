@@ -104,6 +104,7 @@ async function notifyAskerOfAnswer(
   questionId: string,
   answerContent: string,
   answerTitle: string | undefined,
+  writerType: string,
 ): Promise<void> {
   const settings = await fetchSettings();
   if (!settings.notifyAskerOnReply) return;
@@ -147,6 +148,7 @@ async function notifyAskerOfAnswer(
     answerTitle,
     answerContent,
     referenceId,
+    writerType,
     publicUrl,
     followUpUrl,
     isPubliclyVisible,
@@ -227,10 +229,11 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
         // Reset status to ממתין so admin notices the new reply
         await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
 
-        // Notify the asker only when the rabbi (not a moderator) replied.
-        // Fail-soft: the admin's write succeeds even if the email send fails.
-        if (writerType === 'רב' && RECORD_ID_RE.test(body.questionId)) {
-          notifyAskerOfAnswer(body.questionId, body.content, answerTitle).catch((err) => {
+        // Notify the asker when the rabbi or the secretariat replied (but not
+        // when the asker themself sent a follow-up). Fail-soft: the admin's
+        // write succeeds even if the email send fails.
+        if ((writerType === 'רב' || writerType === 'מזכירות') && RECORD_ID_RE.test(body.questionId)) {
+          notifyAskerOfAnswer(body.questionId, body.content, answerTitle, writerType).catch((err) => {
             captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
           });
         }

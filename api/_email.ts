@@ -52,6 +52,8 @@ export interface AnswerToAskerEmailOpts {
   answerTitle?:      string;
   answerContent:     string;
   referenceId?:      string;
+  /** Who authored the answer — affects subject and body wording. 'רב' or 'מזכירות'. */
+  writerType:        string;
   /** "View on site" button — set only when the question is publicly visible. */
   publicUrl?:        string;
   /** Always set. Points to the right follow-up form: public Q&A page when the question is published, askPage otherwise. */
@@ -81,14 +83,16 @@ export async function sendQuestionReceivedEmail(opts: QuestionReceivedEmailOpts)
 }
 
 export async function sendAnswerToAskerEmail(opts: AnswerToAskerEmailOpts): Promise<void> {
-  const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible } = opts;
+  const { toEmail, fromEmail, bccEmail, replyToEmail, askerName, questionContent, answerTitle, answerContent, referenceId, writerType, publicUrl, followUpUrl, isPubliclyVisible } = opts;
+  const isSecretariat = writerType === 'מזכירות';
+  const subjectAttribution = isSecretariat ? 'ממזכירות לשכת הרב הראשי' : 'מאת הרב קלמן מאיר בר';
   await resend.emails.send({
     from:    fromEmail,
     to:      [toEmail],
     bcc:     bccEmail ? [bccEmail] : undefined,
     replyTo: replyToEmail || undefined,
-    subject: `תשובה לשאלתך מאת הרב קלמן מאיר בר${referenceId ? ` — #${referenceId}` : ''}`,
-    html:    buildAnswerToAskerHtml({ askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible }),
+    subject: `תשובה לשאלתך ${subjectAttribution}${referenceId ? ` — #${referenceId}` : ''}`,
+    html:    buildAnswerToAskerHtml({ askerName, questionContent, answerTitle, answerContent, referenceId, writerType, publicUrl, followUpUrl, isPubliclyVisible }),
   });
 }
 
@@ -304,11 +308,17 @@ function buildAnswerToAskerHtml(opts: {
   answerTitle?:      string;
   answerContent:     string;
   referenceId?:      string;
+  writerType:        string;
   publicUrl?:        string;
   followUpUrl:       string;
   isPubliclyVisible: boolean;
 }): string {
-  const { askerName, questionContent, answerTitle, answerContent, referenceId, publicUrl, followUpUrl, isPubliclyVisible } = opts;
+  const { askerName, questionContent, answerTitle, answerContent, referenceId, writerType, publicUrl, followUpUrl, isPubliclyVisible } = opts;
+  const isSecretariat = writerType === 'מזכירות';
+  const introLine = isSecretariat
+    ? 'התקבל מענה ממזכירות לשכת הרב הראשי לשאלה ששלחת:'
+    : 'הרב קלמן מאיר בר השיב לשאלה ששלחת:';
+  const answerLabel = isSecretariat ? 'מענה המזכירות:' : 'תשובת הרב:';
   const followUpLabel = isPubliclyVisible ? 'שלח שאלת המשך באתר ←' : 'פתח טופס שאלה חדשה ←';
   const followUpIntro = isPubliclyVisible
     ? 'לשליחת שאלת המשך, יש להשתמש בטופס שמתחת לשאלה באתר:'
@@ -348,12 +358,12 @@ function buildAnswerToAskerHtml(opts: {
           <tr>
             <td class="email-pad" dir="rtl" style="padding:32px;text-align:right;">
               ${referenceId ? `<p style="color:#6B7280;font-size:13px;margin:0 0 16px;">מזהה שאלה: <strong>#${escapeHtml(referenceId)}</strong></p>` : ''}
-              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">שלום ${greetingName},<br/>הרב קלמן מאיר בר השיב לשאלה ששלחת:</p>
+              <p style="margin:0 0 18px;font-size:15px;line-height:1.7;">שלום ${greetingName},<br/>${introLine}</p>
 
               <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">השאלה שלך:</p>
               <div style="background:#F9FAFB;border-right:3px solid #9CA3AF;padding:14px 16px;border-radius:0 6px 6px 0;line-height:1.7;font-size:14px;white-space:pre-wrap;word-wrap:break-word;color:#4B5563;">${escapeHtml(questionContent)}</div>
 
-              <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">תשובת הרב:</p>
+              <p style="font-weight:bold;margin:24px 0 8px;font-size:14px;color:#6B7280;">${answerLabel}</p>
               <div style="background:#FAF7EF;border-right:3px solid #C9A84C;padding:16px;border-radius:0 6px 6px 0;line-height:1.8;font-size:15px;white-space:pre-wrap;word-wrap:break-word;">
                 ${answerTitle?.trim() ? `<p style="font-weight:bold;color:#1B2A4A;margin:0 0 10px;font-size:15px;">${escapeHtml(answerTitle.trim())}</p>` : ''}
                 ${escapeHtml(answerContent)}
