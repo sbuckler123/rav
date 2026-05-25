@@ -183,7 +183,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.statusCode = 200;
       res.end(JSON.stringify({
         success: true,
-        id: record.id,
         referenceId: referenceId,
       }));
     } catch (err) {

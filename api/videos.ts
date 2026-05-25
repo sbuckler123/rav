@@ -69,26 +69,30 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       getCategoryMap(),
     ]);
 
-    const shiurim = videosData.records.map((r) => {
-      const f = r.fields;
-      const dateRaw = (f['תאריך'] as string) ?? '';
-      const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
-      return {
-        linkId: extractField(f['מזהה קישור']) ?? r.id,
-        title: f['כותרת'] ?? '',
-        date: formatDate(dateRaw),
-        dateRaw,
-        duration: f['משך'] ?? '',
-        description: extractField(f['תיאור']) ?? '',
-        category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
-        videoType: f['סוג סרטון'] ?? '',
-        youtubeId: ((f['מזהה יוטיוב'] as string) ?? '').split('&')[0].split('?')[0].trim(),
-        videoUrl: f['קישור סרטון'] ?? '',
-        thumbnail: f['תמונה ממוזערת'] ?? '',
-        views: f['צפיות'] ?? 0,
-        isNew: f['חדש'] ?? false,
-      };
-    });
+    const shiurim = videosData.records
+      .map((r) => {
+        const f = r.fields;
+        const linkId = extractField(f['מזהה קישור']);
+        if (!linkId) return null;
+        const dateRaw = (f['תאריך'] as string) ?? '';
+        const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
+        return {
+          linkId,
+          title: f['כותרת'] ?? '',
+          date: formatDate(dateRaw),
+          dateRaw,
+          duration: f['משך'] ?? '',
+          description: extractField(f['תיאור']) ?? '',
+          category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
+          videoType: f['סוג סרטון'] ?? '',
+          youtubeId: ((f['מזהה יוטיוב'] as string) ?? '').split('&')[0].split('?')[0].trim(),
+          videoUrl: f['קישור סרטון'] ?? '',
+          thumbnail: f['תמונה ממוזערת'] ?? '',
+          views: f['צפיות'] ?? 0,
+          isNew: f['חדש'] ?? false,
+        };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
 
     res.statusCode = 200;
     res.end(JSON.stringify(shiurim));

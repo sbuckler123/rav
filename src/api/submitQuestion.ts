@@ -7,7 +7,7 @@ export async function submitQuestion(input: {
   allowPublic: boolean;
   consent: boolean;
   turnstileToken?: string | null;
-}): Promise<{ success: boolean; id?: string; referenceId?: string }> {
+}): Promise<{ success: boolean; referenceId?: string }> {
   const res = await fetch('/api/questions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

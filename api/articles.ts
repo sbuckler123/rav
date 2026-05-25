@@ -59,27 +59,31 @@ function toArticleList(
   articlesData: { records: { id: string; fields: Record<string, unknown> }[] },
   catMap: Record<string, string>,
 ) {
-  return articlesData.records.map((r) => {
-    const f = r.fields;
-    const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
-    const categoryName = catIds.length ? (catMap[catIds[0]] ?? '') : '';
-    return {
-      linkId: extractField(f['מזהה קישור']) ?? r.id,
-      title: f['כותרת'] ?? '',
-      journal: f['כתב עת'] ?? '',
-      yeshiva: f['מוסד'] ?? '',
-      year: extractField(Array.isArray(f['שנה עברית']) ? (f['שנה עברית'] as unknown[])[0] : f['שנה עברית']) ?? '',
-      yearNum: f['שנה לועזית'] ?? 0,
-      publishDate: typeof f['תאריך פרסום'] === 'string' ? f['תאריך פרסום'] : undefined,
-      categories: categoryName ? [categoryName] : [],
-      tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
-      readTime: extractField(f['זמן קריאה']),
-      abstract: extractField(f['תקציר']),
-      pdfUrl: extractField(f['קישור PDF']),
-      keyPoints: extractField(f['נקודות מפתח']),
-      sources: extractField(f['מקורות']),
-    };
-  });
+  return articlesData.records
+    .map((r) => {
+      const f = r.fields;
+      const linkId = extractField(f['מזהה קישור']);
+      if (!linkId) return null;
+      const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
+      const categoryName = catIds.length ? (catMap[catIds[0]] ?? '') : '';
+      return {
+        linkId,
+        title: f['כותרת'] ?? '',
+        journal: f['כתב עת'] ?? '',
+        yeshiva: f['מוסד'] ?? '',
+        year: extractField(Array.isArray(f['שנה עברית']) ? (f['שנה עברית'] as unknown[])[0] : f['שנה עברית']) ?? '',
+        yearNum: f['שנה לועזית'] ?? 0,
+        publishDate: typeof f['תאריך פרסום'] === 'string' ? f['תאריך פרסום'] : undefined,
+        categories: categoryName ? [categoryName] : [],
+        tags: Array.isArray(f['תגיות']) ? f['תגיות'] : [],
+        readTime: extractField(f['זמן קריאה']),
+        abstract: extractField(f['תקציר']),
+        pdfUrl: extractField(f['קישור PDF']),
+        keyPoints: extractField(f['נקודות מפתח']),
+        sources: extractField(f['מקורות']),
+      };
+    })
+    .filter((a): a is NonNullable<typeof a> => a !== null);
 }
 
 function toArticleDetail(record: { id: string; fields: Record<string, unknown> }, linkId: string) {
