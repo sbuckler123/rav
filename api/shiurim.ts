@@ -65,21 +65,25 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       getCategoryMap(),
     ]);
 
-    const shiurim = shiurimData.records.map((r) => {
-      const f = r.fields;
-      const dateRaw = (f['תאריך'] as string) ?? '';
-      const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
-      return {
-        linkId: extractField(f['מזהה קישור']) ?? r.id,
-        title: extractField(f['כותרת']) ?? extractField(f['שם']) ?? '',
-        date: formatDate(dateRaw),
-        dateRaw,
-        time: extractField(f['שעה']) ?? extractField(f['זמן']) ?? '',
-        location: extractField(f['מיקום']) ?? '',
-        description: extractField(f['תיאור']) ?? '',
-        category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
-      };
-    });
+    const shiurim = shiurimData.records
+      .map((r) => {
+        const f = r.fields;
+        const linkId = extractField(f['מזהה קישור']);
+        if (!linkId) return null;
+        const dateRaw = (f['תאריך'] as string) ?? '';
+        const catIds = Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[]) : [];
+        return {
+          linkId,
+          title: extractField(f['כותרת']) ?? extractField(f['שם']) ?? '',
+          date: formatDate(dateRaw),
+          dateRaw,
+          time: extractField(f['שעה']) ?? extractField(f['זמן']) ?? '',
+          location: extractField(f['מיקום']) ?? '',
+          description: extractField(f['תיאור']) ?? '',
+          category: catIds.length ? (catMap[catIds[0]] ?? '') : '',
+        };
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null);
 
     res.statusCode = 200;
     res.end(JSON.stringify(shiurim));

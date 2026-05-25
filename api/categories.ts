@@ -147,7 +147,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       { filterByFormula: filter },
       [{ field: 'שם', direction: 'asc' }],
     );
-    const categories = data.records.map((r) => ({ id: r.id, name: (r.fields['שם'] as string) ?? '' }));
+    // Public response intentionally omits Airtable record IDs — clients
+    // identify categories by name instead. Admin callers use ?admin=true above.
+    const categories = data.records.map((r) => ({ name: (r.fields['שם'] as string) ?? '' }));
     res.statusCode = 200;
     res.end(JSON.stringify(categories));
   } catch (err) {

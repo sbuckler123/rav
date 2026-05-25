@@ -10,7 +10,7 @@ import { PAGE_DESC } from '@/config/nav';
 type GetPublishedQuestionsOutputType = Awaited<ReturnType<typeof getPublishedQuestions>>;
 
 export default function QAPage() {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ name: string }[]>([]);
   const [questions, setQuestions] = useState<GetPublishedQuestionsOutputType['questions']>([]);
   const [loading, setLoading] = useState(true);
 

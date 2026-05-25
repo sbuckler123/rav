@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessageCircleQuestion, Search, Clock, CheckCircle2, XCircle, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import { getAllQuestions, createQuestion, submitReply, getWriterTypeChoices, type AdminQuestion } from '@/api/adminQuestionsApi';
-import { getCategories } from '@/api/getCategories';
+import { fetchCategories } from '@/api/categoriesApi';
 import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ export default function QuestionsPage() {
   });
   const categoriesQuery = useQuery({
     queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שאלות'),
-    queryFn: async () => (await getCategories()).categories,
+    queryFn: () => fetchCategories('שאלות'),
     ...ADMIN_QUERY_OPTIONS,
   });
   const writerTypesQuery = useQuery<string[]>({

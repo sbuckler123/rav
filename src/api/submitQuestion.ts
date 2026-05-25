@@ -1,20 +1,20 @@
 export async function submitQuestion(input: {
   name: string;
   email: string;
-  categoryId?: string;
+  category?: string;
   topic?: string;
   question: string;
   allowPublic: boolean;
   consent: boolean;
   turnstileToken?: string | null;
-}): Promise<{ success: boolean; id?: string; referenceId?: string }> {
+}): Promise<{ success: boolean; referenceId?: string }> {
   const res = await fetch('/api/questions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name:           input.name,
       email:          input.email,
-      categoryId:     input.categoryId,
+      category:       input.category,
       question:       input.question,
       allowPublic:    input.allowPublic,
       consent:        input.consent,

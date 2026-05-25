@@ -18,14 +18,30 @@ import { enforceOrigin, enforceRateLimit } from './_security';
 import { requireTurnstile } from './_turnstile';
 import { captureServerError } from './_sentry';
 import { fetchSettings } from './_settings';
-import { sendFollowUpEmail, sendAnswerToAskerEmail } from './_email';
+import { sendFollowUpEmail, sendFollowUpReceivedEmail, sendAnswerToAskerEmail } from './_email';
 
 const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/;
+const REFERENCE_ID_RE = /^\d{1,10}$/;
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 const PUBLIC_REPLY_MAX_LEN = 5_000;
+
+/**
+ * Resolves a public `referenceId` (the numeric "מזהה שאלה" autonumber) to the
+ * internal Airtable record ID. Returns null if no matching question exists.
+ * Used by the public follow-up flow so rec IDs never leave the server.
+ */
+async function recordIdForReference(referenceId: string): Promise<string | null> {
+  const url = new URL(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}`);
+  url.searchParams.set('filterByFormula', `{מזהה שאלה}=${referenceId}`);
+  url.searchParams.set('maxRecords', '1');
+  const res = await fetch(url.toString(), { headers: auth() });
+  if (!res.ok) return null;
+  const data = await res.json() as { records: { id: string }[] };
+  return data.records[0]?.id ?? null;
+}
 
 const auth = () => ({ Authorization: `Bearer ${PAT}` });
 
@@ -88,31 +104,36 @@ async function notifyAskerOfAnswer(
   questionId: string,
   answerContent: string,
   answerTitle: string | undefined,
-): Promise<void> {
+  writerType: string,
+): Promise<boolean> {
   const settings = await fetchSettings();
-  if (!settings.notifyAskerOnReply) return;
-  if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) return;
+  if (!settings.notifyAskerOnReply) return false;
+  if (!settings.notifyEnabled || !settings.notifyEmail || !settings.notifyFromEmail) return false;
 
   const qRes = await fetch(
     `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${questionId}`,
     { headers: auth() },
   );
-  if (!qRes.ok) return;
+  if (!qRes.ok) return false;
   const question = await qRes.json() as { id: string; fields: Record<string, unknown> };
   const f = question.fields;
 
   const askerEmail = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
-  if (!askerEmail) return; // older / admin-created questions may not have an email
+  if (!askerEmail) return false; // older / admin-created questions may not have an email
 
   const baseUrl = settings.publicBaseUrl.replace(/\/$/, '');
   const isPubliclyVisible =
     f['הסכמה לפרסום']  === true &&
     f['מאושר לפרסום'] === true;
-  const publicUrl   = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : undefined;
+  // Use the public-facing referenceId (numeric "מזהה שאלה") for deep links so
+  // the URL doesn't leak Airtable rec IDs. The DOM anchor on the public Q&A
+  // page is keyed on the same value.
+  const referenceId = f['מזהה שאלה'] != null ? String(f['מזהה שאלה']) : '';
+  const publicUrl   = isPubliclyVisible && referenceId ? `${baseUrl}/shut#q-${referenceId}` : undefined;
   // Always provide a follow-up URL. For published questions it points to the
   // public Q&A page (which has the follow-up form). Otherwise it points to
   // the new-question form on the askPage.
-  const followUpUrl = isPubliclyVisible ? `${baseUrl}/shut#q-${questionId}` : `${baseUrl}/shaal-et-harav`;
+  const followUpUrl = isPubliclyVisible && referenceId ? `${baseUrl}/shut#q-${referenceId}` : `${baseUrl}/shaal-et-harav`;
 
   // Reply-To is intentionally NOT set. The From address is no-reply, so
   // replies will bounce; the footer directs the asker to follow up via the
@@ -126,11 +147,13 @@ async function notifyAskerOfAnswer(
     questionContent: String(f['תוכן השאלה'] ?? ''),
     answerTitle,
     answerContent,
-    referenceId:     String(f['מזהה שאלה'] ?? ''),
+    referenceId,
+    writerType,
     publicUrl,
     followUpUrl,
     isPubliclyVisible,
   });
+  return true;
 }
 
 export async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -146,6 +169,59 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
     if (type === 'fieldChoices') {
       const choices = await getFieldChoices('תשובות', 'סוג כותב');
       res.statusCode = 200; res.end(JSON.stringify(choices)); return;
+    }
+
+    // ── Resend asker notification email ──────────────────────────────────────
+    // Admin-only. Used to re-send the "your question has been answered" email
+    // for an existing answer (e.g. historical answers from before the
+    // notification gate was widened). Refuses if already sent so admins can't
+    // accidentally spam the asker. Sets `אימייל נשלח: true` on success.
+    if (type === 'resendNotification' && req.method === 'POST') {
+      const answerId = id;
+      if (!answerId || !RECORD_ID_RE.test(answerId)) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid answer id' })); return;
+      }
+
+      const aRes = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('תשובות')}/${answerId}`,
+        { headers: auth() },
+      );
+      if (!aRes.ok) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Answer not found' })); return;
+      }
+      const answer = await aRes.json() as { id: string; fields: Record<string, unknown> };
+      const af = answer.fields;
+
+      if (af['אימייל נשלח'] === true) {
+        res.statusCode = 409; res.end(JSON.stringify({ error: 'Email already sent' })); return;
+      }
+      const aWriterType = typeof af['סוג כותב'] === 'string' ? af['סוג כותב'] as string : '';
+      if (aWriterType !== 'רב' && aWriterType !== 'מזכירות') {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Only rabbi/secretariat answers trigger notifications' })); return;
+      }
+      if (af['ממתין לאישור'] === true) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Answer is pending approval' })); return;
+      }
+
+      const linkedQuestionIds = Array.isArray(af['שאלה']) ? (af['שאלה'] as string[]) : [];
+      const linkedQuestionId = linkedQuestionIds[0];
+      if (!linkedQuestionId || !RECORD_ID_RE.test(linkedQuestionId)) {
+        res.statusCode = 400; res.end(JSON.stringify({ error: 'Answer is not linked to a valid question' })); return;
+      }
+
+      const sent = await notifyAskerOfAnswer(
+        linkedQuestionId,
+        String(af['תוכן התשובה'] ?? ''),
+        typeof af['כותרת התשובה'] === 'string' ? af['כותרת התשובה'] as string : undefined,
+        aWriterType,
+      );
+      if (!sent) {
+        // Notification was suppressed (settings disabled, missing asker email, etc.)
+        res.statusCode = 422; res.end(JSON.stringify({ error: 'Notification could not be sent (check settings or asker email)' })); return;
+      }
+
+      await atUpdate('תשובות', answerId, { 'אימייל נשלח': true });
+      res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
     }
 
     // ── Answer CRUD ──────────────────────────────────────────────────────────
@@ -186,17 +262,32 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
       if (isAdmin) {
         const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-          questionId: string; content: string; writerType?: string; title?: string;
+          questionId?: string; referenceId?: string; content: string; writerType?: string; title?: string;
         };
-        if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+        if (typeof body.content !== 'string' || !body.content.trim() || (!body.questionId && !body.referenceId)) {
           res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
+        }
+
+        // Admin clients pass questionId (rec ID) directly. The public Q&A page
+        // sends referenceId only — happens when an admin is signed in and uses
+        // the public follow-up form — so resolve it server-side.
+        let questionRecordId = body.questionId;
+        if (!questionRecordId && body.referenceId) {
+          if (!REFERENCE_ID_RE.test(body.referenceId)) {
+            res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid question id' })); return;
+          }
+          const resolved = await recordIdForReference(body.referenceId);
+          if (!resolved) {
+            res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
+          }
+          questionRecordId = resolved;
         }
 
         const writerType = body.writerType ?? 'רב';
         const answerTitle = body.title?.trim();
 
         const fields: Record<string, unknown> = {
-          'שאלה':          [body.questionId],
+          'שאלה':          [questionRecordId],
           'תוכן התשובה':   body.content,
           'סוג כותב':      writerType,
           'תאריך':         new Date().toISOString(),
@@ -205,14 +296,20 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
         const record = await atCreate('תשובות', fields);
         // Reset status to ממתין so admin notices the new reply
-        await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+        await atUpdate('שאלות', questionRecordId!, { 'סטטוס': 'ממתין' });
 
-        // Notify the asker only when the rabbi (not a moderator) replied.
-        // Fail-soft: the admin's write succeeds even if the email send fails.
-        if (writerType === 'רב' && RECORD_ID_RE.test(body.questionId)) {
-          notifyAskerOfAnswer(body.questionId, body.content, answerTitle).catch((err) => {
-            captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
-          });
+        // Notify the asker when the rabbi or the secretariat replied (but not
+        // when the asker themself sent a follow-up). Fail-soft: the admin's
+        // write succeeds even if the email send fails. On success, mark the
+        // answer record so the admin UI can disable the resend button.
+        if ((writerType === 'רב' || writerType === 'מזכירות') && RECORD_ID_RE.test(questionRecordId!)) {
+          notifyAskerOfAnswer(questionRecordId!, body.content, answerTitle, writerType)
+            .then((sent) => {
+              if (sent) return atUpdate('תשובות', record.id, { 'אימייל נשלח': true });
+            })
+            .catch((err) => {
+              captureServerError(err, { handler: 'admin-questions', method: 'notify-asker' });
+            });
         }
 
         res.statusCode = 200; res.end(JSON.stringify({ success: true, id: record.id })); return;
@@ -224,23 +321,30 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
       if (!enforceRateLimit(req, res, 'questions:reply', 5, 60_000)) return;
 
       const body = JSON.parse(await readBody(req, BODY_LIMITS.MEDIUM)) as {
-        questionId: string; content: string; turnstileToken?: string;
+        referenceId?: string; content: string; turnstileToken?: string;
       };
 
       // Bot protection (no-op until TURNSTILE_SECRET_KEY is configured)
       if (!(await requireTurnstile(req, res, body.turnstileToken))) return;
-      if (!body.questionId || typeof body.content !== 'string' || !body.content.trim()) {
+      if (!body.referenceId || typeof body.content !== 'string' || !body.content.trim()) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Missing fields' })); return;
       }
-      if (!RECORD_ID_RE.test(body.questionId)) {
+      if (!REFERENCE_ID_RE.test(body.referenceId)) {
         res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid question id' })); return;
+      }
+
+      // Resolve the public referenceId to the internal rec ID. Returning the
+      // same 404 as a missing question avoids leaking whether the ID exists.
+      const questionRecordId = await recordIdForReference(body.referenceId);
+      if (!questionRecordId) {
+        res.statusCode = 404; res.end(JSON.stringify({ error: 'Question not found' })); return;
       }
 
       const content = body.content.slice(0, PUBLIC_REPLY_MAX_LEN);
 
       // Fetch the question to enrich the email and verify it's publicly visible.
       const qRes = await fetch(
-        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${body.questionId}`,
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('שאלות')}/${questionRecordId}`,
         { headers: auth() },
       );
       if (!qRes.ok) {
@@ -264,29 +368,55 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
 
       // Persist the follow-up as a pending answer record (hidden from public).
       await atCreate('תשובות', {
-        'שאלה':          [body.questionId],
+        'שאלה':          [questionRecordId],
         'תוכן התשובה':   content,
         'סוג כותב':      'השואל',
         'תאריך':         new Date().toISOString(),
         'ממתין לאישור': true,
       });
       // Flip question status back to 'ממתין' so the admin sees it needs attention.
-      await atUpdate('שאלות', body.questionId, { 'סטטוס': 'ממתין' });
+      await atUpdate('שאלות', questionRecordId, { 'סטטוס': 'ממתין' });
 
-      // Notify the rabbi by email (fail-soft — the record is already saved).
+      // Emails are fail-soft — the answer record is already saved.
       const settings = await fetchSettings();
       if (settings.notifyEnabled && settings.notifyEmail && settings.notifyFromEmail) {
+        const askerName       = String(f['שם השואל'] ?? '');
+        const askerEmail      = typeof f['אימייל השואל'] === 'string' ? f['אימייל השואל'] : '';
+        const questionContent = String(f['תוכן השאלה'] ?? '');
+        const referenceId     = f['מזהה שאלה'] != null ? String(f['מזהה שאלה']) : '';
+
+        // 1) Rabbi notification — primary "you have a new follow-up to handle" alert.
         await sendFollowUpEmail({
           toEmail:         settings.notifyEmail,
           fromEmail:       settings.notifyFromEmail,
-          askerName:       String(f['שם השואל'] ?? ''),
-          askerEmail:      String(f['אימייל השואל'] ?? ''),
-          questionContent: String(f['תוכן השאלה'] ?? ''),
+          askerName,
+          askerEmail,
+          questionContent,
           followUpContent: content,
-          referenceId:     String(f['מזהה שאלה'] ?? ''),
+          referenceId,
         }).catch((err) => {
           captureServerError(err, { handler: 'admin-questions', method: 'follow-up-email' });
         });
+
+        // 2) Confirmation to the asker — mirrors the confirmation flow on
+        //    initial question submission. The rabbi already received the
+        //    dedicated notification above, so no BCC here. Gated on the asker
+        //    having a contact email and on the existing notifyAskerOnSubmit
+        //    setting (same intent: confirm receipt of something the asker
+        //    just submitted).
+        if (askerEmail && settings.notifyAskerOnSubmit) {
+          await sendFollowUpReceivedEmail({
+            toEmail:         askerEmail,
+            fromEmail:       settings.notifyFromEmail,
+            askerName,
+            questionContent,
+            followUpContent: content,
+            referenceId,
+            publicBaseUrl:   settings.publicBaseUrl,
+          }).catch((err) => {
+            captureServerError(err, { handler: 'admin-questions', method: 'follow-up-asker-confirmation' });
+          });
+        }
       }
 
       res.statusCode = 200; res.end(JSON.stringify({ success: true })); return;
@@ -342,6 +472,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse) {
           writerType:       (a.fields['סוג כותב'] as string) ?? 'רב',
           date:             a.fields['תאריך'] as string | undefined,
           pendingApproval:  a.fields['ממתין לאישור'] === true,
+          emailSent:        a.fields['אימייל נשלח'] === true,
         }))
         .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 

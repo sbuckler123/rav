@@ -9,7 +9,6 @@ export interface AlHaperekItem {
   title: string;
   summary?: string;
   coverImage?: string;
-  categoryId?: string;
   tags: string[];
   date?: string;
   blocks: ContentBlock[];

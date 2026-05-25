@@ -8,6 +8,7 @@ export interface AdminAnswer {
   writerType: string;
   date?: string;
   pendingApproval?: boolean;
+  emailSent?: boolean;
 }
 
 export interface AdminQuestion {
@@ -103,6 +104,12 @@ export async function approveAnswer(answerId: string) {
 
 export async function deleteAnswer(answerId: string) {
   return apiFetch(`/api/admin?section=questions&type=answer&id=${answerId}`, { method: 'DELETE' });
+}
+
+export async function resendAskerNotification(answerId: string) {
+  return apiFetch(`/api/admin?section=questions&type=resendNotification&id=${encodeURIComponent(answerId)}`, {
+    method: 'POST',
+  });
 }
 
 export async function getWriterTypeChoices(): Promise<string[]> {

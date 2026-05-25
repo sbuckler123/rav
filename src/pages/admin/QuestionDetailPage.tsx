@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   ArrowRight, CheckCircle2, BookOpen,
   MessageCircle, HelpCircle, Loader2, Send, Eye, EyeOff,
-  Pencil, Trash2, Check, X, Ban, Copy,
+  Pencil, Trash2, Check, X, Ban, Copy, Mail, MailCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +21,12 @@ import {
   deleteAnswer,
   deleteQuestion,
   getWriterTypeChoices,
+  resendAskerNotification,
   type AdminQuestion,
 } from '@/api/adminQuestionsApi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS, ADMIN_QUERY_OPTIONS, QUERY_KEYS } from '@/hooks/useQueries';
-import { getCategories } from '@/api/getCategories';
+import { fetchCategories } from '@/api/categoriesApi';
 import { cn, formatAdminDate } from '@/lib/utils';
 
 function writerIcon(type: string) {
@@ -72,7 +73,7 @@ export default function QuestionDetailPage() {
   });
   const categoriesQuery = useQuery({
     queryKey: ADMIN_QUERY_KEYS.categoriesByTable('שאלות'),
-    queryFn: async () => (await getCategories()).categories,
+    queryFn: () => fetchCategories('שאלות'),
     ...ADMIN_QUERY_OPTIONS,
   });
   const writerTypesQuery = useQuery<string[]>({
@@ -208,6 +209,22 @@ export default function QuestionDetailPage() {
       reload();
     } catch {
       toast.error('שגיאה במחיקת התשובה');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleResendNotification(answerId: string) {
+    setActionLoading('resendNotification-' + answerId);
+    try {
+      await resendAskerNotification(answerId);
+      toast.success('הודעת אימייל נשלחה לשואל');
+      reload();
+    } catch (err: any) {
+      const msg = typeof err?.message === 'string' && err.message.includes('409')
+        ? 'הודעת אימייל כבר נשלחה לשואל'
+        : 'שגיאה בשליחת הודעת האימייל';
+      toast.error(msg);
     } finally {
       setActionLoading(null);
     }
@@ -413,6 +430,29 @@ export default function QuestionDetailPage() {
                                     : <CheckCircle2 className="h-3.5 w-3.5" />}
                                   אשר ופרסם
                                 </button>
+                              )}
+                              {(answer.writerType === 'רב' || answer.writerType === 'מזכירות') && !answer.pendingApproval && (
+                                answer.emailSent ? (
+                                  <span
+                                    className="p-1.5 rounded-md text-green-600"
+                                    title="הודעת אימייל נשלחה לשואל"
+                                    aria-label="הודעת אימייל נשלחה לשואל"
+                                  >
+                                    <MailCheck className="h-3.5 w-3.5" />
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleResendNotification(answer.id)}
+                                    disabled={!!actionLoading}
+                                    className="p-1.5 rounded-md text-muted-foreground hover:text-secondary hover:bg-secondary/10 transition-colors disabled:opacity-50"
+                                    title="שלח הודעת אימייל לשואל"
+                                    aria-label="שלח הודעת אימייל לשואל"
+                                  >
+                                    {actionLoading === 'resendNotification-' + answer.id
+                                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      : <Mail className="h-3.5 w-3.5" />}
+                                  </button>
+                                )
                               )}
                               <button
                                 onClick={() => { setEditingAnswerId(answer.id); setAnswerEditText(answer.content); setAnswerEditTitle(answer.title ?? ''); }}

@@ -4,11 +4,15 @@
 // available. Anonymous callers (the public Q&A follow-up form) send no token
 // and hit the public-reply branch on the server. The server distinguishes by
 // presence of a verified token, NOT by the caller.
+//
+// Admin callers pass `questionId` (Airtable rec ID). Public callers pass
+// `referenceId` (the numeric "מזהה שאלה") so rec IDs never reach the browser.
 
 import { apiFetch } from './apiFetch';
 
 export async function submitReply(input: {
-  questionId: string;
+  questionId?: string;
+  referenceId?: string;
   content: string;
   writerType?: string;
   title?: string;
@@ -21,6 +25,7 @@ export async function submitReply(input: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         questionId:     input.questionId,
+        referenceId:    input.referenceId,
         content:        input.content,
         writerType:     input.writerType,
         title:          input.title,

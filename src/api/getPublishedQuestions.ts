@@ -1,13 +1,11 @@
-export async function getPublishedQuestions(input?: { categoryId?: string }): Promise<{
+export async function getPublishedQuestions(input?: { category?: string }): Promise<{
   questions: Array<{
-    id: string;
-    referenceId: any;
+    referenceId: string;
     questionContent: string;
     category?: string;
     createdAt?: string;
     followUpBlocked?: boolean;
     answers: Array<{
-      id: string;
       title?: string;
       content: string;
       writerType: string;
@@ -15,8 +13,8 @@ export async function getPublishedQuestions(input?: { categoryId?: string }): Pr
     }>;
   }>;
 }> {
-  const url = input?.categoryId
-    ? `/api/questions?categoryId=${encodeURIComponent(input.categoryId)}`
+  const url = input?.category
+    ? `/api/questions?category=${encodeURIComponent(input.category)}`
     : '/api/questions';
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch questions: ${res.status}`);

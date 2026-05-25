@@ -48,12 +48,13 @@ async function airtableFetch(
 
 function toItem(r: { id: string; fields: Record<string, unknown> }) {
   const f = r.fields;
+  const linkId = extractField(f['מזהה קישור']);
+  if (!linkId) return null;
   return {
-    linkId:     extractField(f['מזהה קישור']) ?? r.id,
+    linkId,
     title:      (f['כותרת'] as string) ?? '',
     summary:    extractField(f['תקציר']),
     coverImage: extractField(f['תמונת כותרת']),
-    categoryId: Array.isArray(f['קטגוריה']) ? (f['קטגוריה'] as string[])[0] : undefined,
     tags:       Array.isArray(f['תגיות']) ? (f['תגיות'] as string[]) : [],
     date:       extractField(f['תאריך']),
     blocks:     parseBlocks(f['בלוקי תוכן']),
@@ -117,8 +118,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.statusCode = 200;
       res.end(JSON.stringify(record ? toItem(record) : null));
     } else {
+      const items = data.records
+        .map(toItem)
+        .filter((i): i is NonNullable<typeof i> => i !== null);
       res.statusCode = 200;
-      res.end(JSON.stringify({ items: data.records.map(toItem) }));
+      res.end(JSON.stringify({ items }));
     }
   } catch (err) {
     captureServerError(err, { handler: 'al-haperek', method: req.method ?? '', url: req.url ?? '' });

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageCircle, HelpCircle, CalendarDays, ArrowLeft, ChevronLeft } from 'lucide-react';
-import { getCategories } from '@/api/getCategories';
 import { getPublishedQuestions } from '@/api/getPublishedQuestions';
 
 type Question = Awaited<ReturnType<typeof getPublishedQuestions>>['questions'][number];
@@ -17,7 +16,7 @@ function formatDate(raw: any): string {
 
 function QuestionCard({ question, categoryName }: { question: Question; categoryName: string | null }) {
   return (
-    <Link to={`/shut#q-${question.id}`} className="block group h-full">
+    <Link to={`/shut#q-${question.referenceId}`} className="block group h-full">
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col">
 
         {/* Top accent */}
@@ -75,12 +74,10 @@ function QuestionCard({ question, categoryName }: { question: Question; category
 }
 
 export default function AskRabbiSection() {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCategories().then(r => setCategories(r.categories)).catch(() => {});
     getPublishedQuestions({})
       .then(r => {
         const sorted = [...r.questions].sort((a, b) => {
@@ -128,9 +125,9 @@ export default function AskRabbiSection() {
           <div className="flex flex-col gap-4">
             {questions.map(q => (
               <QuestionCard
-                key={q.id}
+                key={q.referenceId}
                 question={q}
-                categoryName={q.category ? (categories.find(c => c.id === q.category)?.name ?? null) : null}
+                categoryName={q.category ?? null}
               />
             ))}
           </div>

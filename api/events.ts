@@ -70,32 +70,36 @@ function toEventList(
   eventsData: { records: { id: string; fields: Record<string, unknown> }[] },
   galleryMap: Map<string, { url: string; caption: string; order: number }>,
 ) {
-  return eventsData.records.map((r) => {
-    const f = r.fields;
-    const rawParticipants = extractField(f['משתתפים']);
-    const participantsShort = rawParticipants
-      ? rawParticipants.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [];
+  return eventsData.records
+    .map((r) => {
+      const f = r.fields;
+      const linkId = extractField(f['מזהה קישור']);
+      if (!linkId) return null;
+      const rawParticipants = extractField(f['משתתפים']);
+      const participantsShort = rawParticipants
+        ? rawParticipants.split('\n').map((s) => s.trim()).filter(Boolean)
+        : [];
 
-    const linkedGalleryIds = Array.isArray(f['גלריה']) ? (f['גלריה'] as string[]) : [];
-    const images = linkedGalleryIds
-      .map((id) => galleryMap.get(id))
-      .filter((img): img is { url: string; caption: string; order: number } => !!img)
-      .sort((a, b) => a.order - b.order);
+      const linkedGalleryIds = Array.isArray(f['גלריה']) ? (f['גלריה'] as string[]) : [];
+      const images = linkedGalleryIds
+        .map((id) => galleryMap.get(id))
+        .filter((img): img is { url: string; caption: string; order: number } => !!img)
+        .sort((a, b) => a.order - b.order);
 
-    return {
-      linkId: extractField(f['מזהה קישור']) ?? r.id,
-      title: f['כותרת'] ?? '',
-      eventType: f['סוג אירוע'] ?? '',
-      dateHebrew: f['תאריך עברי'] ?? '',
-      dateLocale: f['תאריך לועזי'] ?? '',
-      location: f['מיקום'] ?? '',
-      excerpt: extractField(f['תקציר קצר']) ?? '',
-      participantsShort,
-      images: images.map(({ url, order }) => ({ url, order })),
-      mainImageUrl: images.find((img) => img.order === 1)?.url ?? images[0]?.url,
-    };
-  });
+      return {
+        linkId,
+        title: f['כותרת'] ?? '',
+        eventType: f['סוג אירוע'] ?? '',
+        dateHebrew: f['תאריך עברי'] ?? '',
+        dateLocale: f['תאריך לועזי'] ?? '',
+        location: f['מיקום'] ?? '',
+        excerpt: extractField(f['תקציר קצר']) ?? '',
+        participantsShort,
+        images: images.map(({ url, order }) => ({ url, order })),
+        mainImageUrl: images.find((img) => img.order === 1)?.url ?? images[0]?.url,
+      };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null);
 }
 
 function toEventDetail(

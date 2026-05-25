@@ -16,7 +16,7 @@ const PAGE_SIZE = 10;
 
 interface Props {
   questions: Question[];
-  categories: { id: string; name: string }[];
+  categories: { name: string }[];
 }
 
 function formatDate(raw: string | undefined): string {
@@ -112,7 +112,7 @@ export default function PublishedQA({ questions, categories }: Props) {
   const [search, setSearch] = useState('');
 
   const activeCategories = categories.filter(c =>
-    questions.some(q => q.category === c.id)
+    questions.some(q => q.category === c.name)
   );
 
   const sorted = [...questions].sort((a, b) => {
@@ -134,16 +134,16 @@ export default function PublishedQA({ questions, categories }: Props) {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Navigate to the correct page when deep-linking via hash (#q-<id>)
+  // Navigate to the correct page when deep-linking via hash (#q-<referenceId>)
   useEffect(() => {
     if (questions.length === 0 || !window.location.hash) return;
-    const targetId = window.location.hash.replace('#q-', '');
-    const idx = sorted.findIndex(q => q.id === targetId);
+    const targetRef = window.location.hash.replace('#q-', '');
+    const idx = sorted.findIndex(q => q.referenceId === targetRef);
     if (idx === -1) return;
     const targetPage = Math.floor(idx / PAGE_SIZE) + 1;
     setPage(targetPage);
     setTimeout(() => {
-      const el = document.getElementById(`q-${targetId}`);
+      const el = document.getElementById(`q-${targetRef}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
   }, [questions.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -222,19 +222,19 @@ export default function PublishedQA({ questions, categories }: Props) {
             </span>
           </button>
           {activeCategories.map(c => {
-            const count = sorted.filter(q => q.category === c.id).length;
+            const count = sorted.filter(q => q.category === c.name).length;
             return (
               <button
-                key={c.id}
-                onClick={() => handleCategoryChange(c.id)}
+                key={c.name}
+                onClick={() => handleCategoryChange(c.name)}
                 className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-medium border transition-all min-h-[44px] ${
-                  selectedCategory === c.id
+                  selectedCategory === c.name
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-white text-muted-foreground border-input hover:border-primary/40 hover:text-primary'
                 }`}
               >
                 {c.name}
-                <span className={`mr-1.5 text-xs ${selectedCategory === c.id ? 'text-secondary' : 'text-muted-foreground'}`}>
+                <span className={`mr-1.5 text-xs ${selectedCategory === c.name ? 'text-secondary' : 'text-muted-foreground'}`}>
                   ({count})
                 </span>
               </button>
@@ -263,7 +263,7 @@ export default function PublishedQA({ questions, categories }: Props) {
             </div>
           )}
           {visible.map(q => (
-            <QuestionCard key={q.id} question={q} categories={categories} />
+            <QuestionCard key={q.referenceId} question={q} />
           ))}
         </>
       )}
@@ -337,10 +337,8 @@ export default function PublishedQA({ questions, categories }: Props) {
   );
 }
 
-function QuestionCard({ question, categories }: { question: Question; categories: { id: string; name: string }[] }) {
-  const categoryName = question.category
-    ? (categories.find(c => c.id === question.category)?.name ?? null)
-    : null;
+function QuestionCard({ question }: { question: Question }) {
+  const categoryName = question.category ?? null;
   const sortedAnswers = [...question.answers].sort((a, b) => {
     if (!a.date) return 1;
     if (!b.date) return -1;
@@ -361,7 +359,7 @@ function QuestionCard({ question, categories }: { question: Question; categories
     }
     setSubmitting(true);
     try {
-      await submitReply({ questionId: question.id, content: replyText, writerType: 'השואל', turnstileToken });
+      await submitReply({ referenceId: question.referenceId, content: replyText, writerType: 'השואל', turnstileToken });
       setSent(true);
       setReplyText('');
       setReplyOpen(false);
@@ -375,10 +373,9 @@ function QuestionCard({ question, categories }: { question: Question; categories
 
   return (
     <div
-      id={`q-${question.id}`}
+      id={`q-${question.referenceId}`}
       className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden"
       data-question-ref={question.referenceId}
-      data-question-id={question.id}
     >
       <div className="h-1 bg-gradient-to-l from-secondary/60 via-secondary to-secondary/60" />
 
@@ -420,7 +417,7 @@ function QuestionCard({ question, categories }: { question: Question; categories
         {sortedAnswers.length > 0 ? (
           <div>
             {sortedAnswers.map((answer, i) => (
-              <div key={answer.id} className={i === sortedAnswers.length - 1 ? '[&>div>div:first-child>div:last-child]:hidden' : ''}>
+              <div key={i} className={i === sortedAnswers.length - 1 ? '[&>div>div:first-child>div:last-child]:hidden' : ''}>
                 <AnswerBlock answer={answer} />
               </div>
             ))}
