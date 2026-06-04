@@ -24,7 +24,7 @@ export default function AboutPage() {
               <CardContent className="p-0">
                 <div className="relative">
                   <img
-                    src="https://images.fillout.com/orgid-590181/flowpublicid-bjqtmvgzna/widgetid-default/dsJ7nCmUnT3GwzCJGP8zrj/pasted-image-1770841861394.jpg"
+                    src="/og-image.jpg"
                     alt="הרב קלמן מאיר בר שליטא"
                     className="w-full h-auto object-cover"
                     loading="eager"
