@@ -25,16 +25,16 @@ export default function HomePage() {
         <VideosSection />
       </FadeIn>
       <FadeIn>
-        <AlHaperekSection />
-      </FadeIn>
-      <FadeIn>
-        <EventsSection />
-      </FadeIn>
-      <FadeIn>
         <ArticlesSection />
       </FadeIn>
       <FadeIn>
         <AskRabbiSection />
+      </FadeIn>
+      <FadeIn>
+        <AlHaperekSection />
+      </FadeIn>
+      <FadeIn>
+        <EventsSection />
       </FadeIn>
     </div>
   );
