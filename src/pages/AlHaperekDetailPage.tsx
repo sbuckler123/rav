@@ -232,6 +232,16 @@ export default function AlHaperekDetailPage() {
   const prevItem = currentIdx !== -1 ? (allItems[currentIdx + 1] ?? null) : null;
   const nextItem = currentIdx !== -1 ? (allItems[currentIdx - 1] ?? null) : null;
 
+  const currentTags = item?.tags ?? [];
+  const relatedItems = allItems
+    .filter(i => i.linkId !== id && i.linkId !== prevItem?.linkId && i.linkId !== nextItem?.linkId)
+    .sort((a, b) => {
+      const aOverlap = a.tags.filter(t => currentTags.includes(t)).length;
+      const bOverlap = b.tags.filter(t => currentTags.includes(t)).length;
+      return bOverlap - aOverlap;
+    })
+    .slice(0, 4);
+
   useEffect(() => {
     if (!id) { setItem(null); return; }
     getAlHaperekItem(id).then(setItem).catch(() => setItem(null));
@@ -265,9 +275,44 @@ export default function AlHaperekDetailPage() {
   // Calculate image base indices for lightbox
   let imageCounter = 0;
 
+  const itemUrl = `https://www.haravkalmanber.co.il/idkunim/${item.linkId}`;
+  const ogImage = item.coverImage || 'https://www.haravkalmanber.co.il/og-image.jpg';
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: item.title,
+    description: (item.summary ?? '').slice(0, 200) || item.title,
+    inLanguage: 'he-IL',
+    author: {
+      '@type': 'Person',
+      '@id': 'https://www.haravkalmanber.co.il/#person',
+      name: 'הרב קלמן מאיר בר',
+    },
+    publisher: {
+      '@type': 'Organization',
+      '@id': 'https://www.haravkalmanber.co.il/#organization',
+      name: 'הרבנות הראשית לישראל',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.haravkalmanber.co.il/logo.png',
+      },
+    },
+    image: ogImage,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': itemUrl },
+    url: itemUrl,
+    ...(item.date && { datePublished: item.date }),
+    ...(item.tags.length > 0 && { keywords: item.tags.join(', ') }),
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <SEO title={item.title} description={item.summary ?? `${item.title} — הרב קלמן מאיר בר`} />
+      <SEO
+        title={item.title}
+        description={item.summary ?? `${item.title} — הרב קלמן מאיר בר`}
+        type="article"
+        image={ogImage}
+        jsonLd={articleSchema}
+      />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl py-8">
         <Breadcrumbs
@@ -372,6 +417,41 @@ export default function AlHaperekDetailPage() {
               )}
             </div>
           </nav>
+        )}
+
+        {/* Related items */}
+        {relatedItems.length > 0 && (
+          <section className="mt-10 pt-8 border-t border-border" aria-label="עדכונים קשורים">
+            <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary mb-5">עדכונים נוספים</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {relatedItems.map(r => (
+                <Link
+                  key={r.linkId}
+                  to={`/idkunim/${r.linkId}`}
+                  className="group block p-4 rounded-xl border border-border hover:border-secondary hover:bg-secondary/5 transition-colors"
+                >
+                  <p className="font-semibold text-primary group-hover:text-secondary text-sm sm:text-base line-clamp-2 leading-snug">
+                    {r.title}
+                  </p>
+                  {r.summary && (
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.summary}</p>
+                  )}
+                  {r.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {r.tags.slice(0, 3).map(t => (
+                        <span key={t} className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/idkunim">כל העדכונים</Link>
+              </Button>
+            </div>
+          </section>
         )}
       </div>
 

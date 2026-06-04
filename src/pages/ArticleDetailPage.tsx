@@ -57,12 +57,55 @@ export default function ArticleDetailPage() {
     );
   }
 
+  const articleUrl = `https://www.haravkalmanber.co.il/hagut-upsika/${article.linkId}`;
+  const publishDate = idx !== -1 ? allArticles[idx]?.publishDate : undefined;
+
+  const others = allArticles.filter((a: Article) => a.linkId !== id);
+  const sharesCategory = (a: Article) =>
+    article.categories.some((c) => a.categories?.includes(c));
+  const sharesJournal = (a: Article) => !!article.journal && a.journal === article.journal;
+  const relatedArticles: Article[] = [
+    ...others.filter(sharesCategory),
+    ...others.filter((a) => !sharesCategory(a) && sharesJournal(a)),
+    ...others.filter((a) => !sharesCategory(a) && !sharesJournal(a)),
+  ]
+    .filter((a, i, arr) => arr.findIndex((x) => x.linkId === a.linkId) === i)
+    .slice(0, 4);
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: (article.abstract ?? '').slice(0, 200) || article.title,
+    inLanguage: 'he-IL',
+    author: {
+      '@type': 'Person',
+      '@id': 'https://www.haravkalmanber.co.il/#person',
+      name: 'הרב קלמן מאיר בר',
+    },
+    publisher: {
+      '@type': 'Organization',
+      '@id': 'https://www.haravkalmanber.co.il/#organization',
+      name: 'הרבנות הראשית לישראל',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.haravkalmanber.co.il/logo.png',
+      },
+    },
+    image: 'https://www.haravkalmanber.co.il/og-image.jpg',
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+    url: articleUrl,
+    ...(publishDate && { datePublished: publishDate }),
+    ...(article.categories.length > 0 && { articleSection: article.categories[0] }),
+    ...(article.tags.length > 0 && { keywords: article.tags.join(', ') }),
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <SEO
         title={article.title}
         description={(article.abstract ?? '').slice(0, 155) || `מאמר מאת הרב קלמן מאיר בר: ${article.title}`}
         type="article"
+        jsonLd={articleSchema}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-8">
         <Breadcrumbs items={[
@@ -256,6 +299,33 @@ export default function ArticleDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-4 sm:space-y-6">
+            {relatedArticles.length > 0 && (
+              <Card>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="font-bold mb-4">מאמרים קשורים</h3>
+                  <div className="space-y-1">
+                    {relatedArticles.map((a) => (
+                      <Link key={a.linkId} to={`/hagut-upsika/${a.linkId}`}>
+                        <div className="p-2.5 rounded-lg hover:bg-muted/40 transition-colors group cursor-pointer">
+                          <p className="text-sm font-medium line-clamp-2 group-hover:text-secondary transition-colors">
+                            {a.title}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                            {a.journal && <span>{a.journal}</span>}
+                            {a.year && <span>· {a.year}</span>}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  <Link to="/hagut-upsika">
+                    <Button variant="outline" size="sm" className="w-full mt-3 text-xs">
+                      כל המאמרים
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardContent className="p-4 sm:p-6">
                 <h3 className="font-bold mb-3">סינון מהיר</h3>

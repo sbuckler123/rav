@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { Calendar, Clock, MapPin, Share2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import SEO from '@/components/SEO';
 import { type ShiurEvent } from '@/api/getShiurim';
 import { useShiurim } from '@/hooks/useQueries';
 
@@ -161,8 +162,49 @@ export default function ShiurDetailPage() {
     }
   };
 
+  const shiurUrl = `https://www.haravkalmanber.co.il/luach-iruyim/${shiur.linkId}`;
+  const startIso = shiur.dateRaw
+    ? (() => {
+        const base = new Date(shiur.dateRaw);
+        const timeMatch = shiur.time?.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) base.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+        return isNaN(base.getTime()) ? undefined : base.toISOString();
+      })()
+    : undefined;
+  const eventSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: shiur.title,
+    description: (shiur.description ?? '').slice(0, 300) || shiur.title,
+    inLanguage: 'he-IL',
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    organizer: {
+      '@type': 'Organization',
+      '@id': 'https://www.haravkalmanber.co.il/#organization',
+      name: 'הרבנות הראשית לישראל',
+    },
+    performer: {
+      '@type': 'Person',
+      '@id': 'https://www.haravkalmanber.co.il/#person',
+      name: 'הרב קלמן מאיר בר',
+    },
+    url: shiurUrl,
+    image: 'https://www.haravkalmanber.co.il/og-image.jpg',
+    ...(startIso && { startDate: startIso }),
+    ...(shiur.location && {
+      location: { '@type': 'Place', name: shiur.location, address: shiur.location },
+    }),
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={shiur.title}
+        description={(shiur.description ?? '').slice(0, 155) || `שיעור מאת הרב קלמן מאיר בר: ${shiur.title}`}
+        type="article"
+        jsonLd={eventSchema}
+      />
       {/* Page header */}
       <div className="border-b bg-white">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6">
