@@ -81,7 +81,7 @@ export default function ShiurimPage() {
     const now          = new Date();
     const weekFromNow  = new Date(now.getTime() + 7  * 24 * 60 * 60 * 1000);
     const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    return events.filter(event => {
+    const filtered = events.filter(event => {
       const q           = searchQuery.trim().toLowerCase();
       const searchMatch = !q || event.title.toLowerCase().includes(q)
         || event.description.toLowerCase().includes(q)
@@ -92,6 +92,15 @@ export default function ShiurimPage() {
       if (selectedDateFilter === 'week')  dateMatch = eventDate >= now && eventDate <= weekFromNow;
       if (selectedDateFilter === 'month') dateMatch = eventDate >= now && eventDate <= monthFromNow;
       return searchMatch && catMatch && dateMatch;
+    });
+    // Sort: events with no date first, then by date descending (latest first)
+    return [...filtered].sort((a, b) => {
+      const aEmpty = !a.dateRaw;
+      const bEmpty = !b.dateRaw;
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return -1;
+      if (bEmpty) return 1;
+      return b.dateRaw.localeCompare(a.dateRaw);
     });
   }, [events, searchQuery, selectedCategory, selectedDateFilter]);
 
