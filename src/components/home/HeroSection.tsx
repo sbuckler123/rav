@@ -76,6 +76,21 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_80%_50%,rgba(197,165,90,0.07),transparent)] pointer-events-none" aria-hidden="true" />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-10 lg:py-14">
+        <header className="text-center mb-6 sm:mb-9 lg:mb-12">
+          <h1 className="font-serif text-white">
+            <span className="block text-[1.85rem] sm:text-5xl lg:text-6xl font-bold leading-tight tracking-wide break-words [text-shadow:0_2px_12px_rgba(0,0,0,0.25)]">
+              הרב קלמן מאיר בר
+            </span>
+            <span
+              className="block mx-auto h-px w-24 sm:w-36 lg:w-44 bg-gradient-to-r from-transparent via-secondary/70 to-transparent my-3 sm:my-4 lg:my-5"
+              aria-hidden="true"
+            />
+            <span className="block mx-auto max-w-[16rem] sm:max-w-none text-[0.95rem] sm:text-lg lg:text-xl font-medium text-secondary leading-snug tracking-wide break-words">
+              הרב הראשי לישראל ונשיא מועצת הרבנות הראשית
+            </span>
+          </h1>
+        </header>
+
         <div className="grid lg:grid-cols-[1fr_2fr] gap-6 sm:gap-8 lg:gap-10 items-stretch">
 
           {/* Right column — image (RTL puts it on the right); 1/3 width on desktop */}

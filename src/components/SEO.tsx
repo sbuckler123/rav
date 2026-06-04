@@ -24,8 +24,10 @@ export default function SEO({
   type = 'website',
   noindex = false,
 }: SEOProps) {
-  const isHome = title === SITE_NAME;
-  const fullTitle = isHome ? title : `${title} | ${SITE_NAME}`;
+  // Skip the "| siteName" suffix when the title already includes the brand
+  // (e.g. the homepage title), so we don't end up with "X | Y | Y" duplication.
+  const includesBrand = title === SITE_NAME || title.startsWith(SITE_NAME);
+  const fullTitle = includesBrand ? title : `${title} | ${SITE_NAME}`;
 
   return (
     <Helmet>
