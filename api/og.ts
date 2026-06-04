@@ -35,7 +35,14 @@ const TABLE: Record<string, string> = {
 
 // ─── sitemap: static + dynamic config ───────────────────────────────────────
 
-type SitemapEntry = { loc: string; lastmod: string; changefreq: string; priority: string };
+type SitemapImage = { loc: string; caption?: string };
+type SitemapEntry = {
+  loc: string;
+  lastmod: string;
+  changefreq: string;
+  priority: string;
+  images?: SitemapImage[];
+};
 
 const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = [
   { path: '/',               priority: '1.0', changefreq: 'weekly'  },
@@ -52,11 +59,20 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = 
   { path: '/terms',          priority: '0.3', changefreq: 'yearly' },
 ];
 
-const DYNAMIC_SOURCES: { table: string; prefix: string; filter: string }[] = [
-  { table: 'שיעורי וידאו', prefix: '/shiurei-torah', filter: '{סטטוס} = "פעיל"'  },
+// IMPORTANT: only canonical URL paths belong here. /al-haperek/* is 308-redirected
+// to /idkunim/* in vercel.json, so the 'על הפרק' table must publish under /idkunim.
+// Emitting /al-haperek/* URLs would create avoidable redirect chains for Googlebot.
+const DYNAMIC_SOURCES: {
+  table: string;
+  prefix: string;
+  filter: string;
+  imageField?: string;     // direct image URL
+  youtubeIdField?: string; // YouTube ID — derives a thumbnail URL
+}[] = [
+  { table: 'שיעורי וידאו', prefix: '/shiurei-torah', filter: '{סטטוס} = "פעיל"',  youtubeIdField: 'מזהה יוטיוב' },
   { table: 'שיעורים',      prefix: '/luach-iruyim',  filter: '{סטטוס} = "פעיל"'  },
   { table: 'מאמרים',        prefix: '/hagut-upsika',  filter: '{סטטוס} = "פעיל"'  },
-  { table: 'על הפרק',       prefix: '/idkunim',       filter: '{סטטוס} = "פורסם"' },
+  { table: 'על הפרק',       prefix: '/idkunim',       filter: '{סטטוס} = "פורסם"', imageField: 'תמונת כותרת' },
 ];
 
 // ─── index.html (bundled via vercel.json includeFiles) ───────────────────────
@@ -205,18 +221,21 @@ function escapeXml(s: string): string {
 async function fetchSitemapRows(
   table: string,
   filter: string,
-): Promise<{ linkId: string; lastmod: string }[]> {
+  opts: { imageField?: string; youtubeIdField?: string } = {},
+): Promise<{ linkId: string; lastmod: string; imageUrl?: string }[]> {
   const pat    = process.env.AIRTABLE_PAT;
   const baseId = process.env.AIRTABLE_BASE_ID;
   if (!pat || !baseId) return [];
 
-  const all: { linkId: string; lastmod: string }[] = [];
+  const all: { linkId: string; lastmod: string; imageUrl?: string }[] = [];
   let offset: string | undefined;
 
   do {
     const url = new URL(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`);
     url.searchParams.set('pageSize', '100');
     url.searchParams.append('fields[]', 'מזהה קישור');
+    if (opts.imageField) url.searchParams.append('fields[]', opts.imageField);
+    if (opts.youtubeIdField) url.searchParams.append('fields[]', opts.youtubeIdField);
     url.searchParams.set('filterByFormula', filter);
     if (offset) url.searchParams.set('offset', offset);
 
@@ -234,7 +253,17 @@ async function fetchSitemapRows(
       const linkId = extractText(r.fields['מזהה קישור']);
       if (!linkId) continue;
       const lastmod = (r.createdTime ?? new Date().toISOString()).slice(0, 10);
-      all.push({ linkId, lastmod });
+
+      let imageUrl: string | undefined;
+      if (opts.imageField) {
+        const v = r.fields[opts.imageField];
+        if (typeof v === 'string' && v.startsWith('http')) imageUrl = v;
+      } else if (opts.youtubeIdField) {
+        const yt = extractText(r.fields[opts.youtubeIdField]).split('&')[0].split('?')[0].trim();
+        if (yt) imageUrl = `https://img.youtube.com/vi/${yt}/maxresdefault.jpg`;
+      }
+
+      all.push({ linkId, lastmod, imageUrl });
     }
     offset = data.offset;
   } while (offset);
@@ -244,20 +273,28 @@ async function fetchSitemapRows(
 
 function renderSitemap(entries: SitemapEntry[]): string {
   const body = entries
-    .map((e) =>
-      [
+    .map((e) => {
+      const lines = [
         '  <url>',
         `    <loc>${escapeXml(e.loc)}</loc>`,
         `    <lastmod>${e.lastmod}</lastmod>`,
         `    <changefreq>${e.changefreq}</changefreq>`,
         `    <priority>${e.priority}</priority>`,
-        '  </url>',
-      ].join('\n'),
-    )
+      ];
+      for (const img of e.images ?? []) {
+        lines.push('    <image:image>');
+        lines.push(`      <image:loc>${escapeXml(img.loc)}</image:loc>`);
+        if (img.caption) lines.push(`      <image:caption>${escapeXml(img.caption)}</image:caption>`);
+        lines.push('    </image:image>');
+      }
+      lines.push('  </url>');
+      return lines.join('\n');
+    })
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${body}
 </urlset>
 `;
@@ -276,7 +313,12 @@ async function handleSitemap(res: ServerResponse): Promise<void> {
   }));
 
   const dynamicResults = await Promise.all(
-    DYNAMIC_SOURCES.map((s) => fetchSitemapRows(s.table, s.filter).catch(() => [])),
+    DYNAMIC_SOURCES.map((s) =>
+      fetchSitemapRows(s.table, s.filter, {
+        imageField: s.imageField,
+        youtubeIdField: s.youtubeIdField,
+      }).catch(() => []),
+    ),
   );
 
   DYNAMIC_SOURCES.forEach((source, i) => {
@@ -286,12 +328,18 @@ async function handleSitemap(res: ServerResponse): Promise<void> {
         lastmod: row.lastmod,
         changefreq: 'weekly',
         priority: '0.7',
+        images: row.imageUrl ? [{ loc: row.imageUrl }] : undefined,
       });
     }
   });
 
+  // Defensive: drop any URL that would land on a 308 redirect path. Currently
+  // none of the DYNAMIC_SOURCES uses /al-haperek (the legacy prefix), but
+  // guarding here prevents future entries from emitting redirect chains.
+  const filtered = entries.filter((e) => !e.loc.includes('/al-haperek'));
+
   res.statusCode = 200;
-  res.end(renderSitemap(entries));
+  res.end(renderSitemap(filtered));
 }
 
 // ─── handler ─────────────────────────────────────────────────────────────────

@@ -1,7 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'הרב קלמן מאיר בר';
-const DEFAULT_IMAGE = `${window.location.origin}/og-image.jpg`;
+const SITE_URL = 'https://www.haravkalmanber.co.il';
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 interface SEOProps {
   title: string;
@@ -11,6 +12,8 @@ interface SEOProps {
   type?: 'website' | 'article';
   /** Set true for pages that should not appear in search results (privacy, terms, admin) */
   noindex?: boolean;
+  /** Structured data (schema.org JSON-LD). Pass a single object or an array. */
+  jsonLd?: object | object[];
 }
 
 /**
@@ -23,11 +26,19 @@ export default function SEO({
   image = DEFAULT_IMAGE,
   type = 'website',
   noindex = false,
+  jsonLd,
 }: SEOProps) {
   // Skip the "| siteName" suffix when the title already includes the brand
   // (e.g. the homepage title), so we don't end up with "X | Y | Y" duplication.
   const includesBrand = title === SITE_NAME || title.startsWith(SITE_NAME);
   const fullTitle = includesBrand ? title : `${title} | ${SITE_NAME}`;
+
+  // Canonical URL — uses the current pathname against the production origin,
+  // so dev/staging/preview deploys still point Google to the real site.
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const canonicalUrl = `${SITE_URL}${pathname}`;
+
+  const jsonLdEntries = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
     <Helmet>
@@ -35,11 +46,13 @@ export default function SEO({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph — Facebook, WhatsApp, LinkedIn */}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content={type} />
       <meta property="og:locale" content="he_IL" />
       <meta property="og:site_name" content={SITE_NAME} />
@@ -49,6 +62,13 @@ export default function SEO({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+
+      {/* Structured data (schema.org) */}
+      {jsonLdEntries.map((entry, i) => (
+        <script key={i} type="application/ld+json">
+          {JSON.stringify(entry)}
+        </script>
+      ))}
     </Helmet>
   );
 }

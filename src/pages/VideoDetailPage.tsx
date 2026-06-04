@@ -64,12 +64,48 @@ export default function VideoDetailPage() {
     .sort((a, b) => b.views - a.views)
     .slice(0, 3);
 
+  const videoUrl = `https://www.haravkalmanber.co.il/shiurei-torah/${video.linkId}`;
+  const thumb = getThumb(video);
+  const embedUrl =
+    video.videoType === 'youtube' && video.youtubeId
+      ? `https://www.youtube.com/embed/${video.youtubeId}`
+      : video.videoUrl || undefined;
+  const videoSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.title,
+    description: (video.description ?? '').slice(0, 300) || `שיעור וידאו מאת הרב קלמן מאיר בר: ${video.title}`,
+    inLanguage: 'he-IL',
+    thumbnailUrl: thumb.startsWith('data:') ? 'https://www.haravkalmanber.co.il/og-image.jpg' : thumb,
+    uploadDate: video.dateRaw || new Date().toISOString().slice(0, 10),
+    contentUrl: videoUrl,
+    ...(embedUrl && { embedUrl }),
+    publisher: {
+      '@type': 'Organization',
+      '@id': 'https://www.haravkalmanber.co.il/#organization',
+      name: 'הרבנות הראשית לישראל',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.haravkalmanber.co.il/logo.png',
+      },
+    },
+    ...(video.views > 0 && {
+      interactionStatistic: {
+        '@type': 'InteractionCounter',
+        interactionType: { '@type': 'WatchAction' },
+        userInteractionCount: video.views,
+      },
+    }),
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <SEO
         title={video.title}
         description={`שיעור וידאו מאת הרב קלמן מאיר בר: ${video.title}`}
-        image={getThumb(video)}
+        image={thumb}
+        type="article"
+        jsonLd={videoSchema}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-6 sm:py-8">
         <Breadcrumbs items={[
