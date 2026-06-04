@@ -2,6 +2,10 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /admin/login
-Disallow: /api/
+
+# /api/ is intentionally NOT disallowed: the SPA fetches public data
+# (articles, questions, videos, etc.) via XHR while Googlebot renders.
+# JSON responses carry X-Robots-Tag: noindex (set in vercel.json) so the
+# raw API URLs don't appear in search results.
 
 Sitemap: https://www.haravkalmanber.co.il/sitemap.xml
