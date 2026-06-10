@@ -112,7 +112,7 @@ export default function VideosPage() {
     <div className="min-h-screen bg-background">
       <SEO
         title="שיעורי תורה"
-        description="צפו בשיעורי התורה של הרב קלמן מאיר בר — שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
+        description="צפו בשיעורי התורה של הרב קלמן מאיר בר - שיעורי תורה, הלכה ומחשבה מהרב הראשי לישראל."
       />
       <PageHeader title="שיעורי תורה" subtitle={PAGE_DESC['/shiurei-torah']} />
 

@@ -53,7 +53,7 @@ export default function ArticlesPage() {
     <div className="min-h-screen bg-background">
       <SEO
         title="הגות ופסיקה"
-        description="הגות ופסיקה — מאמרים תורניים ופסקי הלכה מאת הרב קלמן מאיר בר, הרב הראשי לישראל."
+        description="הגות ופסיקה - מאמרים תורניים ופסקי הלכה מאת הרב קלמן מאיר בר, הרב הראשי לישראל."
       />
       <PageHeader
         title="הגות ופסיקה"

@@ -26,7 +26,7 @@ export default function QAPage() {
     <div className="min-h-screen bg-background" dir="rtl">
       <SEO
         title='שו"ת'
-        description='שאלות ותשובות בהלכה ובמחשבה מאת הרב קלמן מאיר בר, הרב הראשי לישראל — ארכיון שו"ת מלשכת הרב הראשי.'
+        description='שאלות ותשובות בהלכה ובמחשבה מאת הרב קלמן מאיר בר, הרב הראשי לישראל - ארכיון שו"ת מלשכת הרב הראשי.'
       />
 
       <PageHeader
