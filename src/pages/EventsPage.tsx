@@ -277,7 +277,7 @@ export default function EventsPage() {
     <div className="min-h-screen bg-background">
       <SEO
         title="יומן פעילות"
-        description="יומן הפעילות של הרב קלמן מאיר בר, הרב הראשי לישראל — פגישות, ביקורים ואירועים רשמיים."
+        description="יומן הפעילות של הרב קלמן מאיר בר, הרב הראשי לישראל - פגישות, ביקורים ואירועים רשמיים."
       />
       <PageHeader title="יומן פעילות" subtitle={PAGE_DESC['/yoman-peilut']} />
 
