@@ -15,6 +15,11 @@ export function initSentry() {
       'ResizeObserver loop limit exceeded',
       'ResizeObserver loop completed with undelivered notifications',
       'Non-Error promise rejection captured',
+      // Browser-translation (Google Translate) mutates the DOM under React,
+      // causing removeChild/insertBefore NotFoundError. Guarded in
+      // domReconciliationGuard.ts; ignore any residual reports.
+      "Failed to execute 'removeChild' on 'Node'",
+      "Failed to execute 'insertBefore' on 'Node'",
     ],
     beforeSend(event) {
       if (event.request?.headers) {
