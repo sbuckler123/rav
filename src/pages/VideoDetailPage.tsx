@@ -10,6 +10,25 @@ import SEO from '@/components/SEO';
 import { type ShiurItem } from '@/api/getVideos';
 import { useVideos } from '@/hooks/useQueries';
 
+/** Normalize any incoming date string to an ISO 8601 date (YYYY-MM-DD) for schema.org uploadDate. */
+function toIsoDate(raw: string | undefined): string {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!raw) return today;
+  const s = raw.trim();
+  // Already ISO (optionally with time) → keep the date part.
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  // Israeli formats: DD.MM.YYYY or DD/MM/YYYY (also single-digit day/month).
+  const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  // Last resort: let Date parse it, else fall back to today.
+  const parsed = new Date(s);
+  return isNaN(parsed.getTime()) ? today : parsed.toISOString().slice(0, 10);
+}
+
 function getThumb(video: ShiurItem): string {
   if (video.thumbnail) return video.thumbnail;
   if (video.youtubeId) return `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`;
@@ -77,7 +96,7 @@ export default function VideoDetailPage() {
     description: (video.description ?? '').slice(0, 300) || `שיעור וידאו מאת הרב קלמן מאיר בר: ${video.title}`,
     inLanguage: 'he-IL',
     thumbnailUrl: thumb.startsWith('data:') ? 'https://www.haravkalmanber.co.il/og-image.jpg' : thumb,
-    uploadDate: video.dateRaw || new Date().toISOString().slice(0, 10),
+    uploadDate: toIsoDate(video.dateRaw),
     contentUrl: videoUrl,
     ...(embedUrl && { embedUrl }),
     publisher: {
