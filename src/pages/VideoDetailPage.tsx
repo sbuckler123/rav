@@ -15,18 +15,25 @@ function toIsoDate(raw: string | undefined): string {
   const today = new Date().toISOString().slice(0, 10);
   if (!raw) return today;
   const s = raw.trim();
-  // Already ISO (optionally with time) → keep the date part.
+  let y: number, m: number, d: number;
+  // Plain ISO YYYY-MM-DD (not an expanded-year "+0YYYYYY" form — the leading + fails \d).
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
   // Israeli formats: DD.MM.YYYY or DD/MM/YYYY (also single-digit day/month).
   const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);
-  if (dmy) {
-    const [, d, m, y] = dmy;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  if (iso) {
+    y = +iso[1]; m = +iso[2]; d = +iso[3];
+  } else if (dmy) {
+    d = +dmy[1]; m = +dmy[2]; y = +dmy[3];
+  } else {
+    const parsed = new Date(s);
+    if (isNaN(parsed.getTime())) return today;
+    y = parsed.getUTCFullYear(); m = parsed.getUTCMonth() + 1; d = parsed.getUTCDate();
   }
-  // Last resort: let Date parse it, else fall back to today.
-  const parsed = new Date(s);
-  return isNaN(parsed.getTime()) ? today : parsed.toISOString().slice(0, 10);
+  // Reject implausible years (e.g. a corrupt "+062026" → 62026) so we never emit invalid ISO.
+  const nextYear = new Date().getUTCFullYear() + 1;
+  if (y < 1990 || y > nextYear) return today;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${y}-${pad(m)}-${pad(d)}`;
 }
 
 function getThumb(video: ShiurItem): string {
