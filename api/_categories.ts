@@ -7,6 +7,8 @@
  * Airtable call from each of those misses.
  */
 
+import { airtableRequest } from './_publicCache';
+
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 
@@ -19,19 +21,20 @@ async function fetchCategoryMap(): Promise<Record<string, string>> {
   const url = new URL(
     `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('קטגוריות')}`,
   );
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${PAT}` },
-  });
-  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-  const data = (await res.json()) as {
+  const data = await airtableRequest<{
     records: { id: string; fields: Record<string, unknown> }[];
-  };
+  }>(url.toString(), { headers: { Authorization: `Bearer ${PAT}` } });
   const map: Record<string, string> = {};
   data.records.forEach((r) => { map[r.id] = (r.fields['שם'] as string) ?? ''; });
   return map;
 }
 
-/** Returns an id→name map of all categories, cached in-memory for 10 min. */
+/**
+ * Returns an id→name map of all categories, cached in-memory for 10 min.
+ * On a refresh failure the last good map is served (even if expired) so a
+ * transient Airtable outage doesn't cascade into failing list endpoints; only
+ * a cold instance with no cache surfaces the error.
+ */
 export async function getCategoryMap(): Promise<Record<string, string>> {
   if (cache && cache.expiresAt > Date.now()) return cache.map;
   if (inFlight) return inFlight;
@@ -40,6 +43,10 @@ export async function getCategoryMap(): Promise<Record<string, string>> {
     .then((map) => {
       cache = { map, expiresAt: Date.now() + TTL_MS };
       return map;
+    })
+    .catch((err) => {
+      if (cache) return cache.map;   // serve stale rather than break callers
+      throw err;
     })
     .finally(() => { inFlight = null; });
 

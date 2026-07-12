@@ -7,8 +7,8 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { captureServerError } from './_sentry';
 import { getCategoryMap } from './_categories';
+import { airtableRequest, serveCached } from './_publicCache';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -46,11 +46,10 @@ async function airtableFetch(
       url.searchParams.set(`sort[${i}][direction]`, s.direction ?? 'asc');
     });
   }
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${PAT}` },
-  });
-  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-  return res.json() as Promise<{ records: { id: string; fields: Record<string, unknown> }[] }>;
+  return airtableRequest<{ records: { id: string; fields: Record<string, unknown> }[] }>(
+    url.toString(),
+    { headers: { Authorization: `Bearer ${PAT}` } },
+  );
 }
 
 // ─── transformers ─────────────────────────────────────────────────────────────
@@ -114,28 +113,35 @@ function toArticleDetail(record: { id: string; fields: Record<string, unknown> }
 // ─── handler ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-
   if (!PAT || !BASE_ID) {
+    res.setHeader('Content-Type', 'application/json');
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Missing server configuration' }));
     return;
   }
 
-  try {
-    const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
-    const linkId = reqUrl.searchParams.get('linkId');
+  const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
+  const linkId = reqUrl.searchParams.get('linkId');
 
-    if (linkId) {
-      const data = await airtableFetch('מאמרים', {
-        filterByFormula: `{מזהה קישור}="${escapeAirtable(linkId)}"`,
-        maxRecords: '1',
-      });
-      const record = data.records[0] ?? null;
-      res.statusCode = 200;
-      res.end(JSON.stringify(record ? toArticleDetail(record, linkId) : null));
-    } else {
+  await serveCached(
+    res,
+    {
+      key: linkId ? `articles:detail:${linkId}` : 'articles:list',
+      ttlMs: 600_000,
+      cacheControl: 's-maxage=600, stale-while-revalidate=86400',
+      errorMessage: 'Failed to fetch articles',
+      errorContext: { handler: 'articles', method: req.method ?? '', url: req.url ?? '' },
+    },
+    async () => {
+      if (linkId) {
+        const data = await airtableFetch('מאמרים', {
+          filterByFormula: `{מזהה קישור}="${escapeAirtable(linkId)}"`,
+          maxRecords: '1',
+        });
+        const record = data.records[0] ?? null;
+        return record ? toArticleDetail(record, linkId) : null;
+      }
+
       const [articlesData, catMap] = await Promise.all([
         airtableFetch(
           'מאמרים',
@@ -145,12 +151,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         getCategoryMap(),
       ]);
 
-      res.statusCode = 200;
-      res.end(JSON.stringify(toArticleList(articlesData, catMap)));
-    }
-  } catch (err) {
-    captureServerError(err, { handler: 'articles', method: req.method ?? '', url: req.url ?? '' });
-    res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Failed to fetch articles' }));
-  }
+      return toArticleList(articlesData, catMap);
+    },
+  );
 }

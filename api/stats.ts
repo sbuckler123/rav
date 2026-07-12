@@ -9,7 +9,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { captureServerError } from './_sentry';
+import { airtableRequest, serveCached } from './_publicCache';
 
 const PAT     = process.env.AIRTABLE_PAT;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -30,10 +30,12 @@ async function countRecords(table: string, filterByFormula?: string): Promise<nu
     if (filterByFormula) url.searchParams.set('filterByFormula', filterByFormula);
     if (offset) url.searchParams.set('offset', offset);
 
-    const res = await fetch(url.toString(), { headers: auth() });
-    if (!res.ok) return total;
-
-    const data = await res.json() as { records: unknown[]; offset?: string };
+    // Throws on failure (incl. rate/billing limits) so serveCached can fall
+    // back to the last good counts instead of caching a wrong partial total.
+    const data = await airtableRequest<{ records: unknown[]; offset?: string }>(
+      url.toString(),
+      { headers: auth() },
+    );
     total += data.records?.length ?? 0;
     offset = data.offset;
     if (!offset) break;
@@ -42,23 +44,31 @@ async function countRecords(table: string, filterByFormula?: string): Promise<nu
   return total;
 }
 
-export default async function handler(_req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-  if (!PAT || !BASE_ID) { res.statusCode = 500; res.end(JSON.stringify({ error: 'Missing config' })); return; }
-
-  try {
-    const [shiurim, articles, videos, questions] = await Promise.all([
-      countRecords('שיעורים'),
-      countRecords('מאמרים', '{סטטוס}="פעיל"'),
-      countRecords('שיעורי וידאו'),
-      countRecords('שאלות'),
-    ]);
-    res.statusCode = 200;
-    res.end(JSON.stringify({ shiurim, articles, videos, questions }));
-  } catch (err) {
-    captureServerError(err, { handler: 'stats' });
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  if (!PAT || !BASE_ID) {
+    res.setHeader('Content-Type', 'application/json');
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Internal error' }));
+    res.end(JSON.stringify({ error: 'Missing config' }));
+    return;
   }
+
+  await serveCached(
+    res,
+    {
+      key: 'stats',
+      ttlMs: 600_000,
+      cacheControl: 's-maxage=600, stale-while-revalidate=86400',
+      errorMessage: 'Internal error',
+      errorContext: { handler: 'stats' },
+    },
+    async () => {
+      const [shiurim, articles, videos, questions] = await Promise.all([
+        countRecords('שיעורים'),
+        countRecords('מאמרים', '{סטטוס}="פעיל"'),
+        countRecords('שיעורי וידאו'),
+        countRecords('שאלות'),
+      ]);
+      return { shiurim, articles, videos, questions };
+    },
+  );
 }
