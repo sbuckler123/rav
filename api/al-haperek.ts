@@ -6,7 +6,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import { captureServerError } from './_sentry';
+import { airtableRequest, serveCached } from './_publicCache';
 
 const PAT        = process.env.AIRTABLE_PAT;
 const BASE_ID    = process.env.AIRTABLE_BASE_ID;
@@ -41,9 +41,10 @@ async function airtableFetch(
     url.searchParams.set(`sort[${i}][field]`, s.field);
     url.searchParams.set(`sort[${i}][direction]`, s.direction ?? 'asc');
   });
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${PAT}` } });
-  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-  return res.json() as Promise<{ records: { id: string; fields: Record<string, unknown> }[] }>;
+  return airtableRequest<{ records: { id: string; fields: Record<string, unknown> }[] }>(
+    url.toString(),
+    { headers: { Authorization: `Bearer ${PAT}` } },
+  );
 }
 
 function toItem(r: { id: string; fields: Record<string, unknown> }) {
@@ -62,71 +63,75 @@ function toItem(r: { id: string; fields: Record<string, unknown> }) {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-
   if (!PAT || !BASE_ID) {
+    res.setHeader('Content-Type', 'application/json');
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Missing server configuration' }));
     return;
   }
 
-  try {
-    const reqUrl = new URL(req.url ?? '/', 'https://placeholder');
+  const reqUrl = new URL(req.url ?? '/', 'https://placeholder');
 
-    // PDF proxy — only redirect to PDFs hosted on our Cloudinary cloud.
-    // The target host AND the cloud-name path prefix must both match.
-    const proxyUrl = reqUrl.searchParams.get('proxy');
-    if (proxyUrl) {
-      const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
-      let parsed: URL | null = null;
-      try { parsed = new URL(decodeURIComponent(proxyUrl)); } catch { /* invalid */ }
+  // PDF proxy — only redirect to PDFs hosted on our Cloudinary cloud. The
+  // target host AND the cloud-name path prefix must both match. Handled before
+  // the cache since it neither reads Airtable nor returns JSON.
+  const proxyUrl = reqUrl.searchParams.get('proxy');
+  if (proxyUrl) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+    let parsed: URL | null = null;
+    try { parsed = new URL(decodeURIComponent(proxyUrl)); } catch { /* invalid */ }
 
-      const isAllowed =
-        !!parsed &&
-        !!cloudName &&
-        parsed.protocol === 'https:' &&
-        parsed.host === 'res.cloudinary.com' &&
-        parsed.pathname.startsWith(`/${cloudName}/`);
+    const isAllowed =
+      !!parsed &&
+      !!cloudName &&
+      parsed.protocol === 'https:' &&
+      parsed.host === 'res.cloudinary.com' &&
+      parsed.pathname.startsWith(`/${cloudName}/`);
 
-      if (!isAllowed) {
-        res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'Invalid proxy target' }));
-        return;
-      }
-
-      res.writeHead(302, { Location: parsed!.toString(), 'Cache-Control': 'public, max-age=3600' });
-      res.end();
+    if (!isAllowed) {
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: 'Invalid proxy target' }));
       return;
     }
 
-    const linkId = reqUrl.searchParams.get('linkId');
-
-    const data = await airtableFetch(
-      'על הפרק',
-      linkId
-        ? {
-            filterByFormula: `AND({סטטוס}="פורסם",{מזהה קישור}="${linkId.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`,
-            maxRecords: '1',
-          }
-        : { filterByFormula: '{סטטוס}="פורסם"' },
-      linkId ? undefined : [{ field: 'תאריך', direction: 'desc' }],
-    );
-
-    if (linkId) {
-      const record = data.records[0] ?? null;
-      res.statusCode = 200;
-      res.end(JSON.stringify(record ? toItem(record) : null));
-    } else {
-      const items = data.records
-        .map(toItem)
-        .filter((i): i is NonNullable<typeof i> => i !== null);
-      res.statusCode = 200;
-      res.end(JSON.stringify({ items }));
-    }
-  } catch (err) {
-    captureServerError(err, { handler: 'al-haperek', method: req.method ?? '', url: req.url ?? '' });
-    res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Failed to fetch' }));
+    res.writeHead(302, { Location: parsed!.toString(), 'Cache-Control': 'public, max-age=3600' });
+    res.end();
+    return;
   }
+
+  const linkId = reqUrl.searchParams.get('linkId');
+
+  await serveCached(
+    res,
+    {
+      key: linkId ? `al-haperek:detail:${linkId}` : 'al-haperek:list',
+      ttlMs: 300_000,
+      cacheControl: 's-maxage=300, stale-while-revalidate=86400',
+      errorMessage: 'Failed to fetch',
+      errorContext: { handler: 'al-haperek', method: req.method ?? '', url: req.url ?? '' },
+    },
+    async () => {
+      const data = await airtableFetch(
+        'על הפרק',
+        linkId
+          ? {
+              filterByFormula: `AND({סטטוס}="פורסם",{מזהה קישור}="${linkId.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`,
+              maxRecords: '1',
+            }
+          : { filterByFormula: '{סטטוס}="פורסם"' },
+        linkId ? undefined : [{ field: 'תאריך', direction: 'desc' }],
+      );
+
+      if (linkId) {
+        const record = data.records[0] ?? null;
+        return record ? toItem(record) : null;
+      }
+      return {
+        items: data.records
+          .map(toItem)
+          .filter((i): i is NonNullable<typeof i> => i !== null),
+      };
+    },
+  );
 }

@@ -12,6 +12,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { requireAdmin } from './_verifyAuth';
 import { BODY_LIMITS, readBody } from './_readBody';
 import { captureServerError } from './_sentry';
+import { airtableRequest, serveCached } from './_publicCache';
 
 /** Escapes a value for safe use inside a double-quoted Airtable formula string. */
 function escapeAirtable(value: string): string {
@@ -33,9 +34,10 @@ async function airtableGet(params: Record<string, string> = {}, sort?: { field: 
       url.searchParams.set(`sort[${i}][direction]`, s.direction ?? 'asc');
     });
   }
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${PAT}` } });
-  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-  return res.json() as Promise<{ records: { id: string; fields: Record<string, unknown> }[] }>;
+  return airtableRequest<{ records: { id: string; fields: Record<string, unknown> }[] }>(
+    url.toString(),
+    { headers: { Authorization: `Bearer ${PAT}` } },
+  );
 }
 
 async function airtableCreate(fields: Record<string, unknown>) {
@@ -88,9 +90,33 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // by accident.
   const isPublicCategoryRead =
     req.method === 'GET' && reqUrl.searchParams.get('admin') !== 'true';
-  if (!isPublicCategoryRead) {
-    if (!(await requireAdmin(req, res))) return;
+
+  // Public category dropdowns — cached + resilient. Handled before the auth
+  // gate and shared try/catch since this is the only unauthenticated path.
+  if (isPublicCategoryRead) {
+    const filter = forTable
+      ? `AND({סטטוס}="פעיל",FIND("${escapeAirtable(forTable)}",ARRAYJOIN({טבלה})))`
+      : `{סטטוס}="פעיל"`;
+    await serveCached(
+      res,
+      {
+        key: `categories:public:${forTable ?? 'all'}`,
+        ttlMs: 600_000,
+        cacheControl: 's-maxage=600, stale-while-revalidate=86400',
+        errorMessage: 'Categories operation failed',
+        errorContext: { handler: 'categories', method: 'GET' },
+      },
+      async () => {
+        const data = await airtableGet({ filterByFormula: filter }, [{ field: 'שם', direction: 'asc' }]);
+        // Public response intentionally omits Airtable record IDs — clients
+        // identify categories by name instead.
+        return data.records.map((r) => ({ name: (r.fields['שם'] as string) ?? '' }));
+      },
+    );
+    return;
   }
+
+  if (!(await requireAdmin(req, res))) return;
 
   try {
     if (req.method === 'DELETE' && id) {
@@ -124,32 +150,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return;
     }
 
-    // GET
-    const admin = reqUrl.searchParams.get('admin');
-    if (admin === 'true') {
-      // Admin view: all categories with full fields (no cache)
-      const data = await airtableGet({}, [{ field: 'שם', direction: 'asc' }]);
-      const categories = data.records.map((r) => ({
-        id:     r.id,
-        name:   (r.fields['שם']     as string)   ?? '',
-        status: (r.fields['סטטוס'] as string)   ?? 'פעיל',
-        tables: (r.fields['טבלה']   as string[]) ?? [],
-      }));
-      res.statusCode = 200;
-      res.end(JSON.stringify(categories));
-      return;
-    }
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-    const filter = forTable
-      ? `AND({סטטוס}="פעיל",FIND("${escapeAirtable(forTable)}",ARRAYJOIN({טבלה})))`
-      : `{סטטוס}="פעיל"`;
-    const data = await airtableGet(
-      { filterByFormula: filter },
-      [{ field: 'שם', direction: 'asc' }],
-    );
-    // Public response intentionally omits Airtable record IDs — clients
-    // identify categories by name instead. Admin callers use ?admin=true above.
-    const categories = data.records.map((r) => ({ name: (r.fields['שם'] as string) ?? '' }));
+    // GET (admin view only — the public read is handled and returned above).
+    // All categories with full fields, uncached.
+    const data = await airtableGet({}, [{ field: 'שם', direction: 'asc' }]);
+    const categories = data.records.map((r) => ({
+      id:     r.id,
+      name:   (r.fields['שם']     as string)   ?? '',
+      status: (r.fields['סטטוס'] as string)   ?? 'פעיל',
+      tables: (r.fields['טבלה']   as string[]) ?? [],
+    }));
     res.statusCode = 200;
     res.end(JSON.stringify(categories));
   } catch (err) {

@@ -9,6 +9,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import { captureServerError } from './_sentry';
+import { airtableRequest, serveCached } from './_publicCache';
 import { fetchSettings } from './_settings';
 import { sendNewQuestionEmail, sendQuestionReceivedEmail } from './_email';
 import { BODY_LIMITS, readBody } from './_readBody';
@@ -33,11 +34,10 @@ async function airtableFetch(
     `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}`,
   );
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${PAT}` },
-  });
-  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-  return res.json() as Promise<{ records: { id: string; fields: Record<string, unknown> }[] }>;
+  return airtableRequest<{ records: { id: string; fields: Record<string, unknown> }[] }>(
+    url.toString(),
+    { headers: { Authorization: `Bearer ${PAT}` } },
+  );
 }
 
 /**
@@ -194,62 +194,66 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   // ── GET: fetch published questions ──────────────────────────────────────
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-  try {
-    const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
-    const categoryFilter = reqUrl.searchParams.get('category');
+  const reqUrl = new URL(req.url ?? '/', `https://placeholder`);
+  const categoryFilter = reqUrl.searchParams.get('category');
 
-    const [questionsData, answersData, categoriesData] = await Promise.all([
-      airtableFetch('שאלות', {
-        filterByFormula: "AND({הסכמה לפרסום}=TRUE(),{מאושר לפרסום}=TRUE(),NOT({סטטוס}='נדחה'))",
-      }),
-      airtableFetch('תשובות', { filterByFormula: 'NOT({שאלה}="")' }).catch(() => ({ records: [] })),
-      airtableFetch('קטגוריות', {}).catch(() => ({ records: [] })),
-    ]);
+  await serveCached(
+    res,
+    {
+      key: `questions:list:${categoryFilter ?? 'all'}`,
+      ttlMs: 300_000,
+      cacheControl: 's-maxage=300, stale-while-revalidate=86400',
+      errorMessage: 'Failed to fetch questions',
+      errorContext: { handler: 'questions', method: req.method ?? '', url: req.url ?? '' },
+    },
+    async () => {
+      const [questionsData, answersData, categoriesData] = await Promise.all([
+        airtableFetch('שאלות', {
+          filterByFormula: "AND({הסכמה לפרסום}=TRUE(),{מאושר לפרסום}=TRUE(),NOT({סטטוס}='נדחה'))",
+        }),
+        airtableFetch('תשובות', { filterByFormula: 'NOT({שאלה}="")' }).catch(() => ({ records: [] })),
+        airtableFetch('קטגוריות', {}).catch(() => ({ records: [] })),
+      ]);
 
-    // Build a rec ID → category name map so we can return human-readable
-    // category names to the client instead of leaking Airtable record IDs.
-    const categoryNameById = new Map<string, string>();
-    for (const c of categoriesData.records) {
-      const name = c.fields['שם'];
-      if (typeof name === 'string') categoryNameById.set(c.id, name);
-    }
+      // Build a rec ID → category name map so we can return human-readable
+      // category names to the client instead of leaking Airtable record IDs.
+      const categoryNameById = new Map<string, string>();
+      for (const c of categoriesData.records) {
+        const name = c.fields['שם'];
+        if (typeof name === 'string') categoryNameById.set(c.id, name);
+      }
 
-    const questions = questionsData.records
-      .map((r) => {
-        const linkedAnswerIds = Array.isArray(r.fields['תשובות'])
-          ? (r.fields['תשובות'] as string[])
-          : [];
-        const answers = answersData.records
-          .filter((a) => linkedAnswerIds.includes(a.id) && a.fields['ממתין לאישור'] !== true)
-          .map((a) => ({
-            title: (a.fields['כותרת התשובה'] as string) ?? '',
-            content: a.fields['תוכן התשובה'] ?? '',
-            writerType: a.fields['סוג כותב'] ?? 'רב',
-            date: a.fields['תאריך'],
-          }));
+      const questions = questionsData.records
+        .map((r) => {
+          const linkedAnswerIds = Array.isArray(r.fields['תשובות'])
+            ? (r.fields['תשובות'] as string[])
+            : [];
+          const answers = answersData.records
+            .filter((a) => linkedAnswerIds.includes(a.id) && a.fields['ממתין לאישור'] !== true)
+            .map((a) => ({
+              title: (a.fields['כותרת התשובה'] as string) ?? '',
+              content: a.fields['תוכן התשובה'] ?? '',
+              writerType: a.fields['סוג כותב'] ?? 'רב',
+              date: a.fields['תאריך'],
+            }));
 
-        const linkedCategoryId = Array.isArray(r.fields['קטגוריה'])
-          ? (r.fields['קטגוריה'] as string[])[0]
-          : undefined;
-        const category = linkedCategoryId ? categoryNameById.get(linkedCategoryId) : undefined;
+          const linkedCategoryId = Array.isArray(r.fields['קטגוריה'])
+            ? (r.fields['קטגוריה'] as string[])[0]
+            : undefined;
+          const category = linkedCategoryId ? categoryNameById.get(linkedCategoryId) : undefined;
 
-        return {
-          referenceId: r.fields['מזהה שאלה'] != null ? String(r.fields['מזהה שאלה']) : undefined,
-          questionContent: r.fields['תוכן השאלה'] ?? '',
-          category,
-          createdAt: r.fields['תאריך'],
-          followUpBlocked: r.fields['חסום שאלות המשך'] === true,
-          answers,
-        };
-      })
-      .filter((q) => !categoryFilter || q.category === categoryFilter);
+          return {
+            referenceId: r.fields['מזהה שאלה'] != null ? String(r.fields['מזהה שאלה']) : undefined,
+            questionContent: r.fields['תוכן השאלה'] ?? '',
+            category,
+            createdAt: r.fields['תאריך'],
+            followUpBlocked: r.fields['חסום שאלות המשך'] === true,
+            answers,
+          };
+        })
+        .filter((q) => !categoryFilter || q.category === categoryFilter);
 
-    res.statusCode = 200;
-    res.end(JSON.stringify({ questions }));
-  } catch (err) {
-    captureServerError(err, { handler: 'questions', method: req.method ?? '', url: req.url ?? '' });
-    res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Failed to fetch questions' }));
-  }
+      return { questions };
+    },
+  );
 }
