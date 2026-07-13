@@ -29,7 +29,8 @@
     <meta name="twitter:title" content="הרב קלמן מאיר בר - הרב הראשי לישראל ונשיא מועצת הרבנות הראשית" />
     <meta name="twitter:image" content="https://www.haravkalmanber.co.il/og-image.jpg" />
 
-    <script defer src="https://analytics.umami.is/script.js" data-website-id="57ac0036-58b1-4f5d-8dde-2ce0f1b76835"></script>
+    <!-- Umami analytics, proxied through our own domain (/stats/*) so tracker blockers don't kill it. See rewrites in vercel.json. -->
+    <script defer src="/stats/script.js" data-website-id="57ac0036-58b1-4f5d-8dde-2ce0f1b76835" data-host-url="/stats"></script>
 
     <!-- Structured data — helps Google understand who/what this site is about -->
     <script type="application/ld+json">
