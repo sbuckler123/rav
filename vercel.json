@@ -35,6 +35,8 @@
     { "source": "/al-haperek/:path*", "destination": "/idkunim/:path*", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/stats/script.js",      "destination": "https://cloud.umami.is/script.js" },
+    { "source": "/stats/api/send",       "destination": "https://gateway.umami.is/api/send" },
     { "source": "/sitemap.xml",          "destination": "/api/og?sitemap=1" },
     { "source": "/shiurei-torah/:path*", "destination": "/api/og?p=/shiurei-torah/:path*" },
     { "source": "/luach-iruyim/:path*",  "destination": "/api/og?p=/luach-iruyim/:path*" },
